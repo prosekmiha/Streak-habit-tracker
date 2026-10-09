@@ -1,8 +1,6 @@
 package com.streak.app.di
 
 import com.streak.app.data.prefs.SettingsDataStore
-import com.streak.app.data.remote.RemoteDataSource
-import com.streak.app.data.remote.SupabaseRemoteDataSource
 import com.streak.app.data.repository.HabitRepositoryImpl
 import com.streak.app.data.repository.TaskRepositoryImpl
 import com.streak.app.domain.repository.HabitRepository
@@ -26,7 +24,4 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindSettingsRepository(impl: SettingsDataStore): SettingsRepository
-
-    @Binds @Singleton
-    abstract fun bindRemoteDataSource(impl: SupabaseRemoteDataSource): RemoteDataSource
 }

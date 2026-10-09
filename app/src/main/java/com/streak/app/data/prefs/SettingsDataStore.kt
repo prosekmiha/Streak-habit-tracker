@@ -3,7 +3,6 @@ package com.streak.app.data.prefs
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -25,7 +24,6 @@ class SettingsDataStore @Inject constructor(
     private object Keys {
         val NAME = stringPreferencesKey("user_name")
         val THEME = stringPreferencesKey("theme_mode")
-        val CLOUD = booleanPreferencesKey("cloud_sync")
     }
 
     override val userName: Flow<String> =
@@ -36,18 +34,11 @@ class SettingsDataStore @Inject constructor(
             ThemeMode.valueOf(it[Keys.THEME] ?: ThemeMode.DARK.name)
         }
 
-    override val cloudSyncEnabled: Flow<Boolean> =
-        context.dataStore.data.map { it[Keys.CLOUD] ?: false }
-
     override suspend fun setUserName(name: String) {
         context.dataStore.edit { it[Keys.NAME] = name }
     }
 
     override suspend fun setThemeMode(mode: ThemeMode) {
         context.dataStore.edit { it[Keys.THEME] = mode.name }
-    }
-
-    override suspend fun setCloudSync(enabled: Boolean) {
-        context.dataStore.edit { it[Keys.CLOUD] = enabled }
     }
 }

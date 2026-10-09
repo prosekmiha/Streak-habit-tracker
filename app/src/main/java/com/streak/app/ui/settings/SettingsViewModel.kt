@@ -21,7 +21,6 @@ import javax.inject.Inject
 data class SettingsUiState(
     val userName: String = "",
     val themeMode: ThemeMode = ThemeMode.DARK,
-    val cloudSync: Boolean = false,
     val habits: List<Habit> = emptyList(),
     val exportJson: String? = null
 )
@@ -39,16 +38,14 @@ class SettingsViewModel @Inject constructor(
     val state: StateFlow<SettingsUiState> = combine(
         settingsRepository.userName,
         settingsRepository.themeMode,
-        settingsRepository.cloudSyncEnabled,
         habitRepository.observeHabitsWithStreak().map { list -> list.map { it.habit } },
         exportJson
-    ) { name, theme, cloud, habits, export ->
-        SettingsUiState(name, theme, cloud, habits, export)
+    ) { name, theme, habits, export ->
+        SettingsUiState(name, theme, habits, export)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     fun setName(name: String) { viewModelScope.launch { settingsRepository.setUserName(name) } }
     fun setTheme(mode: ThemeMode) { viewModelScope.launch { settingsRepository.setThemeMode(mode) } }
-    fun setCloud(enabled: Boolean) { viewModelScope.launch { settingsRepository.setCloudSync(enabled) } }
 
     fun deleteHabit(habit: Habit) {
         viewModelScope.launch {

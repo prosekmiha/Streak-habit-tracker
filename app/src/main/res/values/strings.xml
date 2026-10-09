@@ -69,8 +69,6 @@
     <string name="theme_dark">Temna</string>
     <string name="settings_manage">Upravljanje navad</string>
     <string name="settings_export">Izvozi v JSON</string>
-    <string name="settings_cloud">Oblačna sinhronizacija</string>
-    <string name="settings_cloud_desc">Sinhroniziraj podatke v oblak (kmalu)</string>
 
     <!-- Obvestila -->
     <string name="notif_channel_reminders">Opomniki za navade</string>

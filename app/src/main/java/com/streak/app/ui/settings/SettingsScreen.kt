@@ -120,21 +120,6 @@ fun SettingsScreen(
             }
         }
 
-        // Oblacna sinhronizacija (placeholder)
-        SectionCard {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(stringRes(R.string.settings_cloud), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                    Text(stringRes(R.string.settings_cloud_desc), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Switch(checked = state.cloudSync, onCheckedChange = { viewModel.setCloud(it) })
-            }
-        }
-
         Box(modifier = Modifier.size(24.dp))
     }
 
