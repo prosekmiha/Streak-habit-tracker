@@ -1,10 +1,9 @@
 package com.streak.app.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import com.streak.app.data.local.entity.HabitEntity
 import com.streak.app.data.local.entity.HabitWithLogsEntity
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +28,9 @@ interface HabitDao {
     @Query("SELECT * FROM habits WHERE id = :id")
     suspend fun getHabit(id: String): HabitEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    // @Upsert namesto REPLACE: REPLACE bi vrstico izbrisal in s tem prek
+    // ON DELETE CASCADE izbrisal tudi vso zgodovino navade.
+    @Upsert
     suspend fun upsert(habit: HabitEntity)
 
     @Query("DELETE FROM habits WHERE id = :id")
