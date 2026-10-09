@@ -3,9 +3,11 @@ package com.streak.app.di
 import com.streak.app.data.prefs.SettingsDataStore
 import com.streak.app.data.repository.HabitRepositoryImpl
 import com.streak.app.data.repository.TaskRepositoryImpl
+import com.streak.app.data.time.SystemDayClock
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.repository.TaskRepository
+import com.streak.app.domain.time.DayClock
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -24,4 +26,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindSettingsRepository(impl: SettingsDataStore): SettingsRepository
+
+    @Binds @Singleton
+    abstract fun bindDayClock(impl: SystemDayClock): DayClock
 }

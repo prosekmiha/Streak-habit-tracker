@@ -11,26 +11,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.streak.app.domain.model.LogStatus
+import com.streak.app.domain.model.DayState
 import java.time.LocalDate
 
 // Vrstica pik za zadnjih N dni (privzeto 7)
 @Composable
 fun StreakDots(
-    statusByDate: Map<LocalDate, LogStatus>,
+    statusByDate: Map<LocalDate, DayState>,
+    today: LocalDate,
     color: Color,
     days: Int = 7,
     trackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
     modifier: Modifier = Modifier
 ) {
-    val today = LocalDate.now()
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         for (i in days - 1 downTo 0) {
             val date = today.minusDays(i.toLong())
             val status = statusByDate[date]
             val dotColor = when (status) {
-                LogStatus.DONE -> color
-                LogStatus.SKIPPED -> color.copy(alpha = 0.4f)
+                DayState.DONE -> color
+                DayState.PARTIAL -> color.copy(alpha = 0.6f)
+                DayState.SKIPPED, DayState.FROZEN, DayState.VACATION -> color.copy(alpha = 0.4f)
                 else -> trackColor
             }
             Box(

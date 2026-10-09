@@ -11,19 +11,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.streak.app.domain.model.LogStatus
+import com.streak.app.domain.model.DayState
 import java.time.LocalDate
 
 // GitHub-style heatmap zadnjega leta. Vsak stolpec je teden (7 dni navzdol).
 @Composable
 fun Heatmap(
-    statusByDate: Map<LocalDate, LogStatus>,
+    statusByDate: Map<LocalDate, DayState>,
+    today: LocalDate,
     baseColor: Color,
     modifier: Modifier = Modifier,
     weeks: Int = 26
 ) {
     val empty = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-    val today = LocalDate.now()
     // Zacni na zacetku tedna pred N tedni
     val start = today.minusWeeks((weeks - 1).toLong()).with(java.time.DayOfWeek.MONDAY)
 
@@ -42,8 +42,9 @@ fun Heatmap(
                 if (date.isAfter(today)) continue
                 val status = statusByDate[date]
                 val color = when (status) {
-                    LogStatus.DONE -> baseColor
-                    LogStatus.SKIPPED -> baseColor.copy(alpha = 0.45f)
+                    DayState.DONE -> baseColor
+                    DayState.PARTIAL -> baseColor.copy(alpha = 0.6f)
+                    DayState.SKIPPED, DayState.FROZEN, DayState.VACATION -> baseColor.copy(alpha = 0.45f)
                     else -> empty
                 }
                 val x = c * (cell + gap)

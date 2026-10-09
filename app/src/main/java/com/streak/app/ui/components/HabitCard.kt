@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -43,7 +44,7 @@ fun HabitCard(
 ) {
     val color = parseHexColor(item.habit.colorHex)
     val done = item.isDoneToday
-    val statusMap = item.logs.associate { it.date to it.status }
+    val statusMap = item.days
 
     val tinted = softTint(color)
     val bg by animateColorAsState(
@@ -62,7 +63,7 @@ fun HabitCard(
             .clip(RoundedCornerShape(20.dp))
             .background(bg)
             .clickable(
-                interactionSource = MutableInteractionSource(),
+                interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) { onClick() }
             .padding(horizontal = 14.dp, vertical = 14.dp),
@@ -96,6 +97,7 @@ fun HabitCard(
             )
             StreakDots(
                 statusByDate = statusMap,
+                today = item.today,
                 color = if (done) Color.White else color,
                 trackColor = if (done) Color.White.copy(alpha = 0.25f) else color.copy(alpha = 0.18f)
             )
@@ -111,7 +113,7 @@ fun HabitCard(
                     else Modifier.border(2.dp, color.copy(alpha = 0.5f), CircleShape)
                 )
                 .clickable(
-                    interactionSource = MutableInteractionSource(),
+                    interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) { onToggle() },
             contentAlignment = Alignment.Center

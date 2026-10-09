@@ -33,6 +33,7 @@
     <string name="color_label">Barva</string>
     <string name="frequency_label">Frekvenca</string>
     <string name="target_label">Cilj na teden</string>
+    <string name="target_label_month">Cilj na mesec</string>
     <string name="reminder_label">Opomnik</string>
     <string name="reminder_time">Ura opomnika</string>
     <string name="save">Shrani</string>
@@ -42,7 +43,13 @@
     <!-- Frekvence -->
     <string name="freq_daily">Dnevno</string>
     <string name="freq_weekly">Tedensko</string>
-    <string name="freq_custom">Po meri</string>
+    <string name="freq_monthly">Mesečno</string>
+
+    <!-- Stanja dneva -->
+    <string name="day_skipped">Preskočeno</string>
+    <string name="day_frozen">Zamrznjeno</string>
+    <string name="day_vacation">Dopust</string>
+    <string name="day_missed">Zamujeno</string>
 
     <!-- Naloge -->
     <string name="due_date">Datum</string>
@@ -76,4 +83,10 @@
     <string name="notif_reminder_title">Čas za navado</string>
     <string name="notif_done_action">Označi kot opravljeno</string>
     <string name="notif_briefing_title">Dobro jutro</string>
+    <plurals name="notif_briefing_habits">
+        <item quantity="one">Danes te čaka %d navada</item>
+        <item quantity="two">Danes te čakata %d navadi</item>
+        <item quantity="few">Danes te čakajo %d navade</item>
+        <item quantity="other">Danes te čaka %d navad</item>
+    </plurals>
 </resources>

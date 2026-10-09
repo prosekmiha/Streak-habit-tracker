@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.streak.app.R
-import com.streak.app.domain.model.Frequency
+import com.streak.app.domain.model.ScheduleType
 import com.streak.app.ui.components.ColorPicker
 import com.streak.app.ui.components.IconPicker
 import com.streak.app.ui.components.parseHexColor
@@ -86,25 +86,28 @@ fun AddEditHabitScreen(
         // Frekvenca
         FieldLabel(stringRes(R.string.frequency_label))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FreqChip(stringRes(R.string.freq_daily), form.frequency == Frequency.DAILY) { viewModel.update { it.copy(frequency = Frequency.DAILY, targetPerWeek = 7) } }
-            FreqChip(stringRes(R.string.freq_weekly), form.frequency == Frequency.WEEKLY) { viewModel.update { it.copy(frequency = Frequency.WEEKLY) } }
-            FreqChip(stringRes(R.string.freq_custom), form.frequency == Frequency.CUSTOM) { viewModel.update { it.copy(frequency = Frequency.CUSTOM) } }
+            FreqChip(stringRes(R.string.freq_daily), form.scheduleType == ScheduleType.DAILY) { viewModel.update { it.copy(scheduleType = ScheduleType.DAILY) } }
+            FreqChip(stringRes(R.string.freq_weekly), form.scheduleType == ScheduleType.TIMES_PER_WEEK) { viewModel.update { it.copy(scheduleType = ScheduleType.TIMES_PER_WEEK, timesPerPeriod = it.timesPerPeriod.coerceAtMost(7)) } }
+            FreqChip(stringRes(R.string.freq_monthly), form.scheduleType == ScheduleType.TIMES_PER_MONTH) { viewModel.update { it.copy(scheduleType = ScheduleType.TIMES_PER_MONTH) } }
         }
 
-        // Cilj na teden (le ce ni dnevno)
-        if (form.frequency != Frequency.DAILY) {
-            FieldLabel("${stringRes(R.string.target_label)}: ${form.targetPerWeek}x")
+        // Cilj na obdobje (le ce ni dnevno)
+        if (form.scheduleType != ScheduleType.DAILY) {
+            val monthly = form.scheduleType == ScheduleType.TIMES_PER_MONTH
+            val label = stringRes(if (monthly) R.string.target_label_month else R.string.target_label)
+            val options = if (monthly) AddEditHabitViewModel.QuickMonthlyTargets else (1..7).toList()
+            FieldLabel("$label: ${form.timesPerPeriod}x")
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                (1..7).forEach { n ->
+                options.forEach { n ->
                     Box(
                         modifier = Modifier
                             .background(
-                                if (form.targetPerWeek == n) accent.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                if (form.timesPerPeriod == n) accent.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
                                 RoundedCornerShape(10.dp)
                             )
-                            .clickable { viewModel.update { it.copy(targetPerWeek = n) } }
+                            .clickable { viewModel.update { it.copy(timesPerPeriod = n) } }
                             .padding(horizontal = 14.dp, vertical = 9.dp)
-                    ) { Text("$n", color = if (form.targetPerWeek == n) accent else MaterialTheme.colorScheme.onSurfaceVariant) }
+                    ) { Text("$n", color = if (form.timesPerPeriod == n) accent else MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
         }

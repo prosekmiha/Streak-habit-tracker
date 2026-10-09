@@ -27,19 +27,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.streak.app.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.streak.app.domain.model.HabitWithStreak
-import com.streak.app.domain.model.LogStatus
+import com.streak.app.domain.model.DayState
 import com.streak.app.domain.model.Priority
 import com.streak.app.domain.model.Task
 import com.streak.app.ui.components.parseHexColor
@@ -101,7 +103,7 @@ fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
         val first = state.month.atDay(1)
         val leading = (first.dayOfWeek.value + 6) % 7
         val daysInMonth = state.month.lengthOfMonth()
-        val today = LocalDate.now()
+        val today = state.today
         val allCells = List(leading) { null } + (1..daysInMonth).map { it }
         val weeks = allCells.chunked(7).map { week ->
             if (week.size < 7) week + List(7 - week.size) { null } else week
@@ -173,13 +175,8 @@ fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
                             HabitSummaryRow(
                                 item = habit,
                                 date = date,
-                                onToggle = {
-                                    viewModel.toggleHabitOnDate(
-                                        habit.habit.id,
-                                        date,
-                                        habit.statusOn(date) == LogStatus.DONE
-                                    )
-                                }
+                                isFuture = date.isAfter(state.today),
+                                onToggle = { viewModel.toggleHabitOnDate(habit.habit, date) }
                             )
                         }
                     }
@@ -234,7 +231,7 @@ private fun DayCell(day: Int, completion: Float, isToday: Boolean, isSelected: B
                 else Modifier
             )
             .clickable(
-                interactionSource = MutableInteractionSource(),
+                interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             ),
@@ -254,17 +251,16 @@ private fun DayCell(day: Int, completion: Float, isToday: Boolean, isSelected: B
 }
 
 @Composable
-private fun HabitSummaryRow(item: HabitWithStreak, date: LocalDate, onToggle: () -> Unit) {
+private fun HabitSummaryRow(item: HabitDay, date: LocalDate, isFuture: Boolean, onToggle: () -> Unit) {
     val color = parseHexColor(item.habit.colorHex)
-    val status = item.statusOn(date)
-    val isFuture = date.isAfter(LocalDate.now())
+    val status = item.state
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .then(
                 if (isFuture) Modifier
                 else Modifier.clickable(
-                    interactionSource = MutableInteractionSource(),
+                    interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = onToggle
                 )
@@ -289,15 +285,17 @@ private fun HabitSummaryRow(item: HabitWithStreak, date: LocalDate, onToggle: ()
         Text(
             text = item.habit.title,
             style = MaterialTheme.typography.bodyMedium,
-            color = if (status == LogStatus.DONE) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-            textDecoration = if (status == LogStatus.DONE) TextDecoration.LineThrough else null,
+            color = if (status == DayState.DONE) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+            textDecoration = if (status == DayState.DONE) TextDecoration.LineThrough else null,
             modifier = Modifier.weight(1f)
         )
         when (status) {
-            LogStatus.DONE -> Icon(Icons.Filled.Check, contentDescription = null, tint = Success, modifier = Modifier.size(16.dp))
-            LogStatus.SKIPPED -> Text("Preskočeno", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            LogStatus.MISSED -> Text("Zamujeno", style = MaterialTheme.typography.labelSmall, color = Warning)
-            null -> {}
+            DayState.DONE -> Icon(Icons.Filled.Check, contentDescription = null, tint = Success, modifier = Modifier.size(16.dp))
+            DayState.SKIPPED -> Text(stringResource(R.string.day_skipped), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            DayState.FROZEN -> Text(stringResource(R.string.day_frozen), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            DayState.VACATION -> Text(stringResource(R.string.day_vacation), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            DayState.MISSED -> Text(stringResource(R.string.day_missed), style = MaterialTheme.typography.labelSmall, color = Warning)
+            else -> {}
         }
     }
 }

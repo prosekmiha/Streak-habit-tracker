@@ -38,6 +38,7 @@ import com.streak.app.R
 import com.streak.app.domain.model.HabitWithStreak
 import com.streak.app.domain.model.Priority
 import com.streak.app.domain.model.Task
+import com.streak.app.domain.model.TimeOfDay
 import com.streak.app.ui.components.FilterChipsRow
 import com.streak.app.ui.components.HabitCard
 import com.streak.app.ui.components.ProgressRing
@@ -125,14 +126,12 @@ fun TodayScreen(
     }
 }
 
-// 0 = celodnevno/neznano, 1 = jutro, 2 = popoldne, 3 = vecer (glede na cas opomnika)
-private fun partOfDayIndex(item: HabitWithStreak): Int {
-    val h = item.habit.reminderTime?.hour ?: return 0
-    return when {
-        h < 11 -> 1
-        h < 17 -> 2
-        else -> 3
-    }
+// 0 = celodnevno, 1 = jutro, 2 = popoldne, 3 = vecer
+private fun partOfDayIndex(item: HabitWithStreak): Int = when (item.habit.timeOfDay) {
+    TimeOfDay.ANYTIME -> 0
+    TimeOfDay.MORNING -> 1
+    TimeOfDay.AFTERNOON -> 2
+    TimeOfDay.EVENING -> 3
 }
 
 @Composable
@@ -287,7 +286,7 @@ private fun EmptyHint(text: String) {
 
 private fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier =
     this.clickable(
-        interactionSource = MutableInteractionSource(),
+        interactionSource = null,
         indication = null,
         onClick = onClick
     )

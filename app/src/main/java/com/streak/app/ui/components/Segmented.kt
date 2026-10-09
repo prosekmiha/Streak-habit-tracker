@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -56,7 +57,7 @@ fun SegmentedControl(
                     .weight(1f)
                     .background(bg, RoundedCornerShape(50))
                     .clickable(
-                        interactionSource = MutableInteractionSource(),
+                        interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) { onSelect(index) }
                     .padding(vertical = 10.dp)
@@ -90,7 +91,7 @@ fun FilterChipsRow(
                         RoundedCornerShape(50)
                     )
                     .clickable(
-                        interactionSource = MutableInteractionSource(),
+                        interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) { onSelect(index) }
                     .padding(horizontal = 18.dp, vertical = 9.dp),

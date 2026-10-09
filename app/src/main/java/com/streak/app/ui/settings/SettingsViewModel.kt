@@ -38,7 +38,7 @@ class SettingsViewModel @Inject constructor(
     val state: StateFlow<SettingsUiState> = combine(
         settingsRepository.userName,
         settingsRepository.themeMode,
-        habitRepository.observeHabitsWithStreak().map { list -> list.map { it.habit } },
+        habitRepository.observeHabits().map { list -> list.map { it.habit } },
         exportJson
     ) { name, theme, habits, export ->
         SettingsUiState(name, theme, habits, export)
@@ -49,7 +49,7 @@ class SettingsViewModel @Inject constructor(
 
     fun deleteHabit(habit: Habit) {
         viewModelScope.launch {
-            alarmScheduler.cancel(habit.id)
+            alarmScheduler.cancel(habit)
             habitRepository.deleteHabit(habit.id)
         }
     }

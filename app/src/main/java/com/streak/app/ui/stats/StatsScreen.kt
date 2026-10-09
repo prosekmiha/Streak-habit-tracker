@@ -82,7 +82,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
 
         // Letni heatmap
         SectionCard(title = stringRes(R.string.yearly_overview)) {
-            Heatmap(statusByDate = state.statusByDate, baseColor = color, modifier = Modifier.padding(top = 8.dp))
+            Heatmap(statusByDate = state.statusByDate, today = state.today, baseColor = color, modifier = Modifier.padding(top = 8.dp))
         }
 
         Box(modifier = Modifier.size(24.dp))
