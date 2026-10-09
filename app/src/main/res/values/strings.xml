@@ -1,0 +1,81 @@
+<resources>
+    <string name="app_name">Streak</string>
+
+    <!-- Navigacija -->
+    <string name="nav_today">Danes</string>
+    <string name="nav_calendar">Koledar</string>
+    <string name="nav_stats">Statistike</string>
+    <string name="nav_more">Več</string>
+
+    <!-- Danes -->
+    <string name="greeting_morning">Dobro jutro</string>
+    <string name="greeting_day">Dober dan</string>
+    <string name="greeting_evening">Dober večer</string>
+    <string name="today_progress">Današnji napredek</string>
+    <string name="today_habits">Navade</string>
+    <string name="today_tasks">Naloge danes</string>
+    <string name="filter_all">Vse</string>
+    <string name="filter_morning">Jutro</string>
+    <string name="filter_afternoon">Popoldne</string>
+    <string name="filter_evening">Večer</string>
+    <string name="streak_days">%1$d-dnevni streak</string>
+    <string name="habits_done">%1$d / %2$d navad</string>
+    <string name="empty_habits">Dodaj svojo prvo navado</string>
+    <string name="empty_tasks">Ni nalog za danes</string>
+
+    <!-- Dodajanje -->
+    <string name="add_habit">Dodaj navado</string>
+    <string name="add_task">Dodaj nalogo</string>
+    <string name="edit_habit">Uredi navado</string>
+    <string name="edit_task">Uredi nalogo</string>
+    <string name="title_label">Naslov</string>
+    <string name="icon_label">Ikona</string>
+    <string name="color_label">Barva</string>
+    <string name="frequency_label">Frekvenca</string>
+    <string name="target_label">Cilj na teden</string>
+    <string name="reminder_label">Opomnik</string>
+    <string name="reminder_time">Ura opomnika</string>
+    <string name="save">Shrani</string>
+    <string name="cancel">Prekliči</string>
+    <string name="delete">Izbriši</string>
+
+    <!-- Frekvence -->
+    <string name="freq_daily">Dnevno</string>
+    <string name="freq_weekly">Tedensko</string>
+    <string name="freq_custom">Po meri</string>
+
+    <!-- Naloge -->
+    <string name="due_date">Datum</string>
+    <string name="due_time">Ura</string>
+    <string name="priority_label">Prioriteta</string>
+    <string name="priority_low">Nizka</string>
+    <string name="priority_normal">Normalna</string>
+    <string name="priority_urgent">Nujna</string>
+    <string name="recurring_label">Ponavljajoča</string>
+
+    <!-- Statistike -->
+    <string name="stat_current">Trenutni</string>
+    <string name="stat_best">Rekord</string>
+    <string name="stat_month">Ta mesec</string>
+    <string name="stat_days">dni</string>
+    <string name="weekly_overview">Zadnjih 5 tednov</string>
+    <string name="yearly_overview">Letni pregled</string>
+
+    <!-- Nastavitve -->
+    <string name="settings_name">Tvoje ime</string>
+    <string name="settings_theme">Tema</string>
+    <string name="theme_system">Sistem</string>
+    <string name="theme_light">Svetla</string>
+    <string name="theme_dark">Temna</string>
+    <string name="settings_manage">Upravljanje navad</string>
+    <string name="settings_export">Izvozi v JSON</string>
+    <string name="settings_cloud">Oblačna sinhronizacija</string>
+    <string name="settings_cloud_desc">Sinhroniziraj podatke v oblak (kmalu)</string>
+
+    <!-- Obvestila -->
+    <string name="notif_channel_reminders">Opomniki za navade</string>
+    <string name="notif_channel_briefing">Dnevni pregled</string>
+    <string name="notif_reminder_title">Čas za navado</string>
+    <string name="notif_done_action">Označi kot opravljeno</string>
+    <string name="notif_briefing_title">Dobro jutro</string>
+</resources>

@@ -1,0 +1,30 @@
+package com.streak.app.data.repository
+
+import com.streak.app.data.local.dao.TaskDao
+import com.streak.app.data.mapper.toDomain
+import com.streak.app.data.mapper.toEntity
+import com.streak.app.domain.model.Task
+import com.streak.app.domain.repository.TaskRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import java.time.LocalDate
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class TaskRepositoryImpl @Inject constructor(
+    private val taskDao: TaskDao
+) : TaskRepository {
+
+    override fun observeTasks(): Flow<List<Task>> =
+        taskDao.observeAll().map { list -> list.map { it.toDomain() } }
+
+    override fun observeTasksForDate(date: LocalDate): Flow<List<Task>> =
+        taskDao.observeForDate(date.toEpochDay()).map { list -> list.map { it.toDomain() } }
+
+    override suspend fun upsertTask(task: Task) = taskDao.upsert(task.toEntity())
+
+    override suspend fun deleteTask(id: String) = taskDao.delete(id)
+
+    override suspend fun setDone(id: String, done: Boolean) = taskDao.setDone(id, done)
+}
