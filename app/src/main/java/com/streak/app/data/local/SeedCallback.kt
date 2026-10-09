@@ -28,7 +28,7 @@ class SeedCallback : RoomDatabase.Callback() {
             db.execSQL(
                 "INSERT INTO habits (id,title,icon,colorHex,frequency,targetPerWeek,reminderMinuteOfDay,reminderEnabled,isActive,createdAt,sortOrder) " +
                     "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                arrayOf(
+                arrayOf<Any?>(
                     habitId, s.title, s.icon, s.color, Frequency.DAILY.name, 7,
                     s.reminderMin, 1, 1, now, index
                 )
@@ -39,7 +39,7 @@ class SeedCallback : RoomDatabase.Callback() {
                 val logId = UUID.randomUUID().toString()
                 db.execSQL(
                     "INSERT INTO habit_logs (id,habitId,epochDay,status,completedAt,note) VALUES (?,?,?,?,?,?)",
-                    arrayOf(logId, habitId, day.toEpochDay(), LogStatus.DONE.name, now, null)
+                    arrayOf<Any?>(logId, habitId, day.toEpochDay(), LogStatus.DONE.name, now, null)
                 )
             }
         }
@@ -48,12 +48,12 @@ class SeedCallback : RoomDatabase.Callback() {
         val t1 = UUID.randomUUID().toString()
         db.execSQL(
             "INSERT INTO tasks (id,title,dueEpochDay,dueMinuteOfDay,priority,isDone,isRecurring,recurrenceRule,createdAt) VALUES (?,?,?,?,?,?,?,?,?)",
-            arrayOf(t1, "Oddati poročilo", today.toEpochDay(), 14 * 60, "URGENT", 0, 0, null, now)
+            arrayOf<Any?>(t1, "Oddati poročilo", today.toEpochDay(), 14 * 60, "URGENT", 0, 0, null, now)
         )
         val t2 = UUID.randomUUID().toString()
         db.execSQL(
             "INSERT INTO tasks (id,title,dueEpochDay,dueMinuteOfDay,priority,isDone,isRecurring,recurrenceRule,createdAt) VALUES (?,?,?,?,?,?,?,?,?)",
-            arrayOf(t2, "Pokliči zdravnika", today.toEpochDay(), 16 * 60 + 30, "NORMAL", 0, 0, null, now)
+            arrayOf<Any?>(t2, "Pokliči zdravnika", today.toEpochDay(), 16 * 60 + 30, "NORMAL", 0, 0, null, now)
         )
     }
 }
