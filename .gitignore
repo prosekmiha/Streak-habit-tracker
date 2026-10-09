@@ -12,3 +12,4 @@ local.properties
 /app/build
 /tools/**/__pycache__
 /tools/mascot/out
+/tools/fonts/out

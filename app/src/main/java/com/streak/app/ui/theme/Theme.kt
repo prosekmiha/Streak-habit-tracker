@@ -1,102 +1,100 @@
 package com.streak.app.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-
-private val DarkColors = darkColorScheme(
-    primary = Primary,
-    onPrimary = Color.White,
-    primaryContainer = Primary.copy(alpha = 0.22f),
-    onPrimaryContainer = Accent2,
-    secondary = Accent2,
-    tertiary = Success,
-    background = BgDeep,
-    onBackground = TextPrimaryDark,
-    surface = CardDark,
-    onSurface = TextPrimaryDark,
-    surfaceVariant = BorderDark,
-    onSurfaceVariant = TextSecondaryDark,
-    outline = BorderDark,
-    outlineVariant = TrackDark,
-    error = Warning,
-    onError = Color.White
-)
+import com.streak.app.domain.model.AnimationLevel
 
 private val LightColors = lightColorScheme(
-    primary = Primary,
+    primary = Blurple,
     onPrimary = Color.White,
-    primaryContainer = Primary.copy(alpha = 0.12f),
-    onPrimaryContainer = PrimaryDeep,
-    secondary = Accent2,
-    tertiary = Success,
-    background = BgLight,
-    onBackground = TextPrimaryLight,
-    surface = CardLight,
-    onSurface = TextPrimaryLight,
-    surfaceVariant = BorderLight,
-    onSurfaceVariant = TextSecondaryLight,
-    outline = BorderLight,
-    outlineVariant = TrackLight,
-    error = Warning,
+    primaryContainer = Color(0xFFE4E5FB),
+    onPrimaryContainer = Color(0xFF1B1F7A),
+    secondary = Lime,
+    onSecondary = InkOnPastel,
+    tertiary = Bubblegum,
+    onTertiary = InkOnPastel,
+    background = Color.White,
+    onBackground = LightPalette.ink,
+    surface = Color.White,
+    onSurface = LightPalette.ink,
+    surfaceVariant = LightPalette.surfaceSoft,
+    onSurfaceVariant = LightPalette.inkSoft,
+    surfaceContainer = LightPalette.surfaceSoft,
+    surfaceContainerHigh = Color.White,
+    surfaceContainerLow = Color.White,
+    outline = LightPalette.border,
+    outlineVariant = LightPalette.border,
+    error = Danger,
     onError = Color.White
 )
+
+private val DarkColors = darkColorScheme(
+    primary = BlurpleLight,
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFF2B2F6E),
+    onPrimaryContainer = Color(0xFFDADCFF),
+    secondary = Lime,
+    onSecondary = InkOnPastel,
+    tertiary = Bubblegum,
+    onTertiary = InkOnPastel,
+    background = Color(0xFF121318),
+    onBackground = DarkPalette.ink,
+    surface = Color(0xFF1C1D24),
+    onSurface = DarkPalette.ink,
+    surfaceVariant = DarkPalette.surfaceSoft,
+    onSurfaceVariant = DarkPalette.inkSoft,
+    surfaceContainer = DarkPalette.surfaceSoft,
+    surfaceContainerHigh = Color(0xFF1C1D24),
+    surfaceContainerLow = Color(0xFF16171D),
+    outline = DarkPalette.border,
+    outlineVariant = DarkPalette.border,
+    error = Color(0xFFFF6B6F),
+    onError = Color.White
+)
+
+val LocalStreakPalette = staticCompositionLocalOf { LightPalette }
+
+// Ucinkovita raven animacij (nastavitev aplikacije + sistemsko "Odstrani animacije")
+val LocalAnimationLevel = staticCompositionLocalOf { AnimationLevel.FULL }
+
+object StreakTheme {
+    val palette: StreakPalette
+        @Composable get() = LocalStreakPalette.current
+}
 
 @Composable
 fun StreakTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
+    animationLevel: AnimationLevel = AnimationLevel.FULL,
     content: @Composable () -> Unit
 ) {
-    val context = LocalContext.current
-    val colors = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        darkTheme -> DarkColors
-        else -> LightColors
-    }
+    val colors = if (darkTheme) DarkColors else LightColors
+    val palette = if (darkTheme) DarkPalette else LightPalette
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.isAppearanceLightStatusBars = !darkTheme
+            controller.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 
-    MaterialTheme(
-        colorScheme = colors,
-        typography = StreakTypography,
-        content = content
-    )
-}
-
-/** Nezno pastelno ozadje kartice iz barve navade – prilagojeno svetli/temni temi. */
-@Composable
-fun softTint(color: Color): Color {
-    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    return if (dark) color.copy(alpha = 0.16f)
-    else color.copy(alpha = 0.14f).compositeOverWhite()
-}
-
-private fun Color.compositeOverWhite(): Color {
-    val bg = Color.White
-    return Color(
-        red = red * alpha + bg.red * (1 - alpha),
-        green = green * alpha + bg.green * (1 - alpha),
-        blue = blue * alpha + bg.blue * (1 - alpha),
-        alpha = 1f
-    )
+    CompositionLocalProvider(
+        LocalStreakPalette provides palette,
+        LocalAnimationLevel provides animationLevel
+    ) {
+        MaterialTheme(colorScheme = colors, typography = StreakTypography, content = content)
+    }
 }

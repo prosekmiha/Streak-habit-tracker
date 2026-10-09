@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Zacetni zaslon (core-splashscreen); ostane, dokler se nastavitve ne nalozijo -->
+    <style name="Theme.Streak.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/blurple</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Streak</item>
+    </style>
+
     <!-- Osnovna tema; Compose prevzame barve preko MaterialTheme -->
-    <style name="Theme.Streak" parent="android:Theme.Material.NoActionBar">
-        <item name="android:statusBarColor">@color/bg_deep</item>
-        <item name="android:navigationBarColor">@color/bg_deep</item>
-        <item name="android:windowBackground">@color/bg_deep</item>
+    <style name="Theme.Streak" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
     </style>
 </resources>

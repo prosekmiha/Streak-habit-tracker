@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg_deep">#0c0d11</color>
-    <color name="card">#15161c</color>
-    <color name="border">#1f2029</color>
-    <color name="accent">#8ea2ff</color>
-    <color name="accent2">#b89dff</color>
-    <color name="success">#5dcb80</color>
-    <color name="warning">#ff8c69</color>
-    <color name="white">#ffffff</color>
-    <color name="black">#000000</color>
+    <color name="blurple">#4E55E0</color>
+    <color name="background">#FFFFFF</color>
 </resources>

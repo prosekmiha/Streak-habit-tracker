@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,12 +36,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.streak.app.R
 import com.streak.app.domain.model.Priority
-import com.streak.app.ui.theme.Accent
-import com.streak.app.ui.theme.Success
-import com.streak.app.ui.theme.Warning
+import com.streak.app.ui.tasks.priorityColor
 import java.time.DayOfWeek
 import java.time.format.TextStyle
-import java.util.Locale
 
 @androidx.compose.material3.ExperimentalMaterial3Api
 @Composable
@@ -49,13 +47,16 @@ fun AddEditTaskScreen(
     viewModel: AddEditTaskViewModel = hiltViewModel()
 ) {
     val form by viewModel.form.collectAsStateWithLifecycle()
-    val sl = Locale.forLanguageTag("sl")
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0]
+    val accent = MaterialTheme.colorScheme.primary
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp)
+            .padding(horizontal = 20.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
@@ -67,7 +68,7 @@ fun AddEditTaskScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Zapri", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = stringRes(R.string.close), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
 
         FieldLabel(stringRes(R.string.title_label))
@@ -81,9 +82,9 @@ fun AddEditTaskScreen(
         // Prioriteta
         FieldLabel(stringRes(R.string.priority_label))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PriorityChip(stringRes(R.string.priority_low), Success, form.priority == Priority.LOW) { viewModel.update { it.copy(priority = Priority.LOW) } }
-            PriorityChip(stringRes(R.string.priority_normal), Accent, form.priority == Priority.NORMAL) { viewModel.update { it.copy(priority = Priority.NORMAL) } }
-            PriorityChip(stringRes(R.string.priority_urgent), Warning, form.priority == Priority.URGENT) { viewModel.update { it.copy(priority = Priority.URGENT) } }
+            PriorityChip(stringRes(R.string.priority_low), priorityColor(Priority.LOW), form.priority == Priority.LOW) { viewModel.update { it.copy(priority = Priority.LOW) } }
+            PriorityChip(stringRes(R.string.priority_normal), priorityColor(Priority.NORMAL), form.priority == Priority.NORMAL) { viewModel.update { it.copy(priority = Priority.NORMAL) } }
+            PriorityChip(stringRes(R.string.priority_urgent), priorityColor(Priority.URGENT), form.priority == Priority.URGENT) { viewModel.update { it.copy(priority = Priority.URGENT) } }
         }
 
         // Ura
@@ -121,15 +122,15 @@ fun AddEditTaskScreen(
                     Box(
                         modifier = Modifier
                             .size(38.dp)
-                            .background(if (sel) Accent.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f), CircleShape)
+                            .background(if (sel) accent.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f), CircleShape)
                             .clickable { viewModel.toggleDay(day) },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            day.getDisplayName(TextStyle.NARROW, sl).uppercase(),
+                            day.getDisplayName(TextStyle.NARROW, locale).uppercase(),
                             style = MaterialTheme.typography.labelMedium,
                             textAlign = TextAlign.Center,
-                            color = if (sel) Accent else MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (sel) accent else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }

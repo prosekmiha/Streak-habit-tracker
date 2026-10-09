@@ -19,13 +19,14 @@ import java.time.LocalDate
 fun Heatmap(
     statusByDate: Map<LocalDate, DayState>,
     today: LocalDate,
+    firstDayOfWeek: java.time.DayOfWeek,
     baseColor: Color,
     modifier: Modifier = Modifier,
     weeks: Int = 26
 ) {
-    val empty = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    val empty = MaterialTheme.colorScheme.outline
     // Zacni na zacetku tedna pred N tedni
-    val start = today.minusWeeks((weeks - 1).toLong()).with(java.time.DayOfWeek.MONDAY)
+    val start = today.minusWeeks((weeks - 1).toLong()).with(java.time.temporal.TemporalAdjusters.previousOrSame(firstDayOfWeek))
 
     Canvas(
         modifier = modifier

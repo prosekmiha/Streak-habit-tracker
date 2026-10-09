@@ -1,54 +1,43 @@
-# Streak — habit tracker
+# Streak — sledilnik navad
 
-Offline-first sledilnik navad z dnevnimi opomniki, koledarjem in vizualnimi statistikami.
-Zgrajen v Kotlinu + Jetpack Compose (Material 3), arhitektura MVVM + Clean.
+Sledilnik navad, ki deluje popolnoma brez povezave: brez računov, strežnikov, oglasov in analitike. Vsi podatki ostanejo na napravi.
+Zgrajen je v Kotlinu z Jetpack Compose (Material 3), arhitektura je MVVM + Clean, DI pa Hilt.
 
 ## Funkcionalnosti
-- **Danes**: krožni progress ring, kartice navad s pikami zadnjih 7 dni in odkljukanjem, današnje naloge
-- **Koledar**: mesečni grid, dnevi obarvani po deležu opravljenih navad
-- **Statistike**: trenutni/rekordni streak, mesečni %, tedenski stolpčni graf, letni heatmap (GitHub-style)
-- **Več**: ime, preklop teme (sistem/svetla/temna), urejanje in brisanje navad, izvoz v JSON, placeholder za oblak
-- **Dodajanje**: navada (ikona, barva, frekvenca, cilj/teden, opomnik z uro) in naloga (datum, ura, prioriteta, ponavljanje z RRULE)
-- **Opomniki**: AlarmManager dnevno; če navada ni opravljena, escalation po 30 in 60 min (tiho → zvok → persistent)
-- **Dnevni reset**: WorkManager ob polnoči označi včerajšnje neopravljene navade kot MISSED in pripravi jutranji briefing
-- Ob ponovnem zagonu telefona (BOOT_COMPLETED) se alarmi znova razporedijo
+- **Onboarding**: dobrodošlica z maskoto, ime, dovoljenje za obvestila, izbira predlog navad.
+- **Domov**: pozdrav glede na del dneva, tedenski trak (dotik dneva omogoči naknadni vpis), mreža pastelnih kartic.
+  - Dotik kartico označi; pri količinskih navadah doda +1.
+  - Dolg pritisk odpre meni: preskoči, zamrzni, opomba, uredi, arhiviraj.
+- **Navade**:
+  - Cilj je lahko da/ne, količina z enoto ali trajanje.
+  - Urnik je lahko vsak dan, izbrani dnevi ali X-krat na teden oziroma mesec.
+  - Druge nastavitve: kategorija, del dneva, več opomnikov, začetek in konec, arhiv.
+- **Streak**: preskoki, zamrznitve in dopust verige ne prekinejo. Nastaviti je mogoče "dan se konča ob" (npr. 04:00 za pozne ure) in prvi dan tedna.
+- **Statistika**:
+  - Pregled: tedenski povzetek in mesečni koledar z naknadnim vpisom.
+  - Navade: trenutni streak in rekord, skupno število, uspešnost, najboljši dan v tednu, zadnjih 8 tednov, heatmap.
+- **Naloge**: enkratna opravila z rokom, prioriteto in ponavljanjem.
+- **Profil**: ime, tema, animacije, prvi dan tedna, "dan se konča ob", arhivirane navade, izvoz JSON in "Preračunaj vse".
 
 ## Zagon
-1. Odpri mapo v **Android Studio** (Ladybug ali novejši).
-2. Počakaj na Gradle sync (prvič potegne odvisnosti).
-3. Zaženi na emulatorju ali napravi z **API 33+** (zaradi `POST_NOTIFICATIONS`; aplikacija deluje že od API 26).
-4. Ob prvem zagonu se vstavijo 3 vzorčne navade z zgodovino, da je UI takoj poln.
+1. Odpri mapo v **Android Studio**.
+2. Zaženi na emulatorju ali napravi (minSdk 26, targetSdk 36).
 
-> Iz ukazne vrstice: `./gradlew assembleDebug` (potrebna sta JDK 17+ in internet za prvi sync).
+Iz ukazne vrstice:
 
-## Potrebna dovoljenja
-- `POST_NOTIFICATIONS` — prikaz opomnikov (API 33+, vpraša ob zagonu)
-- `SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM` — točni dnevni alarmi
-- `RECEIVE_BOOT_COMPLETED` — obnovitev alarmov po ponovnem zagonu
-- `VIBRATE` — vibracija pri opomniku
-
-Za testiranje opomnikov nastavi uro opomnika nekaj minut v prihodnost; za escalation pusti navado neoznačeno.
-
-## Arhitektura
 ```
-ui (Compose, ViewModeli s StateFlow)
-   └── domain (modeli, repository vmesniki, use-case-i: streak, toggle, export)
-        └── data (Room baza – edini vir resnice, DataStore, Supabase stub)
+./gradlew assembleDebug          # gradnja
+./gradlew testDebugUnitTest      # unit in Robolectric testi
+./gradlew lintDebug              # lint
 ```
-Izračun streaka je v `domain/usecase/ComputeStreakUseCase.kt`:
-DONE poveča verigo, MISSED jo prekine, SKIPPED je ne prekine; pri WEEKLY/CUSTOM šteje tedenski cilj.
 
-## Priklop Supabase (kasneje)
-1. Dodaj odvisnost `io.github.jan-tennert.supabase:postgrest-kt` (+ ktor client) v `app/build.gradle.kts`.
-2. Implementiraj `data/remote/SupabaseRemoteDataSource.kt` (trenutno prazni stubi z TODO):
-   inicializiraj `SupabaseClient` (Project URL + anon key) in napiši `push*/pull*` klice na tabeli `habits` in `tasks`.
-3. V repozitorijih po lokalnem zapisu pokliči `RemoteDataSource`, ko je sinhronizacija vklopljena (stikalo v Nastavitvah).
-4. UI sloja ni treba spreminjati — vse teče preko vmesnika `RemoteDataSource`.
+## Dokumentacija
+- [docs/audit.md](docs/audit.md) — Phase 0 audit, tabela vrzeli, tveganja, fazni načrt
+- [docs/data-model.md](docs/data-model.md) — Room shema, logični dan, izračun streaka, migracije
 
 ## Struktura
-- `data/local` — Room entitete, DAO-ji, baza, seed
-- `data/prefs` — DataStore (ime, tema, sync)
-- `domain` — modeli, use-case-i, vmesniki
-- `notifications` — AlarmScheduler, ReminderReceiver, BootReceiver, NotificationHelper
-- `work` — DailyResetWorker + scheduler
-- `ui/*` — ekrani + ViewModeli, `ui/components` ročno risane komponente (Canvas grafi)
+- `domain` — modeli, use-case-i (streak, vpis, izvoz), `time` (logični dan, zaznava skokov ure), `streak` (izpeljava stanja dneva)
+- `data` — Room (entitete, DAO, `DatabaseGuard`), DataStore nastavitve, repozitoriji, `StreakRecalculator` (predpomnilnik streakov in dnevni povzetki)
+- `notifications`, `work` — alarmi, opomniki, menjava logičnega dne
+- `ui` — `onboarding`, `home`, `addhabit`, `tasks`, `addtask`, `stats`, `settings`, `mascot` (2D maskota do 3D rendererja), `components`, `theme`
+- `tools/fonts` — ponovljiva gradnja fontov (Roboto Flex, Manrope; OFL)

@@ -2,6 +2,8 @@ package com.streak.app.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.streak.app.domain.model.AnimationLevel
+import com.streak.app.domain.model.AppSettings
 import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.ThemeMode
 import com.streak.app.domain.repository.HabitRepository
@@ -16,13 +18,16 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
+import java.time.LocalTime
 import javax.inject.Inject
 
 data class SettingsUiState(
-    val userName: String = "",
-    val themeMode: ThemeMode = ThemeMode.DARK,
+    val settings: AppSettings = AppSettings(),
     val habits: List<Habit> = emptyList(),
-    val exportJson: String? = null
+    val archived: List<Habit> = emptyList(),
+    val exportJson: String? = null,
+    val recalculating: Boolean = false
 )
 
 @HiltViewModel
@@ -34,18 +39,38 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val exportJson = MutableStateFlow<String?>(null)
+    private val recalculating = MutableStateFlow(false)
 
     val state: StateFlow<SettingsUiState> = combine(
-        settingsRepository.userName,
-        settingsRepository.themeMode,
+        settingsRepository.settings,
         habitRepository.observeHabits().map { list -> list.map { it.habit } },
-        exportJson
-    ) { name, theme, habits, export ->
-        SettingsUiState(name, theme, habits, export)
+        habitRepository.observeArchivedHabits(),
+        exportJson,
+        recalculating
+    ) { settings, habits, archived, export, recalc ->
+        SettingsUiState(settings, habits, archived, export, recalc)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
-    fun setName(name: String) { viewModelScope.launch { settingsRepository.setUserName(name) } }
-    fun setTheme(mode: ThemeMode) { viewModelScope.launch { settingsRepository.setThemeMode(mode) } }
+    fun setName(name: String) = update { it.copy(userName = name.trim().take(40)) }
+    fun setTheme(mode: ThemeMode) = update { it.copy(themeMode = mode) }
+    fun setAnimations(level: AnimationLevel) = update { it.copy(animationLevel = level) }
+    fun setFirstDayOfWeek(day: DayOfWeek) = update { it.copy(firstDayOfWeek = day) }
+
+    // Sprememba meje dneva vpliva na "danes", streake in dnevni alarm
+    fun setDayEndsAt(time: LocalTime) {
+        viewModelScope.launch {
+            settingsRepository.update { it.copy(dayEndsAt = time) }
+            alarmScheduler.scheduleDailyReset()
+            habitRepository.recalculateAll()
+        }
+    }
+
+    fun unarchive(habit: Habit) {
+        viewModelScope.launch {
+            habitRepository.setArchived(habit.id, false)
+            habitRepository.getHabit(habit.id)?.let { alarmScheduler.schedule(it) }
+        }
+    }
 
     fun deleteHabit(habit: Habit) {
         viewModelScope.launch {
@@ -59,4 +84,16 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun clearExport() { exportJson.value = null }
+
+    fun recalculateAll() {
+        if (recalculating.value) return
+        viewModelScope.launch {
+            recalculating.value = true
+            try { habitRepository.recalculateAll() } finally { recalculating.value = false }
+        }
+    }
+
+    private fun update(transform: (AppSettings) -> AppSettings) {
+        viewModelScope.launch { settingsRepository.update(transform) }
+    }
 }

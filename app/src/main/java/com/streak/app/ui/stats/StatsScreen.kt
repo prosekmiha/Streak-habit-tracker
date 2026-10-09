@@ -1,6 +1,5 @@
 package com.streak.app.ui.stats
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,24 +7,36 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -35,107 +46,148 @@ import com.streak.app.ui.components.Heatmap
 import com.streak.app.ui.components.IconMap
 import com.streak.app.ui.components.WeeklyBars
 import com.streak.app.ui.components.parseHexColor
+import com.streak.app.ui.home.streakText
+import com.streak.app.ui.mascot.MascotMood
+import com.streak.app.ui.mascot.MascotView
+import com.streak.app.ui.theme.Bubblegum
+import com.streak.app.ui.theme.InkOnPastel
+import com.streak.app.ui.theme.Lime
+import com.streak.app.ui.theme.Sky
+import com.streak.app.ui.theme.StreakTheme
+import com.streak.app.ui.theme.Sun
+import java.time.format.TextStyle
 
 @Composable
-fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
+fun StatsScreen() {
+    var tab by rememberSaveable { mutableIntStateOf(0) }
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
+        Text(
+            stringResource(R.string.nav_stats),
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(start = 20.dp, top = 24.dp, bottom = 8.dp).semantics { heading() }
+        )
+        SecondaryTabRow(selectedTabIndex = tab, containerColor = MaterialTheme.colorScheme.background) {
+            Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.stats_tab_overview), style = MaterialTheme.typography.labelLarge) })
+            Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.stats_tab_habits), style = MaterialTheme.typography.labelLarge) })
+        }
+        Box(Modifier.weight(1f)) {
+            if (tab == 0) CalendarTab() else HabitStatsTab()
+        }
+    }
+}
+
+@Composable
+private fun HabitStatsTab(viewModel: StatsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val selected = state.selected
+    val locale = LocalConfiguration.current.locales[0]
 
     Column(
-        modifier = Modifier
+        Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp)
+            .padding(bottom = 24.dp)
     ) {
-        Text(
-            text = stringRes(R.string.nav_stats),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp),
             modifier = Modifier.padding(vertical = 14.dp)
-        )
-
-        // Izbira navade (vrstica cipov)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 16.dp)) {
+        ) {
             items(state.habits, key = { it.habit.id }) { item ->
-                HabitChip(item = item, selected = item.habit.id == selected?.habit?.id) { viewModel.select(item.habit.id) }
+                HabitChip(item, item.habit.id == selected?.habit?.id) { viewModel.select(item.habit.id) }
             }
         }
 
         if (selected == null) {
-            Text("Ni navad za prikaz", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(24.dp)) {
+                MascotView(MascotMood.THINKING, Modifier.size(150.dp))
+                Text(stringResource(R.string.stats_empty), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 12.dp))
+            }
             return@Column
         }
 
-        val color = parseHexColor(selected.habit.colorHex)
-
-        // Trojni stat
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatBox(stringRes(R.string.stat_current), "${selected.streak.currentStreak}", stringRes(R.string.stat_days), Modifier.weight(1f))
-            StatBox(stringRes(R.string.stat_best), "${selected.streak.bestStreak}", stringRes(R.string.stat_days), Modifier.weight(1f))
-            StatBox(stringRes(R.string.stat_month), "${state.monthRate}", "%", Modifier.weight(1f))
+        val unit = selected.habit.schedule.streakUnit
+        Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Kpi(stringResource(R.string.stat_current), streakText(selected.streak.currentStreak, unit), Sun, Modifier.weight(1f))
+                Kpi(stringResource(R.string.stat_best), streakText(selected.streak.bestStreak, unit), Bubblegum, Modifier.weight(1f))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Kpi(stringResource(R.string.stat_total), selected.streak.totalDone.toString(), Sky, Modifier.weight(1f))
+                Kpi(stringResource(R.string.stat_rate), "${state.monthRate} %", Lime, Modifier.weight(1f))
+            }
+            state.bestWeekday?.let { day ->
+                Kpi(
+                    stringResource(R.string.stat_best_weekday),
+                    day.getDisplayName(TextStyle.FULL_STANDALONE, locale).replaceFirstChar { it.titlecase(locale) },
+                    parseHexColor(selected.habit.colorHex),
+                    Modifier.fillMaxWidth()
+                )
+            }
         }
 
-        // Tedenski graf
-        SectionCard(title = stringRes(R.string.weekly_overview)) {
+        SectionCard(stringResource(R.string.weekly_overview)) {
             WeeklyBars(values = state.weeklyValues, modifier = Modifier.padding(top = 8.dp))
         }
-
-        // Letni heatmap
-        SectionCard(title = stringRes(R.string.yearly_overview)) {
-            Heatmap(statusByDate = state.statusByDate, today = state.today, baseColor = color, modifier = Modifier.padding(top = 8.dp))
+        SectionCard(stringResource(R.string.yearly_overview)) {
+            Heatmap(
+                statusByDate = state.statusByDate,
+                today = state.today,
+                firstDayOfWeek = state.firstDayOfWeek,
+                baseColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
-
-        Box(modifier = Modifier.size(24.dp))
     }
 }
 
 @Composable
 private fun HabitChip(item: HabitWithStreak, selected: Boolean, onClick: () -> Unit) {
-    val color = parseHexColor(item.habit.colorHex)
+    val palette = StreakTheme.palette
+    val shape = RoundedCornerShape(14.dp)
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
         modifier = Modifier
-            .background(
-                if (selected) color.copy(alpha = 0.16f) else MaterialTheme.colorScheme.surface,
-                RoundedCornerShape(50)
-            )
-            .then(if (selected) Modifier.border(1.dp, color.copy(alpha = 0.5f), RoundedCornerShape(50)) else Modifier)
-            .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 9.dp)
+            .heightIn(min = 44.dp)
+            .background(if (selected) parseHexColor(item.habit.colorHex) else palette.surfaceSoft, shape)
+            .then(if (selected) Modifier.border(2.dp, palette.ink, shape) else Modifier)
+            .clickable(role = Role.Tab, onClick = onClick)
+            .semantics { this.selected = selected }
+            .padding(horizontal = 14.dp)
     ) {
-        Icon(IconMap.resolve(item.habit.icon), contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
-        Text(item.habit.title, style = MaterialTheme.typography.labelLarge, color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(IconMap.resolve(item.habit.icon), null, tint = if (selected) InkOnPastel else palette.ink, modifier = Modifier.size(18.dp))
+        Text(
+            item.habit.title,
+            style = MaterialTheme.typography.labelLarge,
+            color = if (selected) InkOnPastel else palette.ink,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
 }
 
 @Composable
-private fun StatBox(label: String, value: String, unit: String, modifier: Modifier = Modifier) {
+private fun Kpi(label: String, value: String, color: Color, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
-            .padding(vertical = 18.dp, horizontal = 14.dp)
+        modifier
+            .background(color, RoundedCornerShape(20.dp))
+            .padding(16.dp)
+            .semantics(mergeDescendants = true) {}
     ) {
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(value, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Text(" $unit", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 6.dp))
-        }
-        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+        Text(value, style = MaterialTheme.typography.headlineSmall, color = InkOnPastel)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = InkOnPastel, modifier = Modifier.padding(top = 2.dp))
     }
 }
 
 @Composable
 private fun SectionCard(title: String, content: @Composable () -> Unit) {
     Column(
-        modifier = Modifier
+        Modifier
             .fillMaxWidth()
-            .padding(top = 14.dp)
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(22.dp))
+            .padding(start = 20.dp, end = 20.dp, top = 14.dp)
+            .background(StreakTheme.palette.surfaceSoft, RoundedCornerShape(22.dp))
             .padding(18.dp)
     ) {
-        Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
         content()
     }
 }
-
-@Composable private fun stringRes(id: Int) = androidx.compose.ui.res.stringResource(id)

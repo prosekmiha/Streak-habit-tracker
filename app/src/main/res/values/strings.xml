@@ -1,87 +1,310 @@
 <resources>
     <string name="app_name">Streak</string>
 
-    <!-- Navigacija -->
-    <string name="nav_today">Danes</string>
-    <string name="nav_calendar">Koledar</string>
-    <string name="nav_stats">Statistike</string>
-    <string name="nav_more">Več</string>
-
-    <!-- Danes -->
-    <string name="greeting_morning">Dobro jutro</string>
-    <string name="greeting_day">Dober dan</string>
-    <string name="greeting_evening">Dober večer</string>
-    <string name="today_progress">Današnji napredek</string>
-    <string name="today_habits">Navade</string>
-    <string name="today_tasks">Naloge danes</string>
-    <string name="filter_all">Vse</string>
-    <string name="filter_morning">Jutro</string>
-    <string name="filter_afternoon">Popoldne</string>
-    <string name="filter_evening">Večer</string>
-    <string name="streak_days">%1$d-dnevni streak</string>
-    <string name="habits_done">%1$d / %2$d navad</string>
-    <string name="empty_habits">Dodaj svojo prvo navado</string>
-    <string name="empty_tasks">Ni nalog za danes</string>
-
-    <!-- Dodajanje -->
-    <string name="add_habit">Dodaj navado</string>
-    <string name="add_task">Dodaj nalogo</string>
-    <string name="edit_habit">Uredi navado</string>
-    <string name="edit_task">Uredi nalogo</string>
-    <string name="title_label">Naslov</string>
-    <string name="icon_label">Ikona</string>
-    <string name="color_label">Barva</string>
-    <string name="frequency_label">Frekvenca</string>
-    <string name="target_label">Cilj na teden</string>
-    <string name="target_label_month">Cilj na mesec</string>
-    <string name="reminder_label">Opomnik</string>
-    <string name="reminder_time">Ura opomnika</string>
+    <!-- Splosno -->
     <string name="save">Shrani</string>
     <string name="cancel">Prekliči</string>
     <string name="delete">Izbriši</string>
+    <string name="close">Zapri</string>
+    <string name="back">Nazaj</string>
+    <string name="next">Naprej</string>
+    <string name="ok">V redu</string>
+    <string name="add">Dodaj</string>
+    <string name="clear">Počisti</string>
+    <string name="not_now">Ne zdaj</string>
+    <string name="increase">Povečaj</string>
+    <string name="decrease">Zmanjšaj</string>
 
-    <!-- Frekvence -->
-    <string name="freq_daily">Dnevno</string>
-    <string name="freq_weekly">Tedensko</string>
-    <string name="freq_monthly">Mesečno</string>
+    <!-- Navigacija -->
+    <string name="nav_today">Domov</string>
+    <string name="nav_tasks">Naloge</string>
+    <string name="nav_stats">Statistika</string>
+    <string name="nav_profile">Profil</string>
 
-    <!-- Stanja dneva -->
+    <!-- Onboarding -->
+    <string name="onboarding_title">Gradi zdrave navade z nami</string>
+    <string name="onboarding_start">Začni</string>
+    <string name="onboarding_privacy">Vsi podatki ostanejo na tvoji napravi. Brez računa, brez oglasov, brez sledenja.</string>
+    <string name="onboarding_name_title">Kako ti je ime?</string>
+    <string name="onboarding_name_subtitle">Uporabimo ga le za pozdrav. Lahko ga tudi izpustiš.</string>
+    <string name="onboarding_name_label">Ime</string>
+    <string name="onboarding_notif_title">Opomniki ob pravem času</string>
+    <string name="onboarding_notif_subtitle">Opomnimo te na navade, ki jih še nisi opravil. Obvestila se ustvarijo na napravi in nikamor ne pošiljajo podatkov.</string>
+    <string name="onboarding_notif_allow">Dovoli obvestila</string>
+    <string name="onboarding_templates_title">Izberi prve navade</string>
+    <string name="onboarding_templates_subtitle">Kasneje jih lahko urediš ali dodaš svoje.</string>
+    <string name="onboarding_templates_skip">Začni brez navad</string>
+    <plurals name="onboarding_templates_start">
+        <item quantity="one">Začni z %d navado</item>
+        <item quantity="two">Začni z %d navadama</item>
+        <item quantity="few">Začni s %d navadami</item>
+        <item quantity="other">Začni s %d navadami</item>
+    </plurals>
+
+    <!-- Predloge navad -->
+    <string name="tpl_reading">Branje</string>
+    <string name="tpl_reading_desc">Preberi 20 strani</string>
+    <string name="tpl_household">Gospodinjstvo</string>
+    <string name="tpl_household_desc">Zjutraj pospravi posteljo</string>
+    <string name="tpl_water">Voda</string>
+    <string name="tpl_water_desc">Popij 8 kozarcev vode</string>
+    <string name="tpl_meditation">Meditacija</string>
+    <string name="tpl_meditation_desc">10 minut tišine</string>
+    <string name="tpl_positive">Pozitivno razmišljanje</string>
+    <string name="tpl_positive_desc">Zapiši 10 afirmacij</string>
+    <string name="tpl_finance">Finančna pismenost</string>
+    <string name="tpl_finance_desc">Zabeleži vse stroške</string>
+    <string name="tpl_exercise">Vadba</string>
+    <string name="tpl_exercise_desc">3-krat na teden</string>
+    <string name="tpl_coding">Programiranje</string>
+    <string name="tpl_coding_desc">Vsak dan napiši nekaj kode</string>
+    <string name="tpl_sleep">Spanje</string>
+    <string name="tpl_sleep_desc">Spi 8 ur</string>
+    <string name="unit_pages">strani</string>
+    <string name="unit_glasses">kozarcev</string>
+
+    <!-- Domov -->
+    <string name="greeting_morning">Dobro jutro</string>
+    <string name="greeting_day">Dober dan</string>
+    <string name="greeting_evening">Dober večer</string>
+    <!-- Pozdrav in ime sta v ločenih vrsticah, ime se ne sklanja -->
+    <string name="greeting_with_comma">%1$s,</string>
+    <plurals name="home_progress">
+        <item quantity="one">Opravljeno %1$d od %2$d</item>
+        <item quantity="two">Opravljeno %1$d od %2$d</item>
+        <item quantity="few">Opravljeno %1$d od %2$d</item>
+        <item quantity="other">Opravljeno %1$d od %2$d</item>
+    </plurals>
+    <string name="home_editing_past">Urejaš dan: %1$s</string>
+    <string name="home_viewing_future">Ogled dne: %1$s</string>
+    <string name="home_back_to_today">Na danes</string>
+    <string name="all_done_title">Vse opravljeno danes!</string>
+    <string name="all_done_subtitle">Odlično. Jutri nadaljujemo.</string>
+    <string name="empty_habits_title">Začnimo</string>
+    <string name="empty_habits">Dodaj svojo prvo navado</string>
+    <string name="future_blocked">Prihodnjih dni ni mogoče označiti.</string>
+    <string name="inbox_title">Obvestila</string>
+    <string name="inbox_empty">Ni novih obvestil.</string>
+
+    <string name="week_day_all_done">vse opravljeno</string>
+    <string name="week_day_some_done">delno opravljeno</string>
+    <string name="week_day_none">nič opravljeno</string>
+    <string name="week_day_future">prihodnji dan</string>
+
+    <!-- Ura naprave -->
+    <string name="clock_dialog_title">Je datum pravilen?</string>
+    <string name="clock_dialog_confirm">Datum je pravilen</string>
+    <plurals name="clock_jump_forward">
+        <item quantity="one">Datum naprave se je od zadnje uporabe premaknil %d dan naprej.</item>
+        <item quantity="two">Datum naprave se je od zadnje uporabe premaknil %d dni naprej.</item>
+        <item quantity="few">Datum naprave se je od zadnje uporabe premaknil %d dni naprej.</item>
+        <item quantity="other">Datum naprave se je od zadnje uporabe premaknil %d dni naprej.</item>
+    </plurals>
+    <plurals name="clock_jump_backward">
+        <item quantity="one">Datum naprave se je premaknil %d dan nazaj.</item>
+        <item quantity="two">Datum naprave se je premaknil %d dni nazaj.</item>
+        <item quantity="few">Datum naprave se je premaknil %d dni nazaj.</item>
+        <item quantity="other">Datum naprave se je premaknil %d dni nazaj.</item>
+    </plurals>
+
+    <!-- Baza -->
+    <string name="db_migration_failed">Posodobitev podatkov ni uspela. Podatki so varno shranjeni; priporočamo izvoz in posodobitev aplikacije.</string>
+    <string name="db_corrupted">Pri preverjanju podatkov smo našli napako. Priporočamo izvoz in obnovo iz varnostne kopije.</string>
+
+    <!-- Kartica navade -->
+    <string name="habit_progress_quantity">%1$s / %2$s %3$s</string>
+    <string name="habit_progress_minutes">%1$d / %2$d min</string>
+    <string name="state_done">opravljeno</string>
+    <string name="state_not_done">ni opravljeno</string>
+    <string name="state_partial">delno opravljeno</string>
     <string name="day_skipped">Preskočeno</string>
     <string name="day_frozen">Zamrznjeno</string>
     <string name="day_vacation">Dopust</string>
     <string name="day_missed">Zamujeno</string>
+    <string name="a11y_mark_done">Označi kot opravljeno</string>
+    <string name="a11y_mark_not_done">Odznači</string>
+    <string name="a11y_habit_actions">Možnosti navade</string>
+    <plurals name="streak_days_a11y">
+        <item quantity="one">%d dan zapored</item>
+        <item quantity="two">%d dneva zapored</item>
+        <item quantity="few">%d dnevi zapored</item>
+        <item quantity="other">%d dni zapored</item>
+    </plurals>
+    <plurals name="streak_days">
+        <item quantity="one">%d dan zapored</item>
+        <item quantity="two">%d dneva zapored</item>
+        <item quantity="few">%d dnevi zapored</item>
+        <item quantity="other">%d dni zapored</item>
+    </plurals>
+    <plurals name="streak_weeks">
+        <item quantity="one">%d teden zapored</item>
+        <item quantity="two">%d tedna zapored</item>
+        <item quantity="few">%d tedni zapored</item>
+        <item quantity="other">%d tednov zapored</item>
+    </plurals>
+    <plurals name="streak_months">
+        <item quantity="one">%d mesec zapored</item>
+        <item quantity="two">%d meseca zapored</item>
+        <item quantity="few">%d meseci zapored</item>
+        <item quantity="other">%d mesecev zapored</item>
+    </plurals>
+
+    <!-- Dejanja navade -->
+    <string name="action_mark_done">Označi kot opravljeno</string>
+    <string name="action_mark_not_done">Odznači</string>
+    <string name="action_skip">Preskoči ta dan</string>
+    <string name="action_unskip">Prekliči preskok</string>
+    <string name="action_freeze">Zamrzni ta dan</string>
+    <string name="action_unfreeze">Odmrzni</string>
+    <string name="action_edit">Uredi navado</string>
+    <string name="action_archive">Arhiviraj</string>
+    <string name="action_unarchive">Obnovi</string>
+    <string name="note_label">Opomba</string>
+    <string name="note_placeholder">Kako si se počutil?</string>
+
+    <!-- Nova navada -->
+    <string name="new_habit">Nova navada</string>
+    <string name="new_habit_desc">Nekaj, kar želiš ponavljati</string>
+    <string name="new_task">Nova naloga</string>
+    <string name="new_task_desc">Enkratno opravilo z rokom</string>
+    <string name="new_habit_title">Začni novo navado</string>
+    <string name="edit_habit">Uredi navado</string>
+    <string name="add_habit">Dodaj navado</string>
+    <string name="habit_name_label">Ime</string>
+    <string name="habit_name_placeholder">Vpiši ime navade</string>
+    <string name="habit_description_label">Opis</string>
+    <string name="habit_description_placeholder">Opiši navado</string>
+    <string name="interval_label">Intervali</string>
+    <string name="interval_daily">Vsak dan</string>
+    <string name="interval_weekdays">Izbrani dnevi</string>
+    <string name="interval_times_week">Večkrat na teden</string>
+    <string name="interval_times_month">Večkrat na mesec</string>
+    <string name="times_per_week_value">%1$d× na teden</string>
+    <string name="times_per_month_value">%1$d× na mesec</string>
+    <string name="error_pick_weekday">Izberi vsaj en dan.</string>
+    <string name="goal_label">Cilj</string>
+    <string name="goal_yes_no">Opravljeno</string>
+    <string name="goal_quantity">Količina</string>
+    <string name="goal_duration">Čas</string>
+    <string name="goal_amount_placeholder">Količina</string>
+    <string name="goal_unit_placeholder">Enota (npr. strani)</string>
+    <string name="duration_minutes_value">%1$d min</string>
+    <string name="icon_label">Ikona</string>
+    <string name="color_label">Barva</string>
+    <string name="category_label">Kategorija</string>
+    <string name="category_none">Brez</string>
+    <string name="category_health">Zdravje</string>
+    <string name="category_finance">Finance</string>
+    <string name="category_learning">Učenje</string>
+    <string name="category_home">Dom</string>
+    <string name="category_mindfulness">Čuječnost</string>
+    <string name="category_work">Delo</string>
+    <string name="time_of_day_label">Del dneva</string>
+    <string name="time_of_day_anytime">Kadarkoli</string>
+    <string name="filter_morning">Jutro</string>
+    <string name="filter_afternoon">Popoldne</string>
+    <string name="filter_evening">Večer</string>
+    <string name="reminders_label">Opomniki</string>
+    <string name="add_reminder">Dodaj opomnik</string>
+    <string name="remove_reminder">Odstrani opomnik ob %1$s</string>
+    <string name="dates_label">Trajanje</string>
+    <string name="start_date">Začetek</string>
+    <string name="end_date">Konec</string>
+    <string name="end_date_none">Brez konca</string>
+    <string name="error_end_before_start">Konec ne more biti pred začetkom.</string>
+    <string name="delete_habit_title">Izbrišem navado?</string>
+    <string name="delete_habit_text">Navada »%1$s« in vsa njena zgodovina bosta trajno izbrisani. Če jo želiš le skriti, jo raje arhiviraj.</string>
 
     <!-- Naloge -->
-    <string name="due_date">Datum</string>
+    <string name="add_task">Dodaj nalogo</string>
+    <string name="edit_task">Uredi nalogo</string>
+    <string name="title_label">Naslov</string>
     <string name="due_time">Ura</string>
     <string name="priority_label">Prioriteta</string>
     <string name="priority_low">Nizka</string>
     <string name="priority_normal">Normalna</string>
     <string name="priority_urgent">Nujna</string>
     <string name="recurring_label">Ponavljajoča</string>
+    <string name="tasks_overdue">Zamujeno</string>
+    <string name="tasks_today">Danes</string>
+    <string name="tasks_upcoming">Prihodnje</string>
+    <string name="tasks_no_date">Brez datuma</string>
+    <string name="tasks_done">Opravljeno</string>
+    <string name="tasks_empty">Ni nalog. Uživaj v miru.</string>
 
-    <!-- Statistike -->
-    <string name="stat_current">Trenutni</string>
+    <!-- Statistika -->
+    <string name="stats_tab_overview">Pregled</string>
+    <string name="stats_tab_habits">Navade</string>
+    <string name="stats_empty">Dodaj navado, da vidiš statistiko.</string>
+    <string name="stat_current">Trenutno</string>
     <string name="stat_best">Rekord</string>
-    <string name="stat_month">Ta mesec</string>
-    <string name="stat_days">dni</string>
-    <string name="weekly_overview">Zadnjih 5 tednov</string>
-    <string name="yearly_overview">Letni pregled</string>
+    <string name="stat_total">Skupaj opravljeno</string>
+    <string name="stat_rate">Uspešnost (30 dni)</string>
+    <string name="stat_best_weekday">Najboljši dan v tednu</string>
+    <string name="weekly_overview">Zadnjih 8 tednov</string>
+    <string name="yearly_overview">Zadnjih 6 mesecev</string>
+    <string name="weekly_summary_title">Ta teden</string>
+    <string name="weekly_summary_value">Opravljeno: %1$d / %2$d (%3$d %%)</string>
+    <string name="weekly_summary_up">+%1$d %% glede na prejšnji teden</string>
+    <string name="weekly_summary_down">−%1$d %% glede na prejšnji teden</string>
+    <string name="previous_month">Prejšnji mesec</string>
+    <string name="next_month">Naslednji mesec</string>
+    <string name="calendar_legend">Bolj zelen dan pomeni več opravljenih navad. Dotakni se dneva za podrobnosti in naknadni vpis.</string>
+    <string name="calendar_day_a11y">%1$d., opravljeno %2$d %%</string>
+    <string name="calendar_no_habits">Ta dan ni bilo načrtovanih navad.</string>
 
-    <!-- Nastavitve -->
+    <!-- Profil in nastavitve -->
+    <string name="profile_no_name">Brez imena</string>
     <string name="settings_name">Tvoje ime</string>
+    <string name="settings_appearance">Videz</string>
     <string name="settings_theme">Tema</string>
     <string name="theme_system">Sistem</string>
     <string name="theme_light">Svetla</string>
     <string name="theme_dark">Temna</string>
-    <string name="settings_manage">Upravljanje navad</string>
+    <string name="settings_animations">Animacije</string>
+    <string name="animations_full">Polne</string>
+    <string name="animations_reduced">Zmanjšane</string>
+    <string name="animations_off">Izklopljene</string>
+    <string name="settings_days">Dan in teden</string>
+    <string name="settings_first_day">Prvi dan tedna</string>
+    <string name="settings_day_ends_at">Dan se konča ob</string>
+    <string name="settings_day_ends_at_desc">Vpisi pred to uro štejejo za prejšnji dan. Primerno, če greš pozno spat.</string>
+    <string name="settings_midnight">Polnoč</string>
+    <string name="settings_manage">Navade</string>
+    <string name="settings_archived">Arhivirane</string>
+    <string name="no_habits">Ni navad</string>
+    <string name="settings_data">Podatki</string>
     <string name="settings_export">Izvozi v JSON</string>
+    <string name="export_title">Izvoz (JSON)</string>
+    <string name="settings_recalculate">Preračunaj vse streake</string>
+    <string name="settings_recalculating">Preračunavam …</string>
+    <string name="settings_about">O aplikaciji</string>
+    <string name="privacy_short">Vsi podatki ostanejo na tvoji napravi</string>
+    <string name="privacy_long">Streak deluje brez povezave. Ni računov, strežnikov, oglasov ali analitike. Vsi podatki ostanejo na tvoji napravi; za varnostno kopijo poskrbi z izvozom.</string>
+    <string name="health_disclaimer">Meditacija, spanje in podobne funkcije niso zdravniški nasvet.</string>
+    <string name="licenses_fonts">Pisavi Roboto Flex in Manrope: SIL Open Font License 1.1.</string>
+    <string name="app_version">Različica %1$s</string>
+
+    <!-- Maskota (opisi za bralnike zaslona) -->
+    <string name="mascot_idle">Maskota se smehlja</string>
+    <string name="mascot_wave">Maskota maha v pozdrav</string>
+    <string name="mascot_walk">Maskota hodi</string>
+    <string name="mascot_happy">Maskota je vesela</string>
+    <string name="mascot_cheer">Maskota proslavlja</string>
+    <string name="mascot_sad">Maskota je malo žalostna, a te spodbuja</string>
+    <string name="mascot_thinking">Maskota razmišlja</string>
+    <string name="mascot_sleeping">Maskota spi</string>
+    <string name="mascot_meditating">Maskota meditira</string>
+    <string name="mascot_stretching">Maskota se razteguje</string>
+    <string name="mascot_thumbs_up">Maskota kaže palec gor</string>
+    <string name="mascot_freeze">Maskota je zamrznjena v ledu</string>
+    <string name="mascot_vacation">Maskota je na dopustu</string>
+    <string name="mascot_working">Maskota dela</string>
 
     <!-- Obvestila -->
     <string name="notif_channel_reminders">Opomniki za navade</string>
     <string name="notif_channel_briefing">Dnevni pregled</string>
     <string name="notif_reminder_title">Čas za navado</string>
-    <string name="notif_done_action">Označi kot opravljeno</string>
     <string name="notif_briefing_title">Dobro jutro</string>
     <plurals name="notif_briefing_habits">
         <item quantity="one">Danes te čaka %d navada</item>

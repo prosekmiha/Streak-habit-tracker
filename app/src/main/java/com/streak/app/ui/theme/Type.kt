@@ -1,19 +1,60 @@
 package com.streak.app.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.streak.app.R
 
-// Tipografija s krepkejsimi naslovi in rahlo negativnim letter-spacingom
+// Naslovni font: Roboto Flex (OFL) v siroki, krepki razlicici - blizu sloga dizajna.
+// Besedilo: Manrope (OFL). Oba pokrivata latinico, cirilico in grscino.
+@OptIn(ExperimentalTextApi::class)
+private fun display(weight: Int, width: Float, fontWeight: FontWeight) = Font(
+    R.font.streak_display,
+    fontWeight,
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight), FontVariation.width(width))
+)
+
+@OptIn(ExperimentalTextApi::class)
+private fun text(weight: Int, fontWeight: FontWeight) = Font(
+    R.font.streak_text,
+    fontWeight,
+    variationSettings = FontVariation.Settings(FontVariation.weight(weight))
+)
+
+val DisplayFamily = FontFamily(
+    display(750, 135f, FontWeight.Bold),
+    display(850, 145f, FontWeight.ExtraBold),
+    display(950, 151f, FontWeight.Black)
+)
+
+val TextFamily = FontFamily(
+    text(400, FontWeight.Normal),
+    text(500, FontWeight.Medium),
+    text(600, FontWeight.SemiBold),
+    text(700, FontWeight.Bold),
+    text(800, FontWeight.ExtraBold)
+)
+
 val StreakTypography = Typography(
-    displaySmall = TextStyle(fontWeight = FontWeight.Bold, fontSize = 34.sp, letterSpacing = (-0.6).sp),
-    headlineMedium = TextStyle(fontWeight = FontWeight.Bold, fontSize = 25.sp, letterSpacing = (-0.5).sp),
-    headlineSmall = TextStyle(fontWeight = FontWeight.Bold, fontSize = 21.sp, letterSpacing = (-0.4).sp),
-    titleLarge = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp, letterSpacing = (-0.3).sp),
-    titleMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 15.sp, letterSpacing = (-0.1).sp),
-    bodyLarge = TextStyle(fontWeight = FontWeight.Normal, fontSize = 15.sp),
-    bodyMedium = TextStyle(fontWeight = FontWeight.Normal, fontSize = 13.sp),
-    labelLarge = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 13.sp),
-    labelMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 11.sp, letterSpacing = 0.3.sp)
+    // Onboarding naslov
+    displayLarge = TextStyle(fontFamily = DisplayFamily, fontWeight = FontWeight.Black, fontSize = 34.sp, lineHeight = 38.sp),
+    // Ime v pozdravu, stevec seje
+    displayMedium = TextStyle(fontFamily = DisplayFamily, fontWeight = FontWeight.Black, fontSize = 36.sp, lineHeight = 40.sp),
+    displaySmall = TextStyle(fontFamily = DisplayFamily, fontWeight = FontWeight.Black, fontSize = 30.sp, lineHeight = 34.sp),
+    headlineMedium = TextStyle(fontFamily = DisplayFamily, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, lineHeight = 28.sp),
+    headlineSmall = TextStyle(fontFamily = DisplayFamily, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, lineHeight = 24.sp),
+    titleLarge = TextStyle(fontFamily = DisplayFamily, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 22.sp),
+    titleMedium = TextStyle(fontFamily = TextFamily, fontWeight = FontWeight.Bold, fontSize = 16.sp, lineHeight = 21.sp),
+    titleSmall = TextStyle(fontFamily = TextFamily, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 18.sp),
+    bodyLarge = TextStyle(fontFamily = TextFamily, fontWeight = FontWeight.Medium, fontSize = 16.sp, lineHeight = 22.sp),
+    bodyMedium = TextStyle(fontFamily = TextFamily, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 19.sp),
+    bodySmall = TextStyle(fontFamily = TextFamily, fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 16.sp),
+    labelLarge = TextStyle(fontFamily = TextFamily, fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 20.sp),
+    labelMedium = TextStyle(fontFamily = TextFamily, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp),
+    labelSmall = TextStyle(fontFamily = TextFamily, fontWeight = FontWeight.SemiBold, fontSize = 11.sp, lineHeight = 14.sp)
 )

@@ -3,11 +3,13 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Stiliziran plamen (streak) -->
+    <!-- Stiliziran plamen (streak) v barvah palete; nadomesti ga maskota (M7) -->
     <path
-        android:fillColor="#8ea2ff"
+        android:fillColor="#F7CD63"
+        android:strokeColor="#111114"
+        android:strokeWidth="2.5"
         android:pathData="M54,30 C60,40 70,46 70,60 C70,72 62,80 54,80 C46,80 38,72 38,60 C38,46 48,40 54,30 Z" />
     <path
-        android:fillColor="#b89dff"
+        android:fillColor="#FFB38A"
         android:pathData="M54,46 C57,52 62,55 62,62 C62,69 58,74 54,74 C50,74 46,69 46,62 C46,55 51,52 54,46 Z" />
 </vector>

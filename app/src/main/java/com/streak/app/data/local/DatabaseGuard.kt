@@ -3,6 +3,7 @@ package com.streak.app.data.local
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
+import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -77,7 +78,7 @@ class DatabaseGuard @Inject constructor(
                 buildList { while (c.moveToNext()) add(c.getString(0)) }
             }
         }.getOrElse { listOf(it.message ?: "error") }
-        prefs.edit().putLong(KEY_LAST_CHECK, now).apply()
+        prefs.edit { putLong(KEY_LAST_CHECK, now) }
         if (result != listOf("ok")) {
             _health.value = DatabaseHealth.Corrupted(result.take(5).joinToString("; "))
         }
