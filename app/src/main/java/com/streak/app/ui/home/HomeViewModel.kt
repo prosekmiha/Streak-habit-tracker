@@ -52,7 +52,10 @@ data class HomeUiState(
     val doneCount: Int = 0,
     val hasHabits: Boolean = false,
     val clockStatus: ClockStatus = ClockStatus.Ok,
-    val dbHealth: DatabaseHealth = DatabaseHealth.Ok
+    val dbHealth: DatabaseHealth = DatabaseHealth.Ok,
+    // Najdaljsa trenutna veriga med navadami (za cip ob traku napredka)
+    val topStreak: Int = 0,
+    val celebration: Celebration? = null
 ) {
     val isToday: Boolean get() = selectedDate == today
     val allDone: Boolean get() = dueCount > 0 && doneCount >= dueCount
@@ -61,7 +64,11 @@ data class HomeUiState(
 
 sealed interface HomeEvent {
     data object FutureBlocked : HomeEvent
+    data class OpenSession(val habitId: String) : HomeEvent
 }
+
+// Praznovanje mejnika (npr. 7 dni zapored)
+data class Celebration(val habitTitle: String, val count: Int, val unit: StreakUnit)
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -73,6 +80,10 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val selectedDate = MutableStateFlow<LocalDate?>(null)
+    private val celebration = MutableStateFlow<Celebration?>(null)
+    // Navade, pri katerih je uporabnik pravkar napredoval: preveri mejnik ob naslednjem izracunu
+    private val pendingMilestone = mutableMapOf<String, Int>()
+    private val celebrated = mutableSetOf<String>()
     private val events = Channel<HomeEvent>(Channel.BUFFERED)
     val eventFlow = events.receiveAsFlow()
 
@@ -85,9 +96,10 @@ class HomeViewModel @Inject constructor(
         habitRepository.observeHabits(),
         settingsRepository.settings,
         dayClock.todayFlow,
-        selectedDate,
+        combine(selectedDate, celebration) { d, c -> d to c },
         databaseGuard.health
-    ) { habits, settings, today, selected, health ->
+    ) { habits, settings, today, (selected, celebrating), health ->
+        checkMilestones(habits)
         val date = selected?.takeIf { !it.isAfter(today.plusDays(FUTURE_DAYS)) && !it.isBefore(today.minusDays(PAST_DAYS)) } ?: today
         val cards = habits.mapNotNull { it.toCard(date) }
         val due = cards.count { it.state.isDue() }
@@ -103,7 +115,9 @@ class HomeViewModel @Inject constructor(
             doneCount = cards.count { it.isDone },
             hasHabits = habits.isNotEmpty(),
             clockStatus = ClockSanity.check(settings.lastKnownDate, today),
-            dbHealth = health
+            dbHealth = health,
+            topStreak = habits.filter { it.habit.schedule.streakUnit == StreakUnit.DAY }.maxOfOrNull { it.streak.currentStreak } ?: 0,
+            celebration = celebrating
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
 
@@ -125,15 +139,49 @@ class HomeViewModel @Inject constructor(
 
     fun backToToday() { selectedDate.value = null }
 
-    // Dotik kartice: da/ne preklopi, kolicina +1, opravljena kartica se odznaci
-    fun onTap(item: HabitCardUi) = guarded {
-        val date = state.value.selectedDate
-        val result = when {
-            item.isDone -> logHabit(item.habit, date)
-            item.habit.goalType == GoalType.QUANTITY -> logHabit.addProgress(item.habit, date, 1.0)
-            else -> logHabit(item.habit, date)
+    // Dotik kartice: da/ne preklopi, kolicina +1, casovna navada odpre sejo,
+    // opravljena kartica se odznaci
+    fun onTap(item: HabitCardUi) {
+        if (!item.isDone && !item.isNeutral && item.habit.goalType == GoalType.DURATION && state.value.isToday) {
+            viewModelScope.launch { events.send(HomeEvent.OpenSession(item.habit.id)) }
+            return
         }
-        report(result)
+        guarded {
+            val date = state.value.selectedDate
+            if (!item.isDone) pendingMilestone[item.habit.id] = item.currentStreak
+            val result = when {
+                item.isDone -> logHabit(item.habit, date)
+                item.habit.goalType == GoalType.QUANTITY -> logHabit.addProgress(item.habit, date, 1.0)
+                else -> logHabit(item.habit, date)
+            }
+            report(result)
+        }
+    }
+
+    // Oznaci/odznaci brez odpiranja seje (iz menija dejanj)
+    fun toggleDone(item: HabitCardUi) = guarded {
+        if (!item.isDone) pendingMilestone[item.habit.id] = item.currentStreak
+        report(logHabit(item.habit, state.value.selectedDate))
+    }
+
+    fun dismissCelebration() { celebration.value = null }
+
+    // Ce je vpis uporabnika podaljsal verigo do mejnika, pokazi praznovanje (enkrat na mejnik)
+    private fun checkMilestones(habits: List<HabitWithStreak>) {
+        if (pendingMilestone.isEmpty()) return
+        val iterator = pendingMilestone.iterator()
+        while (iterator.hasNext()) {
+            val (id, before) = iterator.next()
+            val h = habits.firstOrNull { it.habit.id == id } ?: run { iterator.remove(); continue }
+            val now = h.streak.currentStreak
+            if (now == before) continue
+            iterator.remove()
+            val milestones = if (h.streak.unit == StreakUnit.DAY) DAY_MILESTONES else PERIOD_MILESTONES
+            val key = "$id:$now"
+            if (now > before && now in milestones && celebrated.add(key)) {
+                celebration.value = Celebration(h.habit.title, now, h.streak.unit)
+            }
+        }
     }
 
     fun setStatus(habit: Habit, status: CompletionStatus?) = guarded {
@@ -185,7 +233,15 @@ class HomeViewModel @Inject constructor(
         // Navade izven urnika (npr. ob vikendih) pokazemo le, ce imajo zapis
         if (dayState == DayState.INACTIVE && !hasRecord) return null
         if (dayState == DayState.NOT_SCHEDULED && habit.schedule.streakUnit == StreakUnit.DAY && !hasRecord) return null
-        return HabitCardUi(habit, dayState, completionOn(date)?.value ?: 0.0, streak.currentStreak)
+        return HabitCardUi(
+            habit = habit,
+            state = dayState,
+            value = completionOn(date)?.value ?: 0.0,
+            currentStreak = streak.currentStreak,
+            bestStreak = streak.bestStreak,
+            unit = streak.unit,
+            note = completionOn(date)?.note
+        )
     }
 
     private fun DayState.isDue() = this == DayState.DONE || this == DayState.PARTIAL ||
@@ -222,6 +278,8 @@ class HomeViewModel @Inject constructor(
     }
 
     private companion object {
+        val DAY_MILESTONES = setOf(7, 30, 100, 365)
+        val PERIOD_MILESTONES = setOf(4, 12, 26, 52)
         val DayOrder = listOf(TimeOfDay.MORNING, TimeOfDay.AFTERNOON, TimeOfDay.EVENING, TimeOfDay.ANYTIME)
         const val PAST_DAYS = 13L
         const val FUTURE_DAYS = 6L

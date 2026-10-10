@@ -66,6 +66,7 @@ data class HabitForm(
 
 @HiltViewModel
 class AddEditHabitViewModel @Inject constructor(
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
     private val habitRepository: HabitRepository,
     private val settingsRepository: SettingsRepository,
     private val alarmScheduler: AlarmScheduler,
@@ -74,6 +75,7 @@ class AddEditHabitViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val habitId: String? = savedStateHandle["habitId"]
+    private val templateId: String? = savedStateHandle["template"]
 
     // Izvirna navada pri urejanju - polja, ki jih obrazec ne ureja, ostanejo nespremenjena
     private var original: Habit? = null
@@ -93,7 +95,9 @@ class AddEditHabitViewModel @Inject constructor(
             val today = dayClock.today()
             val habit = habitId?.let { habitRepository.getHabit(it) }
             original = habit
-            _form.value = habit?.toForm(firstDay) ?: HabitForm(loaded = true, startDate = today, firstDayOfWeek = firstDay)
+            _form.value = habit?.toForm(firstDay)
+                ?: templateForm(templateId, today, firstDay)
+                ?: HabitForm(loaded = true, startDate = today, firstDayOfWeek = firstDay)
         }
     }
 
@@ -177,6 +181,30 @@ class AddEditHabitViewModel @Inject constructor(
             habitRepository.deleteHabit(habit.id)
             onDone()
         }
+    }
+
+    // Obrazec iz predloge (hitra izbira v listu "+")
+    private fun templateForm(id: String?, today: LocalDate, firstDay: DayOfWeek): HabitForm? {
+        val t = com.streak.app.ui.onboarding.HabitTemplates.all.firstOrNull { it.id == id } ?: return null
+        return HabitForm(
+            loaded = true,
+            title = context.getString(t.title),
+            description = context.getString(t.description),
+            scheduleType = t.schedule.type,
+            weekdays = t.schedule.weekdays,
+            timesPerPeriod = t.schedule.timesPerPeriod,
+            goalType = t.goalType,
+            targetText = if (t.goalType == GoalType.QUANTITY) formatAmount(t.target) else "",
+            unit = t.unit?.let { context.getString(it) }.orEmpty(),
+            durationMinutes = if (t.goalType == GoalType.DURATION) (t.target / 60).toInt() else 10,
+            icon = t.icon,
+            colorHex = t.colorHex,
+            colorTouched = true,
+            category = t.category,
+            timeOfDay = t.timeOfDay,
+            startDate = today,
+            firstDayOfWeek = firstDay
+        )
     }
 
     private fun Habit.toForm(firstDay: DayOfWeek) = HabitForm(

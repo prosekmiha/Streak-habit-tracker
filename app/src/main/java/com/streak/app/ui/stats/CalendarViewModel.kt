@@ -48,6 +48,9 @@ data class CalendarUiState(
     val completionByDate: Map<LocalDate, Float> = emptyMap(),
     val selectedDate: LocalDate? = null,
     val habitsForDate: List<HabitDay> = emptyList(),
+    // Kazalnika cez vse navade
+    val bestStreak: Int = 0,
+    val totalDone: Int = 0,
     val tasksForDate: List<Task> = emptyList()
 )
 
@@ -106,17 +109,23 @@ class CalendarViewModel @Inject constructor(
         combine(month, dayClock.todayFlow, settingsRepository.settings) { m, t, s -> Triple(m, t, s.firstDayOfWeek) },
         completionByDate,
         selectedDate,
-        combine(habitsForDate, tasksForDate) { h, t -> h to t },
+        combine(habitsForDate, tasksForDate, habitRepository.observeHabits()) { h, t, all -> Triple(h, t, all) },
         weekly
-    ) { (m, today, firstDay), completion, selected, (habits, tasks), (thisWeek, lastWeek) ->
-        CalendarUiState(m, today, firstDay, thisWeek, lastWeek, completion, selected, habits, tasks)
+    ) { (m, today, firstDay), completion, selected, (habits, tasks, all), (thisWeek, lastWeek) ->
+        CalendarUiState(
+            month = m, today = today, firstDayOfWeek = firstDay, thisWeek = thisWeek, lastWeek = lastWeek,
+            completionByDate = completion, selectedDate = selected, habitsForDate = habits,
+            bestStreak = all.maxOfOrNull { it.streak.bestStreak } ?: 0,
+            totalDone = all.sumOf { it.streak.totalDone },
+            tasksForDate = tasks
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CalendarUiState())
 
     fun prevMonth() { month.value = month.value.minusMonths(1) }
     fun nextMonth() { month.value = month.value.plusMonths(1) }
 
-    fun selectDate(date: LocalDate) {
-        selectedDate.value = if (selectedDate.value == date) null else date
+    fun selectDate(date: LocalDate?) {
+        selectedDate.value = date
     }
 
     // Potrdi/preklici opravljenost navade za izbran (tudi pretekli) dan.

@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -25,6 +24,8 @@ import javax.inject.Inject
 data class SettingsUiState(
     val settings: AppSettings = AppSettings(),
     val habits: List<Habit> = emptyList(),
+    val topStreak: Int = 0,
+    val totalDone: Int = 0,
     val archived: List<Habit> = emptyList(),
     val exportJson: String? = null,
     val recalculating: Boolean = false
@@ -43,12 +44,20 @@ class SettingsViewModel @Inject constructor(
 
     val state: StateFlow<SettingsUiState> = combine(
         settingsRepository.settings,
-        habitRepository.observeHabits().map { list -> list.map { it.habit } },
+        habitRepository.observeHabits(),
         habitRepository.observeArchivedHabits(),
         exportJson,
         recalculating
     ) { settings, habits, archived, export, recalc ->
-        SettingsUiState(settings, habits, archived, export, recalc)
+        SettingsUiState(
+            settings = settings,
+            habits = habits.map { it.habit },
+            topStreak = habits.maxOfOrNull { it.streak.currentStreak } ?: 0,
+            totalDone = habits.sumOf { it.streak.totalDone },
+            archived = archived,
+            exportJson = export,
+            recalculating = recalc
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
     fun setName(name: String) = update { it.copy(userName = name.trim().take(40)) }

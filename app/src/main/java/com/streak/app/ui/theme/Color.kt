@@ -42,7 +42,10 @@ data class StreakPalette(
     val daySelected: Color,   // izbran dan v tedenskem traku
     val daySelectedInk: Color,
     val dayDone: Color,
-    val border: Color
+    val border: Color,
+    val danger: Color,
+    val dangerSoft: Color,
+    val scrim: Color
 )
 
 val LightPalette = StreakPalette(
@@ -54,7 +57,10 @@ val LightPalette = StreakPalette(
     daySelected = Color(0xFF111114),
     daySelectedInk = Color.White,
     dayDone = Lime,
-    border = Color(0xFFE6E7EC)
+    border = Color(0xFFE6E7EC),
+    danger = Color(0xFFB3123F),
+    dangerSoft = Color(0xFFFFE3EC),
+    scrim = Color(0x73111114)
 )
 
 val DarkPalette = StreakPalette(
@@ -66,5 +72,8 @@ val DarkPalette = StreakPalette(
     daySelected = Color(0xFFF4F4F8),
     daySelectedInk = Color(0xFF111114),
     dayDone = Lime,
-    border = Color(0xFF2E3040)
+    border = Color(0xFF2E3040),
+    danger = Color(0xFFFF8FAB),
+    dangerSoft = Color(0xFF3A1A24),
+    scrim = Color(0x99000000)
 )

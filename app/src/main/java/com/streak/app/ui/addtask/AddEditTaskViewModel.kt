@@ -29,8 +29,16 @@ data class TaskForm(
     val isRecurring: Boolean = false,
     val recurringDays: Set<DayOfWeek> = emptySet()
 ) {
-    val isValid: Boolean get() = title.isNotBlank()
+    val isValid: Boolean get() = title.isNotBlank() && !(isRecurring && repeat == TaskRepeat.WEEKLY && recurringDays.isEmpty())
+    val repeat: TaskRepeat
+        get() = when {
+            !isRecurring -> TaskRepeat.NONE
+            recurringDays.isEmpty() || recurringDays.size == 7 -> TaskRepeat.DAILY
+            else -> TaskRepeat.WEEKLY
+        }
 }
+
+enum class TaskRepeat { NONE, DAILY, WEEKLY }
 
 @HiltViewModel
 class AddEditTaskViewModel @Inject constructor(
@@ -41,6 +49,9 @@ class AddEditTaskViewModel @Inject constructor(
     private val taskId: String? = savedStateHandle["taskId"]
     val isEdit: Boolean get() = taskId != null
 
+    // Izvirna naloga pri urejanju (ohrani stanje opravljenosti in cas ustvarjanja)
+    private var original: Task? = null
+
     private val _form = MutableStateFlow(TaskForm())
     val form: StateFlow<TaskForm> = _form.asStateFlow()
 
@@ -48,6 +59,7 @@ class AddEditTaskViewModel @Inject constructor(
         if (taskId != null) {
             viewModelScope.launch {
                 taskRepository.observeTasks().first().firstOrNull { it.id == taskId }?.let { t ->
+                    original = t
                     _form.value = TaskForm(
                         id = t.id, title = t.title, dueDate = t.dueDate,
                         dueHour = (t.dueMinuteOfDay ?: 540) / 60,
@@ -63,6 +75,25 @@ class AddEditTaskViewModel @Inject constructor(
     }
 
     fun update(transform: (TaskForm) -> TaskForm) = _form.update(transform)
+
+    fun setRepeat(repeat: TaskRepeat) = _form.update {
+        when (repeat) {
+            TaskRepeat.NONE -> it.copy(isRecurring = false, recurringDays = emptySet())
+            TaskRepeat.DAILY -> it.copy(isRecurring = true, recurringDays = emptySet())
+            TaskRepeat.WEEKLY -> it.copy(
+                isRecurring = true,
+                recurringDays = it.recurringDays.takeIf { d -> d.isNotEmpty() && d.size < 7 } ?: setOfNotNull(it.dueDate?.dayOfWeek ?: DayOfWeek.MONDAY)
+            )
+        }
+    }
+
+    fun delete(onDone: () -> Unit) {
+        val id = _form.value.id ?: return
+        viewModelScope.launch {
+            taskRepository.deleteTask(id)
+            onDone()
+        }
+    }
 
     fun toggleDay(day: DayOfWeek) = _form.update {
         val set = it.recurringDays.toMutableSet()
@@ -80,10 +111,10 @@ class AddEditTaskViewModel @Inject constructor(
                 dueDate = f.dueDate,
                 dueMinuteOfDay = if (f.hasTime) f.dueHour * 60 + f.dueMinute else null,
                 priority = f.priority,
-                isDone = false,
+                isDone = original?.isDone ?: false,
                 isRecurring = f.isRecurring,
                 recurrenceRule = if (f.isRecurring) buildRule(f.recurringDays) else null,
-                createdAt = System.currentTimeMillis()
+                createdAt = original?.createdAt ?: System.currentTimeMillis()
             )
             taskRepository.upsertTask(task)
             onDone()

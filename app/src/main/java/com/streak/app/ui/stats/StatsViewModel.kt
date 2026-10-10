@@ -49,6 +49,18 @@ data class StatsUiState(
 
     val monthRate: Int get() = ((selected?.streak?.completionRate ?: 0f) * 100).toInt()
 
+    // Najpogostejsa ura vpisa (mediana lokalnega casa ob vpisu opravljenih dni)
+    val typicalTime: java.time.LocalTime?
+        get() {
+            val minutes = selected?.completions?.values
+                ?.filter { it.status == com.streak.app.domain.model.CompletionStatus.DONE && !it.manuallyEdited }
+                ?.map { it.loggedAt.atOffset(it.zoneOffset).toLocalTime().let { t -> t.hour * 60 + t.minute } }
+                ?.sorted()
+                ?.takeIf { it.size >= 3 } ?: return null
+            val m = minutes[minutes.size / 2]
+            return java.time.LocalTime.of(m / 60, m % 60)
+        }
+
     // Dan v tednu z najvec opravljenimi zapisi
     val bestWeekday: DayOfWeek?
         get() = selected?.days?.filterValues { it == DayState.DONE }?.keys

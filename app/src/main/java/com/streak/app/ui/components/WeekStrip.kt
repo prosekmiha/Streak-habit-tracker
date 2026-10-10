@@ -2,16 +2,14 @@ package com.streak.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,11 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,13 +32,14 @@ import com.streak.app.ui.theme.StreakTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.time.format.TextStyle
 
 enum class WeekDayStatus { ALL_DONE, SOME_DONE, NONE, FUTURE }
 
 data class WeekDayUi(val date: LocalDate, val status: WeekDayStatus, val isToday: Boolean)
 
-// Vodoravni trak dni: opravljeni dnevi zeleni, izbran dan crn, ostali sivi.
+private val LimeSoft = Color(0xFFDCF5B6)
+
+// Vodoravni trak dni: opravljeni zeleni, delno svetlo zeleni, izbran crn, ostali sivi.
 @Composable
 fun WeekStrip(
     days: List<WeekDayUi>,
@@ -52,7 +52,7 @@ fun WeekStrip(
     val palette = StreakTheme.palette
     val selectedIndex = days.indexOfFirst { it.date == selected }
     LaunchedEffect(days.size) {
-        if (selectedIndex > 2) listState.scrollToItem(selectedIndex - 2)
+        if (selectedIndex > 3) listState.scrollToItem(selectedIndex - 3)
     }
     LazyRow(
         state = listState,
@@ -62,10 +62,11 @@ fun WeekStrip(
     ) {
         items(days, key = { it.date.toEpochDay() }) { day ->
             val isSelected = day.date == selected
+            val shape = RoundedCornerShape(18.dp)
             val bg = when {
                 isSelected -> palette.daySelected
                 day.status == WeekDayStatus.ALL_DONE -> palette.dayDone
-                day.status == WeekDayStatus.SOME_DONE -> palette.dayDone.copy(alpha = 0.45f)
+                day.status == WeekDayStatus.SOME_DONE -> LimeSoft
                 else -> palette.surfaceSoft
             }
             val fg = when {
@@ -87,27 +88,16 @@ fun WeekStrip(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .width(58.dp)
-                    .height(64.dp)
-                    .background(bg, RoundedCornerShape(18.dp))
-                    .then(
-                        if (day.isToday && !isSelected) Modifier.border(1.5.dp, palette.ink, RoundedCornerShape(18.dp))
-                        else Modifier
-                    )
-                    .clickable(role = Role.Tab) { onSelect(day.date) }
-                    .semantics(mergeDescendants = true) {
-                        this.selected = isSelected
-                        contentDescription = "$fullDate, $stateLabel"
-                    }
-                    .padding(horizontal = 2.dp)
+                    .size(width = 56.dp, height = 66.dp)
+                    .clip(shape)
+                    .background(bg)
+                    .then(if (day.isToday && !isSelected) Modifier.border(2.dp, palette.ink, shape) else Modifier)
+                    .selectable(selected = isSelected, role = Role.Tab) { onSelect(day.date) }
+                    .semantics(mergeDescendants = true) { contentDescription = "$fullDate, $stateLabel" }
             ) {
+                Text(day.date.dayOfMonth.toString(), style = MaterialTheme.typography.titleLarge, color = fg)
                 Text(
-                    day.date.dayOfMonth.toString(),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = fg
-                )
-                Text(
-                    day.date.dayOfWeek.getDisplayName(TextStyle.SHORT, locale).replaceFirstChar { it.titlecase(locale) },
+                    shortDayName(day.date.dayOfWeek, locale),
                     style = MaterialTheme.typography.labelMedium,
                     color = fg,
                     maxLines = 1,

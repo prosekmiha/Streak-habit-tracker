@@ -9,10 +9,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
@@ -20,17 +21,15 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Insights
-import androidx.compose.material.icons.outlined.NotificationsNone
-import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.rounded.AutoGraph
+import androidx.compose.material.icons.rounded.LocalFireDepartment
+import androidx.compose.material.icons.rounded.NotificationsNone
+import androidx.compose.material.icons.rounded.WarningAmber
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
@@ -53,9 +53,16 @@ import com.streak.app.R
 import com.streak.app.data.local.DatabaseHealth
 import com.streak.app.domain.model.TimeOfDay
 import com.streak.app.domain.time.ClockStatus
+import com.streak.app.ui.components.ButtonVariant
+import com.streak.app.ui.components.DialogAction
 import com.streak.app.ui.components.HabitGridCard
-import com.streak.app.ui.components.PillButton
+import com.streak.app.ui.components.ProgressTrack
+import com.streak.app.ui.components.RoundIconButton
+import com.streak.app.ui.components.StreakButton
+import com.streak.app.ui.components.StreakDialog
+import com.streak.app.ui.components.TextAction
 import com.streak.app.ui.components.WeekStrip
+import com.streak.app.ui.components.bleed
 import com.streak.app.ui.mascot.MascotMood
 import com.streak.app.ui.mascot.MascotView
 import com.streak.app.ui.theme.InkOnPastel
@@ -69,13 +76,15 @@ import java.time.format.FormatStyle
 fun HomeScreen(
     onAddHabit: () -> Unit,
     onEditHabit: (String) -> Unit,
+    onOpenHabit: (String) -> Unit,
+    onOpenSession: (String) -> Unit,
     onOpenStats: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val pendingClock by viewModel.hasPendingClockAction.collectAsStateWithLifecycle()
     var sheetFor by rememberSaveable { mutableStateOf<String?>(null) }
-    var notificationsOpen by remember { mutableStateOf(false) }
+    var inboxOpen by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
     val futureMsg = stringResource(R.string.future_blocked)
 
@@ -83,6 +92,7 @@ fun HomeScreen(
         viewModel.eventFlow.collect { event ->
             when (event) {
                 HomeEvent.FutureBlocked -> snackbar.showSnackbar(futureMsg)
+                is HomeEvent.OpenSession -> onOpenSession(event.habitId)
             }
         }
     }
@@ -90,37 +100,29 @@ fun HomeScreen(
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 156.dp),
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 28.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize().statusBarsPadding()
         ) {
-            fullSpan { Header(state, onOpenStats = onOpenStats, onOpenNotifications = { notificationsOpen = true }) }
+            fullSpan { Header(state, onOpenStats = onOpenStats, onOpenInbox = { inboxOpen = true }) }
             fullSpan {
+                // Trak sega cez rob (odmik je v traku samem)
                 WeekStrip(
                     days = state.weekDays,
                     selected = state.selectedDate,
                     onSelect = viewModel::selectDate,
-                    modifier = Modifier.padding(vertical = 4.dp)
+                    modifier = Modifier.padding(top = 6.dp).bleed(20.dp)
                 )
             }
             banners(state, onConfirmClock = viewModel::confirmClock)
-
             if (!state.isToday) fullSpan { PastDayBar(state, onBack = viewModel::backToToday) }
 
             if (state.loaded && !state.hasHabits) {
                 fullSpan { EmptyState(onAddHabit) }
             } else {
-                if (state.allDone && state.isToday) fullSpan { AllDoneBanner() }
-                if (state.dueCount > 0) {
-                    fullSpan {
-                        Text(
-                            pluralStringResource(R.plurals.home_progress, state.dueCount, state.doneCount, state.dueCount),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = StreakTheme.palette.inkSoft
-                        )
-                    }
-                }
+                if (state.dueCount > 0) fullSpan { ProgressRow(state) }
+                if (state.allDone && state.isToday) fullSpan { AllDoneBanner(state) }
                 state.sections.forEach { section ->
                     section.timeOfDay?.let { tod -> fullSpan { SectionTitle(tod) } }
                     items(section.items, key = { it.habit.id }) { item ->
@@ -146,10 +148,12 @@ fun HomeScreen(
                 date = state.selectedDate,
                 isToday = state.isToday,
                 onDismiss = { sheetFor = null },
-                onToggle = { viewModel.onTap(item) },
+                onToggle = { viewModel.toggleDone(item) },
                 onSetStatus = { viewModel.setStatus(item.habit, it) },
                 onAddProgress = { viewModel.addProgress(item.habit, it) },
                 onSaveNote = { viewModel.saveNote(item.habit, it) },
+                onStartSession = { sheetFor = null; onOpenSession(id) },
+                onDetails = { sheetFor = null; onOpenHabit(id) },
                 onEdit = { sheetFor = null; onEditHabit(id) },
                 onArchive = { sheetFor = null; viewModel.archive(item.habit) }
             )
@@ -157,23 +161,30 @@ fun HomeScreen(
     }
 
     if (pendingClock) {
-        val status = state.clockStatus
-        AlertDialog(
-            onDismissRequest = viewModel::dismissClockDialog,
-            title = { Text(stringResource(R.string.clock_dialog_title)) },
-            text = { Text(clockMessage(status)) },
-            confirmButton = { TextButton(onClick = viewModel::confirmClock) { Text(stringResource(R.string.clock_dialog_confirm)) } },
-            dismissButton = { TextButton(onClick = viewModel::dismissClockDialog) { Text(stringResource(R.string.cancel)) } }
-        )
+        StreakDialog(
+            onDismiss = viewModel::dismissClockDialog,
+            title = stringResource(R.string.clock_dialog_title),
+            text = clockMessage(state.clockStatus),
+            mascot = MascotMood.THINKING
+        ) {
+            DialogAction(stringResource(R.string.clock_dialog_confirm), ButtonVariant.Dark, viewModel::confirmClock)
+            DialogAction(stringResource(R.string.cancel), ButtonVariant.Secondary, viewModel::dismissClockDialog)
+        }
     }
 
-    if (notificationsOpen) {
-        AlertDialog(
-            onDismissRequest = { notificationsOpen = false },
-            title = { Text(stringResource(R.string.inbox_title)) },
-            text = { Text(stringResource(R.string.inbox_empty)) },
-            confirmButton = { TextButton(onClick = { notificationsOpen = false }) { Text(stringResource(R.string.close)) } }
-        )
+    if (inboxOpen) {
+        StreakDialog(
+            onDismiss = { inboxOpen = false },
+            title = stringResource(R.string.inbox_title),
+            text = stringResource(R.string.inbox_empty),
+            mascot = MascotMood.SLEEPING
+        ) {
+            DialogAction(stringResource(R.string.close), ButtonVariant.Secondary) { inboxOpen = false }
+        }
+    }
+
+    state.celebration?.let { c ->
+        CelebrationOverlay(celebration = c, onDismiss = viewModel::dismissCelebration)
     }
 }
 
@@ -182,7 +193,7 @@ private fun LazyGridScope.fullSpan(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun Header(state: HomeUiState, onOpenStats: () -> Unit, onOpenNotifications: () -> Unit) {
+private fun Header(state: HomeUiState, onOpenStats: () -> Unit, onOpenInbox: () -> Unit) {
     val greeting = stringResource(
         when (state.greeting) {
             Greeting.MORNING -> R.string.greeting_morning
@@ -190,26 +201,53 @@ private fun Header(state: HomeUiState, onOpenStats: () -> Unit, onOpenNotificati
             Greeting.EVENING -> R.string.greeting_evening
         }
     )
-    Row(
-        verticalAlignment = Alignment.Top,
-        modifier = Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 8.dp)
-    ) {
+    Row(verticalAlignment = Alignment.Top, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
         // Pozdrav in ime v locenih vrsticah - ime se nikoli ne sklanja
         Column(Modifier.weight(1f).semantics(mergeDescendants = true) { heading() }) {
             Text(
                 if (state.userName.isBlank()) greeting else stringResource(R.string.greeting_with_comma, greeting),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground
+                style = MaterialTheme.typography.headlineSmall,
+                color = StreakTheme.palette.ink
             )
             if (state.userName.isNotBlank()) {
-                Text(state.userName, style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onBackground)
+                Text(state.userName, style = MaterialTheme.typography.displayMedium, color = StreakTheme.palette.ink)
             }
         }
-        IconButton(onClick = onOpenStats) {
-            Icon(Icons.Outlined.Insights, contentDescription = stringResource(R.string.nav_stats))
-        }
-        IconButton(onClick = onOpenNotifications) {
-            Icon(Icons.Outlined.NotificationsNone, contentDescription = stringResource(R.string.inbox_title))
+        RoundIconButton(Icons.Rounded.AutoGraph, stringResource(R.string.nav_stats), onOpenStats, container = Color.Transparent)
+        RoundIconButton(Icons.Rounded.NotificationsNone, stringResource(R.string.inbox_title), onOpenInbox, container = Color.Transparent)
+    }
+}
+
+@Composable
+private fun ProgressRow(state: HomeUiState) {
+    val palette = StreakTheme.palette
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+        ProgressTrack(
+            progress = if (state.dueCount == 0) 0f else state.doneCount.toFloat() / state.dueCount,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            stringResource(R.string.home_progress_short, state.doneCount, state.dueCount),
+            style = MaterialTheme.typography.labelLarge,
+            color = palette.ink,
+            modifier = Modifier.padding(horizontal = 10.dp)
+        )
+        if (state.topStreak > 0) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFFFFE7D6))
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Icon(Icons.Rounded.LocalFireDepartment, null, tint = Color(0xFFF4874B), modifier = Modifier.size(16.dp))
+                Text(
+                    pluralStringResource(R.plurals.days_short, state.topStreak, state.topStreak),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = InkOnPastel,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
         }
     }
 }
@@ -218,22 +256,13 @@ private fun LazyGridScope.banners(state: HomeUiState, onConfirmClock: () -> Unit
     if (state.dbHealth != DatabaseHealth.Ok) {
         fullSpan {
             Banner(
-                text = stringResource(
-                    if (state.dbHealth is DatabaseHealth.MigrationFailed) R.string.db_migration_failed else R.string.db_corrupted
-                ),
-                color = MaterialTheme.colorScheme.errorContainer
+                text = stringResource(if (state.dbHealth is DatabaseHealth.MigrationFailed) R.string.db_migration_failed else R.string.db_corrupted),
+                color = Color(0xFFFFE3EC)
             )
         }
     }
     if (state.clockStatus != ClockStatus.Ok) {
-        fullSpan {
-            Banner(
-                text = clockMessage(state.clockStatus),
-                color = Sun,
-                action = stringResource(R.string.clock_dialog_confirm),
-                onAction = onConfirmClock
-            )
-        }
+        fullSpan { Banner(clockMessage(state.clockStatus), Sun, stringResource(R.string.clock_dialog_confirm), onConfirmClock) }
     }
 }
 
@@ -250,14 +279,13 @@ private fun Banner(text: String, color: Color, action: String? = null, onAction:
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .background(color, RoundedCornerShape(18.dp))
-            .padding(horizontal = 14.dp, vertical = 10.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(color)
+            .padding(start = 14.dp, end = 6.dp, top = 10.dp, bottom = 10.dp)
     ) {
-        Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = InkOnPastel)
+        Icon(Icons.Rounded.WarningAmber, contentDescription = null, tint = InkOnPastel)
         Text(text, style = MaterialTheme.typography.bodyMedium, color = InkOnPastel, modifier = Modifier.weight(1f).padding(horizontal = 10.dp))
-        if (action != null) {
-            TextButton(onClick = onAction) { Text(action, color = InkOnPastel, style = MaterialTheme.typography.labelLarge) }
-        }
+        if (action != null) TextAction(action, onAction, color = InkOnPastel)
     }
 }
 
@@ -269,15 +297,17 @@ private fun PastDayBar(state: HomeUiState, onBack: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .background(StreakTheme.palette.surfaceSoft, RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .background(StreakTheme.palette.surfaceSoft)
             .padding(start = 14.dp)
     ) {
         Text(
             stringResource(if (state.selectedDate.isAfter(state.today)) R.string.home_viewing_future else R.string.home_editing_past, date),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.titleSmall,
+            color = StreakTheme.palette.ink,
             modifier = Modifier.weight(1f)
         )
-        TextButton(onClick = onBack) { Text(stringResource(R.string.home_back_to_today), style = MaterialTheme.typography.labelLarge) }
+        TextAction(stringResource(R.string.home_back_to_today), onBack)
     }
 }
 
@@ -293,46 +323,52 @@ private fun SectionTitle(timeOfDay: TimeOfDay) {
             }
         ),
         style = MaterialTheme.typography.titleLarge,
+        color = StreakTheme.palette.ink,
         modifier = Modifier.padding(top = 8.dp).semantics { heading() }
     )
 }
 
+// Zelena pasica z maskoto, ki proslavlja
 @Composable
-private fun AllDoneBanner() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+private fun AllDoneBanner(state: HomeUiState) {
+    Box(
+        Modifier
             .fillMaxWidth()
-            .background(Lime, RoundedCornerShape(22.dp))
-            .padding(12.dp)
+            .height(150.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(Lime)
     ) {
-        MascotView(MascotMood.CHEER, Modifier.size(72.dp))
-        Spacer(Modifier.width(12.dp))
-        Column {
-            Text(stringResource(R.string.all_done_title), style = MaterialTheme.typography.titleLarge, color = InkOnPastel)
-            Text(stringResource(R.string.all_done_subtitle), style = MaterialTheme.typography.bodyMedium, color = InkOnPastel)
+        Column(Modifier.align(Alignment.CenterStart).padding(start = 20.dp).fillMaxWidth(0.58f)) {
+            Text(stringResource(R.string.all_done_title), style = MaterialTheme.typography.headlineSmall, color = InkOnPastel)
+            Text(
+                pluralStringResource(R.plurals.all_done_detail, state.doneCount, state.doneCount, state.topStreak),
+                style = MaterialTheme.typography.titleSmall,
+                color = InkOnPastel,
+                modifier = Modifier.padding(top = 6.dp)
+            )
         }
+        MascotView(
+            MascotMood.CHEER,
+            Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = 6.dp, y = 26.dp)
+                .size(width = 150.dp, height = 162.dp)
+        )
     }
 }
 
 @Composable
 private fun EmptyState(onAddHabit: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth().padding(top = 24.dp)
-    ) {
-        MascotView(MascotMood.IDLE, Modifier.size(180.dp))
-        Text(
-            stringResource(R.string.empty_habits_title),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(top = 16.dp)
-        )
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 28.dp)) {
+        MascotView(MascotMood.IDLE, Modifier.size(width = 170.dp, height = 184.dp))
+        Text(stringResource(R.string.empty_habits_title), style = MaterialTheme.typography.headlineSmall, color = StreakTheme.palette.ink, modifier = Modifier.padding(top = 16.dp))
         Text(
             stringResource(R.string.empty_habits),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = StreakTheme.palette.inkSoft,
             modifier = Modifier.padding(top = 6.dp, bottom = 20.dp)
         )
-        PillButton(stringResource(R.string.add_habit), onAddHabit)
+        StreakButton(stringResource(R.string.add_habit), onAddHabit)
+        Spacer(Modifier.height(8.dp))
     }
 }

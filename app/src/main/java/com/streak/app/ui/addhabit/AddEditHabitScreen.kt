@@ -1,9 +1,7 @@
 package com.streak.app.ui.addhabit
 
-import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,40 +17,23 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.outlined.Alarm
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,17 +41,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -79,19 +61,38 @@ import com.streak.app.domain.model.GoalType
 import com.streak.app.domain.model.HabitCategory
 import com.streak.app.domain.model.ScheduleType
 import com.streak.app.domain.model.TimeOfDay
+import com.streak.app.ui.components.ButtonVariant
+import com.streak.app.ui.components.ChoiceChip
+import com.streak.app.ui.components.ChoiceChips
+import com.streak.app.ui.components.DashedAddButton
+import com.streak.app.ui.components.DatePickerSheet
+import com.streak.app.ui.components.DatePreset
+import com.streak.app.ui.components.DialogAction
 import com.streak.app.ui.components.FieldLabel
-import com.streak.app.ui.components.FieldShape
 import com.streak.app.ui.components.IconMap
-import com.streak.app.ui.components.PillButton
+import com.streak.app.ui.components.InfoField
+import com.streak.app.ui.components.OptionSheet
+import com.streak.app.ui.components.RoundIconButton
+import com.streak.app.ui.components.ScreenTopBar
+import com.streak.app.ui.components.SegmentedControl
+import com.streak.app.ui.components.SelectField
+import com.streak.app.ui.components.Stepper
+import com.streak.app.ui.components.StreakButton
+import com.streak.app.ui.components.StreakDialog
 import com.streak.app.ui.components.StreakTextField
+import com.streak.app.ui.components.TextAction
+import com.streak.app.ui.components.TimePickerSheet
+import com.streak.app.ui.components.TimePreset
+import com.streak.app.ui.components.nextWeekStart
 import com.streak.app.ui.components.parseHexColor
+import com.streak.app.ui.components.shortDayName
+import com.streak.app.ui.mascot.MascotMood
 import com.streak.app.ui.theme.HabitColors
 import com.streak.app.ui.theme.InkOnPastel
+import com.streak.app.ui.theme.Lavender
 import com.streak.app.ui.theme.StreakTheme
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.format.TextStyle
@@ -101,256 +102,250 @@ fun AddEditHabitScreen(onClose: () -> Unit, viewModel: AddEditHabitViewModel = h
     val form by viewModel.form.collectAsStateWithLifecycle()
     val showErrors by viewModel.showErrors.collectAsStateWithLifecycle()
     var confirmDelete by remember { mutableStateOf(false) }
+    val palette = StreakTheme.palette
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .imePadding()
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
-            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.close)) }
-            Text(
-                stringResource(if (viewModel.isEdit) R.string.edit_habit else R.string.new_habit_title),
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(start = 4.dp).semantics { heading() }
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
+        Column(Modifier.fillMaxSize()) {
+            ScreenTopBar(
+                title = stringResource(if (viewModel.isEdit) R.string.edit_habit else R.string.new_habit_title),
+                navIcon = Icons.Rounded.Close,
+                navDescription = stringResource(R.string.close),
+                onNav = onClose
             )
-        }
-        if (!form.loaded) return@Column
+            if (!form.loaded) return@Column
 
-        Column(
-            Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-        ) {
-            StreakTextField(
-                value = form.title,
-                onValueChange = { v -> viewModel.update { it.copy(title = v) } },
-                label = stringResource(R.string.habit_name_label),
-                placeholder = stringResource(R.string.habit_name_placeholder),
-                isError = showErrors && form.titleError,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
-            )
-            StreakTextField(
-                value = form.description,
-                onValueChange = { v -> viewModel.update { it.copy(description = v) } },
-                label = stringResource(R.string.habit_description_label),
-                placeholder = stringResource(R.string.habit_description_placeholder),
-                filled = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
-            )
+            Column(
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 110.dp)
+            ) {
+                StreakTextField(
+                    value = form.title,
+                    onValueChange = { v -> viewModel.update { it.copy(title = v) } },
+                    label = stringResource(R.string.habit_name_label),
+                    placeholder = stringResource(R.string.habit_name_placeholder),
+                    isError = showErrors && form.titleError,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+                )
+                StreakTextField(
+                    value = form.description,
+                    onValueChange = { v -> viewModel.update { it.copy(description = v) } },
+                    label = stringResource(R.string.habit_description_label),
+                    placeholder = stringResource(R.string.habit_description_placeholder),
+                    filled = true,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+                )
+                IntervalSection(form, showErrors, viewModel)
+                GoalSection(form, showErrors, viewModel)
 
-            IntervalSection(form, showErrors, viewModel)
-            GoalSection(form, showErrors, viewModel)
+                FieldLabel(stringResource(R.string.icon_label))
+                IconGrid(selected = form.icon, onSelect = viewModel::selectIcon)
 
-            FieldLabel(stringResource(R.string.icon_label))
-            IconGrid(selected = form.icon, onSelect = viewModel::selectIcon)
+                FieldLabel(stringResource(R.string.card_color_label))
+                ColorRow(selected = form.colorHex, onSelect = viewModel::selectColor)
 
-            FieldLabel(stringResource(R.string.color_label))
-            ColorRow(selected = form.colorHex, onSelect = viewModel::selectColor)
+                FieldLabel(stringResource(R.string.category_label))
+                ChoiceChips(HabitCategory.entries, form.category, { categoryLabel(it) }, { c -> viewModel.update { it.copy(category = c) } })
 
-            FieldLabel(stringResource(R.string.category_label))
-            ChoiceChips(
-                options = HabitCategory.entries,
-                selected = form.category,
-                label = { categoryLabel(it) },
-                onSelect = { c -> viewModel.update { it.copy(category = c) } }
-            )
+                FieldLabel(stringResource(R.string.time_of_day_label))
+                SegmentedControl(TimeOfDay.entries, form.timeOfDay, { timeOfDayLabel(it) }, { t -> viewModel.update { it.copy(timeOfDay = t) } })
 
-            FieldLabel(stringResource(R.string.time_of_day_label))
-            ChoiceChips(
-                options = TimeOfDay.entries,
-                selected = form.timeOfDay,
-                label = { timeOfDayLabel(it) },
-                onSelect = { t -> viewModel.update { it.copy(timeOfDay = t) } }
-            )
+                RemindersSection(form, viewModel)
+                DatesSection(form, showErrors, viewModel)
 
-            RemindersSection(form, viewModel)
-            DatesSection(form, showErrors, viewModel)
-
-            if (viewModel.isEdit) {
-                Row(Modifier.fillMaxWidth().padding(top = 20.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    TextButton(onClick = { viewModel.setArchived(!form.isArchived, onClose) }) {
-                        Text(stringResource(if (form.isArchived) R.string.action_unarchive else R.string.action_archive))
-                    }
-                    TextButton(onClick = { confirmDelete = true }) {
-                        Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
+                if (viewModel.isEdit) {
+                    Row(Modifier.fillMaxWidth().padding(top = 24.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        TextAction(
+                            stringResource(if (form.isArchived) R.string.action_unarchive else R.string.action_archive),
+                            { viewModel.setArchived(!form.isArchived, onClose) },
+                            color = palette.ink
+                        )
+                        TextAction(stringResource(R.string.delete), { confirmDelete = true }, color = palette.danger)
                     }
                 }
             }
-            Spacer(Modifier.size(16.dp))
         }
 
-        PillButton(
-            text = stringResource(R.string.save),
-            onClick = { viewModel.save(onClose) },
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
-        )
+        // Pripet gumb "Shrani" z mehkim prehodom
+        Box(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(Brush.verticalGradient(0f to Color.Transparent, 0.3f to MaterialTheme.colorScheme.background))
+                .navigationBarsPadding()
+                .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp)
+        ) {
+            StreakButton(stringResource(R.string.save), { viewModel.save(onClose) }, height = 58.dp)
+        }
     }
 
     if (confirmDelete) {
-        AlertDialog(
-            onDismissRequest = { confirmDelete = false },
-            title = { Text(stringResource(R.string.delete_habit_title)) },
-            text = { Text(stringResource(R.string.delete_habit_text, form.title)) },
-            confirmButton = {
-                TextButton(onClick = { confirmDelete = false; viewModel.delete(onClose) }) {
-                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } }
-        )
+        StreakDialog(
+            onDismiss = { confirmDelete = false },
+            title = stringResource(R.string.delete_habit_title_named, form.title),
+            text = stringResource(R.string.delete_habit_text_short),
+            mascot = MascotMood.SAD
+        ) {
+            if (!form.isArchived) DialogAction(stringResource(R.string.archive_instead), ButtonVariant.Dark) { confirmDelete = false; viewModel.setArchived(true, onClose) }
+            DialogAction(stringResource(R.string.delete_forever), ButtonVariant.Danger) { confirmDelete = false; viewModel.delete(onClose) }
+            DialogAction(stringResource(R.string.cancel), ButtonVariant.Secondary) { confirmDelete = false }
+        }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun IntervalSection(form: HabitForm, showErrors: Boolean, viewModel: AddEditHabitViewModel) {
     val palette = StreakTheme.palette
-    var expanded by remember { mutableStateOf(false) }
+    val locale = LocalConfiguration.current.locales[0]
+    var picking by remember { mutableStateOf(false) }
+
     FieldLabel(stringResource(R.string.interval_label))
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        OutlinedTextField(
-            value = scheduleLabel(form.scheduleType),
-            onValueChange = {},
-            readOnly = true,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            shape = FieldShape,
-            textStyle = MaterialTheme.typography.bodyLarge,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = palette.surfaceSoft,
-                unfocusedContainerColor = palette.surfaceSoft,
-                unfocusedBorderColor = Color.Transparent,
-                focusedBorderColor = MaterialTheme.colorScheme.primary
-            ),
-            modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable)
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            ScheduleType.entries.forEach { type ->
-                DropdownMenuItem(
-                    text = { Text(scheduleLabel(type)) },
-                    onClick = {
-                        expanded = false
-                        viewModel.update {
-                            it.copy(
-                                scheduleType = type,
-                                timesPerPeriod = it.timesPerPeriod.coerceAtMost(if (type == ScheduleType.TIMES_PER_WEEK) 7 else 31)
-                            )
-                        }
-                    }
-                )
-            }
-        }
-    }
+    SelectField(scheduleLabel(form.scheduleType), { picking = true })
 
     when (form.scheduleType) {
         ScheduleType.WEEKDAYS -> {
-            val locale = LocalConfiguration.current.locales[0]
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.padding(top = 10.dp)
-            ) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth().padding(top = 10.dp)) {
                 form.orderedWeekdays.forEach { day ->
                     val on = day in form.weekdays
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(44.dp)
-                            .background(if (on) palette.daySelected else palette.surfaceSoft, CircleShape)
-                            .clickable(role = Role.Checkbox) { viewModel.toggleWeekday(day) }
-                            .semantics {
-                                selected = on
-                                contentDescription = day.getDisplayName(TextStyle.FULL, locale)
-                            }
+                            .clip(CircleShape)
+                            .background(if (on) palette.daySelected else palette.surfaceSoft)
+                            .toggleable(value = on, role = Role.Checkbox) { viewModel.toggleWeekday(day) }
+                            .semantics { contentDescription = day.getDisplayName(TextStyle.FULL, locale) }
                     ) {
-                        Text(
-                            day.getDisplayName(TextStyle.SHORT, locale).take(3),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (on) palette.daySelectedInk else palette.ink
-                        )
+                        Text(shortDayName(day, locale).take(3), style = MaterialTheme.typography.labelMedium, color = if (on) palette.daySelectedInk else palette.ink)
                     }
                 }
             }
             if (showErrors && form.weekdaysError) ErrorText(stringResource(R.string.error_pick_weekday))
         }
         ScheduleType.TIMES_PER_WEEK, ScheduleType.TIMES_PER_MONTH -> {
-            val max = if (form.scheduleType == ScheduleType.TIMES_PER_WEEK) 7 else 31
+            val weekly = form.scheduleType == ScheduleType.TIMES_PER_WEEK
+            val max = if (weekly) 7 else 31
             Stepper(
-                value = form.timesPerPeriod,
-                label = stringResource(
-                    if (form.scheduleType == ScheduleType.TIMES_PER_WEEK) R.string.times_per_week_value else R.string.times_per_month_value,
-                    form.timesPerPeriod
-                ),
-                onChange = { n -> viewModel.update { it.copy(timesPerPeriod = n.coerceIn(1, max)) } }
+                value = stringResource(if (weekly) R.string.times_per_week_value else R.string.times_per_month_value, form.timesPerPeriod),
+                onMinus = { viewModel.update { it.copy(timesPerPeriod = (it.timesPerPeriod - 1).coerceIn(1, max)) } },
+                onPlus = { viewModel.update { it.copy(timesPerPeriod = (it.timesPerPeriod + 1).coerceIn(1, max)) } },
+                modifier = Modifier.padding(top = 10.dp)
             )
         }
         ScheduleType.DAILY -> Unit
+    }
+
+    if (picking) {
+        OptionSheet(
+            title = stringResource(R.string.interval_label),
+            options = ScheduleType.entries,
+            selected = form.scheduleType,
+            label = { scheduleLabel(it) },
+            description = { scheduleDescription(it) },
+            onSelect = { type ->
+                viewModel.update {
+                    it.copy(scheduleType = type, timesPerPeriod = it.timesPerPeriod.coerceAtMost(if (type == ScheduleType.TIMES_PER_WEEK) 7 else 31))
+                }
+            },
+            onDismiss = { picking = false }
+        )
     }
 }
 
 @Composable
 private fun GoalSection(form: HabitForm, showErrors: Boolean, viewModel: AddEditHabitViewModel) {
     FieldLabel(stringResource(R.string.goal_label))
-    ChoiceChips(
-        options = GoalType.entries,
-        selected = form.goalType,
-        label = { goalLabel(it) },
-        onSelect = { g -> viewModel.update { it.copy(goalType = g) } }
-    )
+    SegmentedControl(GoalType.entries, form.goalType, { goalLabel(it) }, { g -> viewModel.update { it.copy(goalType = g) } })
     when (form.goalType) {
-        GoalType.QUANTITY -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 4.dp)) {
-            StreakTextField(
+        GoalType.QUANTITY -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 10.dp)) {
+            AmountStepper(
                 value = form.targetText,
-                onValueChange = { v -> viewModel.update { it.copy(targetText = v.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(7)) } },
-                placeholder = stringResource(R.string.goal_amount_placeholder),
-                filled = true,
+                onValueChange = { v -> viewModel.update { it.copy(targetText = v.filter { c -> c.isDigit() || c == ',' || c == '.' }.take(6)) } },
+                onStep = { delta -> viewModel.update { f -> f.copy(targetText = ((f.target ?: 0.0) + delta).coerceAtLeast(1.0).toLong().toString()) } },
                 isError = showErrors && form.targetError,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1.3f)
             )
             StreakTextField(
                 value = form.unit,
                 onValueChange = { v -> viewModel.update { it.copy(unit = v.take(20)) } },
-                placeholder = stringResource(R.string.goal_unit_placeholder),
+                placeholder = stringResource(R.string.goal_unit_placeholder_short),
                 filled = true,
-                modifier = Modifier.weight(1.4f)
+                modifier = Modifier.weight(1f)
             )
         }
-        GoalType.DURATION -> Stepper(
-            value = form.durationMinutes,
-            label = stringResource(R.string.duration_minutes_value, form.durationMinutes),
-            step = 5,
-            onChange = { n -> viewModel.update { it.copy(durationMinutes = n.coerceIn(1, 600)) } }
-        )
+        GoalType.DURATION -> {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 10.dp)) {
+                listOf(5, 10, 20, 30).forEach { m ->
+                    ChoiceChip(stringResource(R.string.duration_minutes_value, m), form.durationMinutes == m, { viewModel.update { it.copy(durationMinutes = m) } }, Modifier.weight(1f))
+                }
+            }
+            Stepper(
+                value = stringResource(R.string.duration_minutes_value, form.durationMinutes),
+                onMinus = { viewModel.update { it.copy(durationMinutes = (it.durationMinutes - 5).coerceIn(1, 600)) } },
+                onPlus = { viewModel.update { it.copy(durationMinutes = (it.durationMinutes + 5).coerceIn(1, 600)) } },
+                modifier = Modifier.padding(top = 10.dp)
+            )
+        }
         GoalType.YES_NO -> Unit
     }
 }
 
+// Stevec z vnosnim poljem v sredini (npr. 20 strani)
+@Composable
+private fun AmountStepper(value: String, onValueChange: (String) -> Unit, onStep: (Double) -> Unit, isError: Boolean, modifier: Modifier) {
+    val palette = StreakTheme.palette
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .heightIn(min = 56.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color(0xFFFFF3D1))
+            .then(if (isError) Modifier.border(2.dp, palette.danger, RoundedCornerShape(18.dp)) else Modifier)
+            .padding(horizontal = 6.dp)
+    ) {
+        RoundIconButton(Icons.Rounded.Remove, stringResource(R.string.decrease), { onStep(-1.0) }, container = InkOnPastel, tint = Color.White, size = 40.dp)
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.headlineSmall.copy(color = InkOnPastel, textAlign = TextAlign.Center),
+            cursorBrush = SolidColor(InkOnPastel),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.weight(1f),
+            decorationBox = { inner ->
+                Box(contentAlignment = Alignment.Center) {
+                    if (value.isEmpty()) Text("0", style = MaterialTheme.typography.headlineSmall, color = InkOnPastel.copy(alpha = .35f))
+                    inner()
+                }
+            }
+        )
+        RoundIconButton(Icons.Rounded.Add, stringResource(R.string.increase), { onStep(1.0) }, container = InkOnPastel, tint = Color.White, size = 40.dp)
+    }
+}
+
+// Mreza ikon 4 stolpcev; vsaka ploscica ima svojo pastelno barvo, izbrana je obrobljena
 @Composable
 private fun IconGrid(selected: String, onSelect: (String) -> Unit) {
-    // Mreza 4 stolpcev brez lastnega drsenja (je znotraj drsnega obrazca)
+    val palette = StreakTheme.palette
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         IconMap.all.chunked(4).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 row.forEach { icon ->
                     val isSel = icon.name == selected
-                    val shape = RoundedCornerShape(18.dp)
+                    val shape = RoundedCornerShape(20.dp)
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .weight(1f)
                             .aspectRatio(1f)
-                            .background(parseHexColor(icon.tileHex), shape)
-                            .then(if (isSel) Modifier.border(3.dp, StreakTheme.palette.ink, shape) else Modifier)
-                            .clickable(role = Role.RadioButton) { onSelect(icon.name) }
-                            .semantics { this.selected = isSel }
-                    ) {
-                        Icon(icon.vector, contentDescription = icon.name, tint = InkOnPastel, modifier = Modifier.size(26.dp))
-                    }
+                            .clip(shape)
+                            .background(parseHexColor(icon.tileHex))
+                            .border(3.dp, if (isSel) palette.ink else Color.Transparent, shape)
+                            .selectable(selected = isSel, role = Role.RadioButton) { onSelect(icon.name) }
+                            .semantics { contentDescription = icon.name }
+                    ) { Icon(icon.vector, contentDescription = null, tint = InkOnPastel, modifier = Modifier.size(26.dp)) }
                 }
                 repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
             }
@@ -361,176 +356,132 @@ private fun IconGrid(selected: String, onSelect: (String) -> Unit) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ColorRow(selected: String, onSelect: (String) -> Unit) {
+    val palette = StreakTheme.palette
     FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         HabitColors.forEach { hex ->
             val isSel = hex.equals(selected, ignoreCase = true)
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(44.dp)
-                    .background(parseHexColor(hex), CircleShape)
-                    .then(if (isSel) Modifier.border(3.dp, StreakTheme.palette.ink, CircleShape) else Modifier)
-                    .clickable(role = Role.RadioButton) { onSelect(hex) }
-                    .semantics { this.selected = isSel; contentDescription = hex }
-            ) {
-                if (isSel) Icon(Icons.Filled.Check, null, tint = InkOnPastel, modifier = Modifier.size(18.dp))
-            }
+                    .size(48.dp)
+                    .border(3.dp, if (isSel) palette.ink else Color.Transparent, CircleShape)
+                    .padding(5.dp)
+                    .clip(CircleShape)
+                    .background(parseHexColor(hex))
+                    .selectable(selected = isSel, role = Role.RadioButton) { onSelect(hex) }
+                    .semantics { contentDescription = hex }
+            ) { if (isSel) Icon(Icons.Rounded.Check, null, tint = InkOnPastel, modifier = Modifier.size(18.dp)) }
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun <T> ChoiceChips(options: List<T>, selected: T, label: @Composable (T) -> String, onSelect: (T) -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        options.forEach { option ->
-            FilterChip(
-                selected = option == selected,
-                onClick = { onSelect(option) },
-                label = { Text(label(option), style = MaterialTheme.typography.labelLarge) },
-                shape = RoundedCornerShape(14.dp),
-                colors = FilterChipDefaults.filterChipColors(
-                    containerColor = StreakTheme.palette.surfaceSoft,
-                    selectedContainerColor = StreakTheme.palette.daySelected,
-                    selectedLabelColor = StreakTheme.palette.daySelectedInk
-                ),
-                border = null,
-                modifier = Modifier.heightIn(min = 44.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun Stepper(value: Int, label: String, onChange: (Int) -> Unit, step: Int = 1) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 10.dp)
-            .background(StreakTheme.palette.surfaceSoft, FieldShape)
-            .padding(6.dp)
-    ) {
-        FilledTonalIconButton(onClick = { onChange(value - step) }) { Icon(Icons.Filled.Remove, stringResource(R.string.decrease)) }
-        Text(label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).padding(horizontal = 8.dp))
-        FilledTonalIconButton(onClick = { onChange(value + step) }) { Icon(Icons.Filled.Add, stringResource(R.string.increase)) }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 private fun RemindersSection(form: HabitForm, viewModel: AddEditHabitViewModel) {
-    val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
     val formatter = remember(locale) { DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale) }
     var picking by remember { mutableStateOf(false) }
 
     FieldLabel(stringResource(R.string.reminders_label))
-    form.reminders.forEach { time ->
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
-                .background(StreakTheme.palette.surfaceSoft, FieldShape)
-                .padding(start = 16.dp)
-        ) {
-            Icon(Icons.Outlined.Alarm, null)
-            Text(time.format(formatter), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f).padding(start = 12.dp))
-            IconButton(onClick = { viewModel.removeReminder(time) }) {
-                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.remove_reminder, time.format(formatter)))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        form.reminders.forEach { time ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Lavender.copy(alpha = .55f))
+                    .padding(start = 16.dp)
+            ) {
+                Text(time.format(formatter), style = MaterialTheme.typography.titleMedium, color = InkOnPastel)
+                RoundIconButton(
+                    Icons.Rounded.Close,
+                    stringResource(R.string.remove_reminder, time.format(formatter)),
+                    { viewModel.removeReminder(time) },
+                    container = Color.Transparent,
+                    tint = InkOnPastel
+                )
             }
         }
-    }
-    if (form.reminders.size < com.streak.app.notifications.AlarmScheduler.MAX_REMINDERS) {
-        TextButton(onClick = { picking = true }) {
-            Icon(Icons.Filled.Add, null)
-            Text(stringResource(R.string.add_reminder), modifier = Modifier.padding(start = 6.dp), style = MaterialTheme.typography.labelLarge)
+        if (form.reminders.size < com.streak.app.notifications.AlarmScheduler.MAX_REMINDERS) {
+            DashedAddButton(stringResource(R.string.add), { picking = true })
         }
     }
 
     if (picking) {
-        val timeState = rememberTimePickerState(initialHour = 8, initialMinute = 0, is24Hour = DateFormat.is24HourFormat(context))
-        AlertDialog(
-            onDismissRequest = { picking = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.addReminder(LocalTime.of(timeState.hour, timeState.minute))
-                    picking = false
-                }) { Text(stringResource(R.string.ok)) }
-            },
-            dismissButton = { TextButton(onClick = { picking = false }) { Text(stringResource(R.string.cancel)) } },
-            text = { TimePicker(state = timeState) }
+        TimePickerSheet(
+            title = stringResource(R.string.add_reminder),
+            initial = form.reminders.lastOrNull()?.plusHours(1) ?: defaultReminder(form.timeOfDay),
+            presets = listOf(
+                TimePreset(LocalTime.of(7, 0), stringResource(R.string.filter_morning)),
+                TimePreset(LocalTime.of(12, 30), stringResource(R.string.preset_lunch)),
+                TimePreset(LocalTime.of(20, 0), stringResource(R.string.filter_evening))
+            ),
+            confirmText = stringResource(R.string.add),
+            onDismiss = { picking = false },
+            onConfirm = { viewModel.addReminder(it); picking = false }
         )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+private fun defaultReminder(timeOfDay: TimeOfDay): LocalTime = when (timeOfDay) {
+    TimeOfDay.MORNING -> LocalTime.of(7, 0)
+    TimeOfDay.AFTERNOON -> LocalTime.of(13, 0)
+    TimeOfDay.EVENING, TimeOfDay.ANYTIME -> LocalTime.of(20, 0)
+}
+
 @Composable
 private fun DatesSection(form: HabitForm, showErrors: Boolean, viewModel: AddEditHabitViewModel) {
     val locale = LocalConfiguration.current.locales[0]
     val formatter = remember(locale) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
-    var picking by remember { mutableStateOf<String?>(null) } // "start" ali "end"
+    val today = LocalDate.now()
+    var picking by remember { mutableStateOf<String?>(null) }
 
     FieldLabel(stringResource(R.string.dates_label))
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        DateBox(
-            label = stringResource(R.string.start_date),
-            value = form.startDate.format(formatter),
-            modifier = Modifier.weight(1f)
-        ) { picking = "start" }
-        DateBox(
-            label = stringResource(R.string.end_date),
-            value = form.endDate?.format(formatter) ?: stringResource(R.string.end_date_none),
-            modifier = Modifier.weight(1f),
-            onClear = if (form.endDate != null) ({ viewModel.update { it.copy(endDate = null) } }) else null
-        ) { picking = "end" }
+        InfoField(
+            Icons.Rounded.CalendarMonth,
+            stringResource(R.string.start_date),
+            if (form.startDate == today) stringResource(R.string.today) else form.startDate.format(formatter),
+            { picking = "start" },
+            Modifier.weight(1f)
+        )
+        InfoField(
+            Icons.Rounded.CalendarMonth,
+            stringResource(R.string.end_date),
+            form.endDate?.format(formatter) ?: stringResource(R.string.end_date_none),
+            { picking = "end" },
+            Modifier.weight(1f)
+        )
     }
     if (showErrors && form.endDateError) ErrorText(stringResource(R.string.error_end_before_start))
 
     picking?.let { which ->
-        val initial = if (which == "start") form.startDate else form.endDate ?: form.startDate
-        val state = rememberDatePickerState(initialSelectedDateMillis = initial.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli())
-        DatePickerDialog(
-            onDismissRequest = { picking = null },
-            confirmButton = {
-                TextButton(onClick = {
-                    state.selectedDateMillis?.let { millis ->
-                        val date = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
-                        viewModel.update { if (which == "start") it.copy(startDate = date) else it.copy(endDate = date) }
-                    }
-                    picking = null
-                }) { Text(stringResource(R.string.ok)) }
-            },
-            dismissButton = { TextButton(onClick = { picking = null }) { Text(stringResource(R.string.cancel)) } }
-        ) { DatePicker(state = state) }
-    }
-}
-
-@Composable
-private fun DateBox(label: String, value: String, modifier: Modifier, onClear: (() -> Unit)? = null, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .background(StreakTheme.palette.surfaceSoft, FieldShape)
-            .clickable(role = Role.Button, onClick = onClick)
-            .heightIn(min = 56.dp)
-            .padding(horizontal = 12.dp)
-    ) {
-        Icon(Icons.Outlined.CalendarMonth, null, modifier = Modifier.size(20.dp))
-        Column(Modifier.weight(1f).padding(start = 8.dp, top = 6.dp, bottom = 6.dp)) {
-            Text(label, style = MaterialTheme.typography.labelSmall, color = StreakTheme.palette.inkSoft)
-            Text(value, style = MaterialTheme.typography.bodyMedium)
-        }
-        if (onClear != null) {
-            IconButton(onClick = onClear) { Icon(Icons.Filled.Close, stringResource(R.string.clear), modifier = Modifier.size(18.dp)) }
-        }
+        val start = which == "start"
+        DatePickerSheet(
+            title = stringResource(if (start) R.string.start_date else R.string.end_date),
+            initial = if (start) form.startDate else form.endDate ?: form.startDate.plusMonths(1),
+            today = today,
+            firstDayOfWeek = form.firstDayOfWeek,
+            presets = if (start) listOf(
+                DatePreset(today, stringResource(R.string.today)),
+                DatePreset(today.plusDays(1), stringResource(R.string.tomorrow)),
+                DatePreset(nextWeekStart(today, form.firstDayOfWeek), form.firstDayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, locale).replaceFirstChar { it.titlecase(locale) })
+            ) else emptyList(),
+            minDate = if (start) null else form.startDate,
+            extraAction = if (!start) stringResource(R.string.end_date_none) to { viewModel.update { it.copy(endDate = null) } } else null,
+            onDismiss = { picking = null },
+            onConfirm = { date ->
+                viewModel.update { if (start) it.copy(startDate = date) else it.copy(endDate = date) }
+                picking = null
+            }
+        )
     }
 }
 
 @Composable
 private fun ErrorText(text: String) {
-    Text(text, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
+    Text(text, color = StreakTheme.palette.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
 }
 
 @Composable
@@ -540,6 +491,16 @@ private fun scheduleLabel(type: ScheduleType) = stringResource(
         ScheduleType.WEEKDAYS -> R.string.interval_weekdays
         ScheduleType.TIMES_PER_WEEK -> R.string.interval_times_week
         ScheduleType.TIMES_PER_MONTH -> R.string.interval_times_month
+    }
+)
+
+@Composable
+private fun scheduleDescription(type: ScheduleType) = stringResource(
+    when (type) {
+        ScheduleType.DAILY -> R.string.interval_daily_desc
+        ScheduleType.WEEKDAYS -> R.string.interval_weekdays_desc
+        ScheduleType.TIMES_PER_WEEK -> R.string.interval_times_week_desc
+        ScheduleType.TIMES_PER_MONTH -> R.string.interval_times_month_desc
     }
 )
 
