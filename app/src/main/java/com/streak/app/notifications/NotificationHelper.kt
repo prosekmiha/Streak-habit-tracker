@@ -20,6 +20,8 @@ class NotificationHelper @Inject constructor(
     companion object {
         const val CHANNEL_REMINDERS = "reminders"
         const val CHANNEL_BRIEFING = "briefing"
+        const val CHANNEL_SESSION = "session"
+        const val CHANNEL_SESSION_ALERTS = "session_alerts"
     }
 
     fun createChannels() {
@@ -34,8 +36,18 @@ class NotificationHelper @Inject constructor(
             context.getString(R.string.notif_channel_briefing),
             NotificationManager.IMPORTANCE_DEFAULT
         )
-        nm.createNotificationChannel(reminders)
-        nm.createNotificationChannel(briefing)
+        // Tekoca seja: tiho, brez znacke
+        val session = NotificationChannel(
+            CHANNEL_SESSION,
+            context.getString(R.string.notif_channel_session),
+            NotificationManager.IMPORTANCE_LOW
+        ).apply { setShowBadge(false) }
+        val sessionAlerts = NotificationChannel(
+            CHANNEL_SESSION_ALERTS,
+            context.getString(R.string.notif_channel_session_alerts),
+            NotificationManager.IMPORTANCE_HIGH
+        )
+        nm.createNotificationChannels(listOf(reminders, briefing, session, sessionAlerts))
     }
 
     private fun contentIntent(notifId: Int): PendingIntent {

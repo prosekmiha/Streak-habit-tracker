@@ -137,6 +137,35 @@ fun HabitDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: H
                 Legend(Sky, stringResource(R.string.legend_skipped))
             }
 
+            if (state.sessions.isNotEmpty()) {
+                Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(top = 22.dp)) {
+                    Text(stringResource(R.string.detail_sessions), style = MaterialTheme.typography.titleMedium, color = palette.ink, modifier = Modifier.weight(1f).semantics { heading() })
+                    Text(
+                        stringResource(R.string.detail_sessions_total, stringResource(R.string.duration_minutes_value, (state.sessionTotalSeconds / 60).toInt())) +
+                            " · " + pluralStringResource(R.plurals.detail_session_count, state.sessionCount, state.sessionCount),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = palette.inkSoft
+                    )
+                }
+                val zone = remember { java.time.ZoneId.systemDefault() }
+                state.sessions.forEach { s ->
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 12.dp)) {
+                        Text(
+                            s.startedAt.atZone(zone).format(DateTimeFormatter.ofPattern("d. MMM · HH:mm", locale)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = palette.ink,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            stringResource(R.string.session_elapsed, s.durationSeconds / 60, s.durationSeconds % 60),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = palette.ink
+                        )
+                    }
+                    HorizontalDivider(color = palette.border)
+                }
+            }
+
             if (state.notes.isNotEmpty()) {
                 Text(stringResource(R.string.notes_title), style = MaterialTheme.typography.titleMedium, color = palette.ink, modifier = Modifier.padding(top = 22.dp).semantics { heading() })
                 state.notes.forEach { c ->

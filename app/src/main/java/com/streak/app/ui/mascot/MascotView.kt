@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -41,20 +44,28 @@ fun MascotView(
     val use3d = hero && animated && remember { DeviceCapabilities.supports3d(context) }
     Box(modifier.aspectRatio(ASPECT).semantics { contentDescription = label }) {
         if (use3d) {
-            Mascot3D(mood, Modifier.fillMaxSize())
+            var ready by remember { mutableStateOf(false) }
+            Mascot3D(mood, Modifier.fillMaxSize(), onReady = { ready = true })
+            // Med nalaganjem modela (hladen zagon) staticna poza istega lika
+            if (!ready) MascotPose(mood)
         } else {
-            Image(
-                painter = painterResource(poseDrawable(mood)),
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize()
-            )
+            MascotPose(mood)
         }
     }
 }
 
 @Composable
-private fun Mascot3D(mood: MascotMood, modifier: Modifier) {
+private fun MascotPose(mood: MascotMood) {
+    Image(
+        painter = painterResource(poseDrawable(mood)),
+        contentDescription = null,
+        contentScale = ContentScale.Fit,
+        modifier = Modifier.fillMaxSize()
+    )
+}
+
+@Composable
+private fun Mascot3D(mood: MascotMood, modifier: Modifier, onReady: () -> Unit) {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
 
     // Izris le, ko je zaslon viden (lifecycle RESUMED); ob izhodu sprosti GPU vire
@@ -64,6 +75,7 @@ private fun Mascot3D(mood: MascotMood, modifier: Modifier) {
             TextureView(ctx).also { tv ->
                 val scene = MascotScene(ctx, tv).apply {
                     if (DeviceCapabilities.reducedFrameRate(ctx)) frameIntervalNanos = 33_000_000L
+                    onFirstFrame = onReady
                 }
                 val observer = LifecycleEventObserver { _, event ->
                     when (event) {

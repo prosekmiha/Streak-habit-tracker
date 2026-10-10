@@ -10,6 +10,8 @@ import com.streak.app.di.ApplicationScope
 import com.streak.app.domain.time.DayClock
 import com.streak.app.notifications.AlarmScheduler
 import com.streak.app.notifications.NotificationHelper
+import com.streak.app.session.SessionController
+import com.streak.app.shortcuts.ShortcutPublisher
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -27,6 +29,8 @@ class StreakApplication : Application(), Configuration.Provider {
     @Inject lateinit var databaseGuard: DatabaseGuard
     @Inject lateinit var recalculator: StreakRecalculator
     @Inject lateinit var dayClock: DayClock
+    @Inject lateinit var sessionController: SessionController
+    @Inject lateinit var shortcutPublisher: ShortcutPublisher
     @Inject @ApplicationScope lateinit var appScope: CoroutineScope
 
     override fun onCreate() {
@@ -43,6 +47,10 @@ class StreakApplication : Application(), Configuration.Provider {
             delay(INTEGRITY_CHECK_DELAY_MS)
             databaseGuard.checkIntegrityIfDue(database)
         }
+
+        // Tekoca seja iz prejsnjega procesa: obvestilo in alarm za cilj
+        appScope.launch { sessionController.restore() }
+        appScope.launch { shortcutPublisher.run() }
 
         // Ob vsaki menjavi logicnega dne (meja dneva, sprememba ure ali pasu) med
         // delovanjem procesa posodobi streake in prerazporedi dnevni alarm

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.streak.app.domain.model.Completion
+import com.streak.app.domain.model.HabitSession
 import com.streak.app.domain.model.DayState
 import com.streak.app.domain.model.HabitWithStreak
 import com.streak.app.domain.model.StreakUnit
@@ -32,7 +33,11 @@ data class HabitDetailState(
     val firstDayOfWeek: DayOfWeek = DayOfWeek.MONDAY,
     // 5 tednov (35 dni), zadnji teden je tekoci
     val grid: List<DetailDay> = emptyList(),
-    val notes: List<Completion> = emptyList()
+    val notes: List<Completion> = emptyList(),
+    // Zgodovina casovnih sej (zadnjih 10) in skupni povzetek
+    val sessions: List<HabitSession> = emptyList(),
+    val sessionCount: Int = 0,
+    val sessionTotalSeconds: Long = 0
 )
 
 @HiltViewModel
@@ -49,8 +54,9 @@ class HabitDetailViewModel @Inject constructor(
 
     val state: StateFlow<HabitDetailState> = combine(
         habitRepository.observeHabit(habitId),
-        settingsRepository.settings
-    ) { item, settings ->
+        settingsRepository.settings,
+        habitRepository.observeSessions(habitId)
+    ) { item, settings, sessions ->
         if (item == null) return@combine HabitDetailState(loaded = true)
         val firstDay = settings.firstDayOfWeek
         val weekStart = Periods.start(item.today, StreakUnit.WEEK, firstDay)
@@ -64,7 +70,10 @@ class HabitDetailViewModel @Inject constructor(
             item = item,
             firstDayOfWeek = firstDay,
             grid = grid,
-            notes = item.completions.values.filter { !it.note.isNullOrBlank() }.sortedByDescending { it.date }.take(20)
+            notes = item.completions.values.filter { !it.note.isNullOrBlank() }.sortedByDescending { it.date }.take(20),
+            sessions = sessions.sortedByDescending { it.startedAt }.take(10),
+            sessionCount = sessions.size,
+            sessionTotalSeconds = sessions.sumOf { it.durationSeconds }
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HabitDetailState())
 

@@ -16,6 +16,7 @@ Zgrajen je v Kotlinu z Jetpack Compose (Material 3), arhitektura je MVVM + Clean
 - **Statistika**:
   - Pregled: tedenski povzetek in mesečni koledar z naknadnim vpisom.
   - Navade: trenutni streak in rekord, skupno število, uspešnost, najboljši dan v tednu, zadnjih 8 tednov, heatmap.
+- **Seje**: časovne seje, ki tečejo tudi v ozadju, z obvestilom s štoparico (Premor/Končaj), opozorilom ob cilju, ambientnimi zvoki, generiranimi na napravi (rjavi šum, dež, valovi, ogenj), in zgodovino v podrobnostih navade. Bližnjice na ikoni aplikacije omogočajo hiter začetek seje ali nove navade.
 - **Naloge**: enkratna opravila z rokom, prioriteto in ponavljanjem.
 - **Profil**: ime, tema, animacije, prvi dan tedna, "dan se konča ob", arhivirane navade, izvoz JSON in "Preračunaj vse".
 
@@ -34,10 +35,13 @@ Iz ukazne vrstice:
 ## Dokumentacija
 - [docs/audit.md](docs/audit.md) — Phase 0 audit, tabela vrzeli, tveganja, fazni načrt
 - [docs/data-model.md](docs/data-model.md) — Room shema, logični dan, izračun streaka, migracije
+- [docs/sessions.md](docs/sessions.md) — trajne seje, obvestilo, opozorilo ob cilju, ambientni zvoki, bližnjice
+- [docs/mascot-pipeline.md](docs/mascot-pipeline.md) — 3D maskota: Blender generator, Filament, fallbacki
 
 ## Struktura
 - `domain` — modeli, use-case-i (streak, vpis, izvoz), `time` (logični dan, zaznava skokov ure), `streak` (izpeljava stanja dneva)
 - `data` — Room (entitete, DAO, `DatabaseGuard`), DataStore nastavitve, repozitoriji, `StreakRecalculator` (predpomnilnik streakov in dnevni povzetki)
 - `notifications`, `work` — alarmi, opomniki, menjava logičnega dne
+- `session`, `shortcuts` — kontroler seje, obvestilo, ambientna storitev in sintetizator, bližnjice
 - `ui` — `onboarding`, `home`, `addhabit`, `tasks`, `addtask`, `stats`, `settings`, `mascot` (3D maskota prek Filamenta + WebP poze, glej `docs/mascot-pipeline.md`), `components`, `theme`
 - `tools/fonts` — ponovljiva gradnja fontov (Roboto Flex, Manrope; OFL)

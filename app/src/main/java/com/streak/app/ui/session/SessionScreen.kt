@@ -1,6 +1,9 @@
 package com.streak.app.ui.session
 
 import android.app.Activity
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +23,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Air
+import androidx.compose.material.icons.rounded.AlarmOn
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pause
@@ -30,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -49,11 +56,15 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.streak.app.R
+import com.streak.app.domain.session.AmbientSound
 import com.streak.app.ui.components.ButtonVariant
 import com.streak.app.ui.components.DialogAction
+import com.streak.app.ui.components.OptionSheet
 import com.streak.app.ui.components.RoundIconButton
 import com.streak.app.ui.components.StreakButton
 import com.streak.app.ui.components.StreakDialog
@@ -64,11 +75,18 @@ import com.streak.app.ui.theme.Lime
 
 // Zaslon seje po dizajnu: zeleno ozadje, meditirajoca maskota, stevec, dihanje in nasveti
 @Composable
-fun SessionScreen(onClose: () -> Unit, viewModel: SessionViewModel = hiltViewModel()) {
+fun SessionScreen(onClose: () -> Unit, onOpenSession: (String) -> Unit, viewModel: SessionViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var confirmExit by remember { mutableStateOf(false) }
+    var pickAmbient by remember { mutableStateOf(false) }
     KeepScreenOn()
     BackHandler { if (state.elapsedSeconds > 0) confirmExit = true else onClose() }
+    LaunchedEffect(state.ended) { if (state.ended) onClose() }
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshAlarmPermission()
+        onPauseOrDispose { }
+    }
+    val context = LocalContext.current
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -103,7 +121,7 @@ fun SessionScreen(onClose: () -> Unit, viewModel: SessionViewModel = hiltViewMod
         )
         if (state.targetSeconds > 0) {
             Text(
-                stringResource(R.string.session_goal, state.targetSeconds / 60),
+                if (state.goalReached) stringResource(R.string.session_goal_reached) else stringResource(R.string.session_goal, state.targetSeconds / 60),
                 style = MaterialTheme.typography.labelLarge,
                 color = InkOnPastel.copy(alpha = .75f)
             )
@@ -126,9 +144,20 @@ fun SessionScreen(onClose: () -> Unit, viewModel: SessionViewModel = hiltViewMod
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 18.dp)) {
-            Tip(Icons.Rounded.MusicNote, stringResource(R.string.tip_music))
+            AmbientRow(state.ambient) { pickAmbient = true }
             Tip(Icons.Rounded.Air, stringResource(R.string.tip_breathing))
-            Tip(Icons.Rounded.WaterDrop, stringResource(R.string.tip_water))
+            if (state.exactAlarmMissing && !state.goalReached && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // Brez dovoljenja lahko opozorilo ob cilju (pri zaklenjenem zaslonu) zamudi
+                ActionRow(Icons.Rounded.AlarmOn, stringResource(R.string.session_exact_alarm)) {
+                    runCatching {
+                        context.startActivity(
+                            Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, "package:${context.packageName}".toUri())
+                        )
+                    }
+                }
+            } else {
+                Tip(Icons.Rounded.WaterDrop, stringResource(R.string.tip_water))
+            }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 18.dp)) {
@@ -142,10 +171,11 @@ fun SessionScreen(onClose: () -> Unit, viewModel: SessionViewModel = hiltViewMod
                     .clickable(role = Role.Button, onClick = viewModel::togglePause)
                     .semantics { contentDescription = pauseLabel }
             ) { Icon(if (state.running) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, null, tint = Lime, modifier = Modifier.size(26.dp)) }
-            StreakButton(stringResource(R.string.finish), { viewModel.finish(save = true, onDone = onClose) }, Modifier.weight(1f), ButtonVariant.White, height = 58.dp)
+            StreakButton(stringResource(R.string.finish), { viewModel.finish(save = true) }, Modifier.weight(1f), ButtonVariant.White, height = 58.dp)
         }
     }
 
+    // Izhod z zaslona: seja lahko tece naprej (obvestilo s stoparico)
     if (confirmExit) {
         StreakDialog(
             onDismiss = { confirmExit = false },
@@ -153,11 +183,98 @@ fun SessionScreen(onClose: () -> Unit, viewModel: SessionViewModel = hiltViewMod
             text = stringResource(R.string.session_exit_text, formatElapsed(state.elapsedSeconds)),
             mascot = MascotMood.THINKING
         ) {
-            DialogAction(stringResource(R.string.session_save_exit), ButtonVariant.Dark) { confirmExit = false; viewModel.finish(save = true, onDone = onClose) }
-            DialogAction(stringResource(R.string.session_discard), ButtonVariant.Danger) { confirmExit = false; viewModel.finish(save = false, onDone = onClose) }
-            DialogAction(stringResource(R.string.session_continue), ButtonVariant.Secondary) { confirmExit = false }
+            DialogAction(stringResource(R.string.session_keep_running), ButtonVariant.Dark) { confirmExit = false; onClose() }
+            DialogAction(stringResource(R.string.session_save_exit), ButtonVariant.Secondary) { confirmExit = false; viewModel.finish(save = true) }
+            DialogAction(stringResource(R.string.session_discard), ButtonVariant.Danger) { confirmExit = false; viewModel.finish(save = false) }
         }
     }
+
+    state.conflict?.let { other ->
+        StreakDialog(
+            onDismiss = onClose,
+            title = stringResource(R.string.session_conflict_title),
+            text = stringResource(R.string.session_conflict_text, other.title),
+            mascot = MascotMood.THINKING
+        ) {
+            DialogAction(stringResource(R.string.session_conflict_open), ButtonVariant.Dark) { onOpenSession(other.habitId) }
+            DialogAction(stringResource(R.string.session_conflict_replace), ButtonVariant.Secondary) { viewModel.replaceConflict() }
+            DialogAction(stringResource(R.string.cancel), ButtonVariant.Secondary) { onClose() }
+        }
+    }
+
+    if (pickAmbient) {
+        OptionSheet(
+            title = stringResource(R.string.ambient_title),
+            options = AmbientSound.entries,
+            selected = state.ambient,
+            label = { ambientLabel(it) },
+            onSelect = viewModel::setAmbient,
+            onDismiss = { pickAmbient = false },
+            description = { if (it == AmbientSound.NONE) null else stringResource(ambientDescription(it)) }
+        )
+    }
+}
+
+@Composable
+private fun ActionRow(icon: ImageVector, text: String, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color.White.copy(alpha = .42f))
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Icon(icon, null, tint = InkOnPastel, modifier = Modifier.size(20.dp))
+        Text(text, style = MaterialTheme.typography.titleSmall, color = InkOnPastel, modifier = Modifier.padding(start = 12.dp).weight(1f))
+        Icon(Icons.Rounded.ChevronRight, null, tint = InkOnPastel.copy(alpha = .75f), modifier = Modifier.size(20.dp))
+    }
+}
+
+// Izbira zvoka ozadja (namesto nasveta o glasbi)
+@Composable
+private fun AmbientRow(sound: AmbientSound, onClick: () -> Unit) {
+    val label = ambientLabel(sound)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color.White.copy(alpha = .42f))
+            .clickable(role = Role.Button, onClickLabel = stringResource(R.string.ambient_title), onClick = onClick)
+            .padding(horizontal = 16.dp)
+    ) {
+        Icon(Icons.Rounded.MusicNote, null, tint = InkOnPastel, modifier = Modifier.size(20.dp))
+        Text(
+            stringResource(R.string.ambient_title),
+            style = MaterialTheme.typography.titleSmall,
+            color = InkOnPastel,
+            modifier = Modifier.padding(start = 12.dp).weight(1f)
+        )
+        Text(label, style = MaterialTheme.typography.labelLarge, color = InkOnPastel.copy(alpha = .75f))
+        Icon(Icons.Rounded.ChevronRight, null, tint = InkOnPastel.copy(alpha = .75f), modifier = Modifier.size(20.dp))
+    }
+}
+
+@Composable
+private fun ambientLabel(sound: AmbientSound): String = stringResource(
+    when (sound) {
+        AmbientSound.NONE -> R.string.ambient_none
+        AmbientSound.BROWN_NOISE -> R.string.ambient_brown
+        AmbientSound.RAIN -> R.string.ambient_rain
+        AmbientSound.OCEAN -> R.string.ambient_ocean
+        AmbientSound.FIRE -> R.string.ambient_fire
+    }
+)
+
+private fun ambientDescription(sound: AmbientSound): Int = when (sound) {
+    AmbientSound.BROWN_NOISE -> R.string.ambient_brown_desc
+    AmbientSound.RAIN -> R.string.ambient_rain_desc
+    AmbientSound.OCEAN -> R.string.ambient_ocean_desc
+    else -> R.string.ambient_fire_desc
 }
 
 @Composable

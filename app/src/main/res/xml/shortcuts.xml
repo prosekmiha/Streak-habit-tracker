@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Staticne bliznjice (dolg pritisk na ikono aplikacije); seje so dinamicne -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="new_habit"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_add"
+        android:shortcutShortLabel="@string/shortcut_new_habit_short"
+        android:shortcutLongLabel="@string/shortcut_new_habit_long">
+        <intent
+            android:action="com.streak.app.action.NEW_HABIT"
+            android:targetPackage="com.streak.app"
+            android:targetClass="com.streak.app.MainActivity" />
+    </shortcut>
+</shortcuts>

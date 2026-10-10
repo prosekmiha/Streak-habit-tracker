@@ -1,14 +1,15 @@
 package com.streak.app.ui.session
 
-import android.os.SystemClock
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.streak.app.domain.model.Habit
-import com.streak.app.domain.model.HabitSession
 import com.streak.app.domain.repository.HabitRepository
-import com.streak.app.domain.time.DayClock
-import com.streak.app.domain.usecase.ToggleHabitUseCase
+import com.streak.app.domain.session.ActiveSession
+import com.streak.app.domain.session.AmbientSound
+import com.streak.app.session.SessionController
+import com.streak.app.session.StartResult
+import com.streak.app.session.targetSeconds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,95 +18,112 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.time.Duration
-import java.util.UUID
 import javax.inject.Inject
 
 data class SessionState(
     val habit: Habit? = null,
     val elapsedSeconds: Long = 0,
     val running: Boolean = true,
-    val finished: Boolean = false
+    val ambient: AmbientSound = AmbientSound.NONE,
+    // Druga seja ze tece (le ena hkrati)
+    val conflict: ActiveSession? = null,
+    // Seja je bila koncana (tudi iz obvestila): zaslon se zapre
+    val ended: Boolean = false,
+    // Brez dovoljenja za natancne alarme je opozorilo ob cilju lahko zamaknjeno
+    val exactAlarmMissing: Boolean = false
 ) {
-    val targetSeconds: Long get() = habit?.targetValue?.toLong() ?: 0
+    val targetSeconds: Long get() = habit?.targetSeconds() ?: 0
+    val goalReached: Boolean get() = targetSeconds > 0 && elapsedSeconds >= targetSeconds
     // Dihalni vodic 4 s vdih / 4 s izdih
     val breathingIn: Boolean get() = (elapsedSeconds / 4) % 2 == 0L
     val breathingCount: Int get() = (4 - (elapsedSeconds % 4)).toInt()
 }
 
-// Casovna seja. Cas temelji na elapsedRealtime (neodvisno od spremembe ure) in je
-// shranjen v SavedStateHandle; trajna seja z obvestilom pride v M3.
+// Zaslon je le pogled na SessionController: seja tece naprej tudi, ko zaslon zapustis
+// (obvestilo, zaklenjen zaslon, smrt procesa).
 @HiltViewModel
 class SessionViewModel @Inject constructor(
     private val habitRepository: HabitRepository,
-    private val logHabit: ToggleHabitUseCase,
-    private val dayClock: DayClock,
-    private val handle: SavedStateHandle
+    private val controller: SessionController,
+    handle: SavedStateHandle
 ) : ViewModel() {
 
     private val habitId: String = checkNotNull(handle["habitId"])
-    private var runStartedAt: Long? = handle.get<Long>(KEY_RUN) ?: SystemClock.elapsedRealtime().also { handle[KEY_RUN] = it }
-    private var accumulated: Long = handle.get<Long>(KEY_ACC) ?: 0L
-
-    private val _state = MutableStateFlow(SessionState(running = handle.get<Boolean>(KEY_RUNNING) ?: true))
+    private val _state = MutableStateFlow(SessionState())
     val state: StateFlow<SessionState> = _state.asStateFlow()
 
     init {
-        if (!_state.value.running) runStartedAt = null
-        viewModelScope.launch { _state.update { it.copy(habit = habitRepository.getHabit(habitId)) } }
         viewModelScope.launch {
-            while (isActive) {
-                _state.update { it.copy(elapsedSeconds = elapsedMillis() / 1000) }
-                delay(250)
+            val habit = habitRepository.getHabit(habitId)
+            if (habit == null) {
+                _state.update { it.copy(ended = true) }
+                return@launch
             }
+            _state.update { it.copy(habit = habit) }
+            refreshAlarmPermission()
+            val result = controller.start(habit)
+            if (result is StartResult.Conflict) {
+                _state.update { it.copy(conflict = result.other) }
+                return@launch
+            }
+            observe()
         }
     }
 
-    private fun elapsedMillis(): Long = accumulated + (runStartedAt?.let { SystemClock.elapsedRealtime() - it } ?: 0L)
-
-    fun togglePause() {
-        if (_state.value.running) {
-            accumulated = elapsedMillis()
-            runStartedAt = null
-        } else {
-            runStartedAt = SystemClock.elapsedRealtime()
+    private suspend fun observe() {
+        var seen = false
+        while (viewModelScope.isActive) {
+            val session = controller.active.value
+            if (session?.habitId == habitId) {
+                seen = true
+                val now = controller.now()
+                _state.update {
+                    it.copy(
+                        elapsedSeconds = session.elapsedMs(now) / 1000,
+                        running = session.running,
+                        ambient = session.ambient
+                    )
+                }
+                // Zaslon je odprt: cilj zaznamo takoj (zvok obvestila tudi z zaprtimi ocmi)
+                if (session.running && !session.goalNotified && session.targetSeconds > 0 && session.remainingToGoalMs(now) == null) {
+                    controller.onGoalReached()
+                }
+            } else if (seen) {
+                // Seja je bila koncana drugje (npr. "Koncaj" v obvestilu)
+                _state.update { it.copy(ended = true) }
+                return
+            }
+            delay(TICK_MS)
         }
-        handle[KEY_ACC] = accumulated
-        handle[KEY_RUN] = runStartedAt
-        _state.update { it.copy(running = !it.running).also { s -> handle[KEY_RUNNING] = s.running } }
     }
 
-    // Zakljuci sejo: shrani zgodovino in pristej trajanje k danasnjemu napredku
-    fun finish(save: Boolean, onDone: () -> Unit) {
-        val habit = _state.value.habit
-        val seconds = elapsedMillis() / 1000
-        if (!save || habit == null || seconds < MIN_SECONDS) {
-            onDone()
-            return
-        }
-        viewModelScope.launch {
-            val today = dayClock.today()
-            val now = dayClock.now()
-            habitRepository.saveSession(
-                HabitSession(
-                    id = UUID.randomUUID().toString(),
-                    habitId = habit.id,
-                    date = today,
-                    startedAt = now.minus(Duration.ofSeconds(seconds)),
-                    endedAt = now,
-                    durationSeconds = seconds
-                )
-            )
-            logHabit.addProgress(habit, today, seconds.toDouble())
-            _state.update { it.copy(finished = true) }
-            onDone()
-        }
+    // Po vrnitvi iz sistemskih nastavitev: ce je dovoljenje novo, prerazporedi alarm
+    fun refreshAlarmPermission() {
+        val missing = _state.value.targetSeconds > 0 && !controller.exactAlarmsAllowed()
+        val wasMissing = _state.value.exactAlarmMissing
+        _state.update { it.copy(exactAlarmMissing = missing) }
+        if (wasMissing && !missing) viewModelScope.launch { controller.restore() }
+    }
+
+    fun togglePause() = viewModelScope.launch { controller.togglePause() }
+
+    fun setAmbient(sound: AmbientSound) = viewModelScope.launch { controller.setAmbient(sound) }
+
+    fun finish(save: Boolean) = viewModelScope.launch {
+        controller.finish(save)
+        _state.update { it.copy(ended = true) }
+    }
+
+    // Zakljuci drugo tekoco sejo (shrani jo) in zacni to
+    fun replaceConflict() = viewModelScope.launch {
+        val habit = _state.value.habit ?: return@launch
+        controller.finish(save = true)
+        _state.update { it.copy(conflict = null) }
+        controller.start(habit)
+        observe()
     }
 
     private companion object {
-        const val KEY_RUN = "session_run_started"
-        const val KEY_ACC = "session_accumulated"
-        const val KEY_RUNNING = "session_running"
-        const val MIN_SECONDS = 10L
+        const val TICK_MS = 250L
     }
 }

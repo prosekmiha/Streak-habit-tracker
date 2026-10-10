@@ -1,6 +1,12 @@
 package com.streak.app.ui.home
 
 import androidx.compose.foundation.background
+import com.streak.app.session.SessionNotifier
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.SelfImprovement
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -83,6 +89,7 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val pendingClock by viewModel.hasPendingClockAction.collectAsStateWithLifecycle()
+    val activeSession by viewModel.activeSession.collectAsStateWithLifecycle()
     var sheetFor by rememberSaveable { mutableStateOf<String?>(null) }
     var inboxOpen by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
@@ -115,6 +122,7 @@ fun HomeScreen(
                     modifier = Modifier.padding(top = 6.dp).bleed(20.dp)
                 )
             }
+            activeSession?.let { bar -> fullSpan { ActiveSessionBanner(bar) { onOpenSession(bar.habitId) } } }
             banners(state, onConfirmClock = viewModel::confirmClock)
             if (!state.isToday) fullSpan { PastDayBar(state, onBack = viewModel::backToToday) }
 
@@ -185,6 +193,44 @@ fun HomeScreen(
 
     state.celebration?.let { c ->
         CelebrationOverlay(celebration = c, onDismiss = viewModel::dismissCelebration)
+    }
+}
+
+// Seja tece v ozadju: hiter povratek na zaslon seje
+@Composable
+private fun ActiveSessionBanner(bar: ActiveSessionBar, onOpen: () -> Unit) {
+    val text = stringResource(
+        if (bar.running) R.string.home_session_running else R.string.home_session_paused,
+        bar.title
+    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(Lime)
+            .clickable(role = Role.Button, onClick = onOpen)
+            .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
+    ) {
+        Icon(
+            if (bar.running) Icons.Rounded.SelfImprovement else Icons.Rounded.Pause,
+            contentDescription = null,
+            tint = InkOnPastel,
+            modifier = Modifier.size(22.dp)
+        )
+        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+            Text(text, style = MaterialTheme.typography.titleSmall, color = InkOnPastel, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(SessionNotifier.formatClock(bar.elapsedSeconds), style = MaterialTheme.typography.labelLarge, color = InkOnPastel.copy(alpha = .75f))
+        }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .clip(RoundedCornerShape(14.dp))
+                .background(InkOnPastel)
+                .padding(horizontal = 14.dp, vertical = 8.dp)
+        ) {
+            Text(stringResource(R.string.home_session_open), style = MaterialTheme.typography.labelLarge, color = Lime)
+        }
     }
 }
 

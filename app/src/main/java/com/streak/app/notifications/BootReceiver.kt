@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.streak.app.domain.repository.HabitRepository
+import com.streak.app.session.SessionController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +17,7 @@ class BootReceiver : BroadcastReceiver() {
 
     @Inject lateinit var habitRepository: HabitRepository
     @Inject lateinit var alarmScheduler: AlarmScheduler
+    @Inject lateinit var sessionController: SessionController
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
@@ -24,6 +26,8 @@ class BootReceiver : BroadcastReceiver() {
             try {
                 alarmScheduler.scheduleDailyReset()
                 habitRepository.getHabits().forEach { alarmScheduler.schedule(it) }
+                // Tekoca seja: obnovi obvestilo in alarm za cilj
+                sessionController.restore()
             } finally {
                 pending.finish()
             }

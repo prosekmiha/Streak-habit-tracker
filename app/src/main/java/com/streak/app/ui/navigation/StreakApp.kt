@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,12 +28,22 @@ import com.streak.app.ui.stats.StatsScreen
 import com.streak.app.ui.tasks.TasksScreen
 
 @Composable
-fun StreakApp(userName: String) {
+fun StreakApp(userName: String, pendingRoute: String? = null, onRouteHandled: () -> Unit = {}) {
     val navController = rememberNavController()
     val backStack by navController.currentBackStackEntryAsState()
     val currentRoute = backStack?.destination?.route ?: Routes.HOME
     val showBars = currentRoute in Routes.TopLevel
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
+
+    // Obvestilo seje ali bliznjica: odpri cilj (ce ni ze odprt)
+    LaunchedEffect(pendingRoute) {
+        val route = pendingRoute ?: return@LaunchedEffect
+        val entry = navController.currentBackStackEntry
+        val alreadyOpen = entry?.destination?.route == Routes.SESSION &&
+            route == Routes.session(entry.arguments?.getString("habitId").orEmpty())
+        if (!alreadyOpen) navController.navigate(route)
+        onRouteHandled()
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -90,7 +101,12 @@ fun StreakApp(userName: String) {
                 )
             }
             composable(Routes.SESSION, arguments = listOf(navArgument("habitId") { type = NavType.StringType })) {
-                SessionScreen(onClose = { navController.popBackStack() })
+                SessionScreen(
+                    onClose = { navController.popBackStack() },
+                    onOpenSession = { id ->
+                        navController.navigate(Routes.session(id)) { popUpTo(Routes.SESSION) { inclusive = true } }
+                    }
+                )
             }
             composable(Routes.ADD_TASK) {
                 AddEditTaskScreen(onClose = { navController.popBackStack() })

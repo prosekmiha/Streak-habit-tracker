@@ -18,11 +18,17 @@ import com.streak.app.domain.time.ClockStatus
 import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.LogResult
 import com.streak.app.domain.usecase.ToggleHabitUseCase
+import com.streak.app.session.SessionController
 import com.streak.app.ui.components.HabitCardUi
 import com.streak.app.ui.components.WeekDayStatus
 import com.streak.app.ui.components.WeekDayUi
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -67,6 +73,9 @@ sealed interface HomeEvent {
     data class OpenSession(val habitId: String) : HomeEvent
 }
 
+// Pasica tekoce seje na vrhu domacega zaslona
+data class ActiveSessionBar(val habitId: String, val title: String, val running: Boolean, val elapsedSeconds: Long)
+
 // Praznovanje mejnika (npr. 7 dni zapored)
 data class Celebration(val habitTitle: String, val count: Int, val unit: StreakUnit)
 
@@ -76,8 +85,23 @@ class HomeViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val dayClock: DayClock,
     private val logHabit: ToggleHabitUseCase,
+    private val sessionController: SessionController,
     databaseGuard: DatabaseGuard
 ) : ViewModel() {
+
+    // Tekoca seja (osvezi se vsako sekundo, le ko je zaslon viden)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val activeSession: StateFlow<ActiveSessionBar?> = sessionController.active
+        .flatMapLatest { s ->
+            if (s == null) flowOf(null) else flow<ActiveSessionBar?> {
+                while (true) {
+                    emit(ActiveSessionBar(s.habitId, s.title, s.running, s.elapsedMs(sessionController.now()) / 1000))
+                    if (!s.running) break
+                    delay(1000)
+                }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private val selectedDate = MutableStateFlow<LocalDate?>(null)
     private val celebration = MutableStateFlow<Celebration?>(null)

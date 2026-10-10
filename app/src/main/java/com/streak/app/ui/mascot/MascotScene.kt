@@ -74,6 +74,9 @@ internal class MascotScene(private val context: Context, private val textureView
     private var running = false
     private var destroyed = false
     var frameIntervalNanos = 0L // 0 = vsak okvir; za varcni nacin npr. 33 ms
+    // Poklican enkrat, ko je izrisan prvi okvir (do takrat se kaze staticna poza)
+    var onFirstFrame: (() -> Unit)? = null
+    private var renderedFrames = 0
     private var lastFrame = 0L
 
     init {
@@ -194,6 +197,11 @@ internal class MascotScene(private val context: Context, private val textureView
         if (uiHelper.isReadyToRender && renderer.beginFrame(chain, frameTimeNanos)) {
             renderer.render(view)
             renderer.endFrame()
+            // Filament ima nekaj okvirjev zamika do prikaza, zato pozo skrijemo malo kasneje
+            if (++renderedFrames == FRAMES_UNTIL_VISIBLE) onFirstFrame?.let {
+                onFirstFrame = null
+                it()
+            }
         }
     }
 
@@ -241,5 +249,6 @@ internal class MascotScene(private val context: Context, private val textureView
     private companion object {
         const val VERTICAL_FOV = 23.64
         const val FADE_SECONDS = 0.35f
+        const val FRAMES_UNTIL_VISIBLE = 4
     }
 }
