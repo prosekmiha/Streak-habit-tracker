@@ -10,12 +10,16 @@ import com.streak.app.di.ApplicationScope
 import com.streak.app.domain.time.DayClock
 import com.streak.app.notifications.AlarmScheduler
 import com.streak.app.notifications.NotificationHelper
+import com.streak.app.notifications.ReminderDispatcher
+import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.session.SessionController
 import com.streak.app.shortcuts.ShortcutPublisher
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,6 +35,8 @@ class StreakApplication : Application(), Configuration.Provider {
     @Inject lateinit var dayClock: DayClock
     @Inject lateinit var sessionController: SessionController
     @Inject lateinit var shortcutPublisher: ShortcutPublisher
+    @Inject lateinit var reminderDispatcher: ReminderDispatcher
+    @Inject lateinit var settingsRepository: SettingsRepository
     @Inject @ApplicationScope lateinit var appScope: CoroutineScope
 
     override fun onCreate() {
@@ -40,7 +46,8 @@ class StreakApplication : Application(), Configuration.Provider {
         appScope.launch {
             // Odpri bazo (in sprozi morebitno migracijo) v ozadju, z obnovo ob napaki
             databaseGuard.openVerified(database, StreakDatabase.NAME)
-            alarmScheduler.scheduleDailyReset()
+            // Alarme lahko pobrise sistem (prisilna ustavitev, posodobitev): vedno jih obnovi
+            alarmScheduler.rescheduleAll()
             // Predpomnjeni streaki morajo veljati za danasnji dan
             recalculator.onDayChanged()
             // Integriteta se preveri odlozeno, da ne upocasni zagona
@@ -51,6 +58,19 @@ class StreakApplication : Application(), Configuration.Provider {
         // Tekoca seja iz prejsnjega procesa: obvestilo in alarm za cilj
         appScope.launch { sessionController.restore() }
         appScope.launch { shortcutPublisher.run() }
+        // Opravljena navada pospravi svoj opomnik, vse opravljeno pa vecerni opomnik
+        appScope.launch { reminderDispatcher.syncWithProgress() }
+        // Sprememba ur povzetka/opomnika ali meje dneva: prerazporedi
+        appScope.launch {
+            settingsRepository.settings
+                .map { listOf(it.dayEndsAt, it.briefingEnabled, it.briefingTime, it.nudgeEnabled, it.nudgeTime) }
+                .distinctUntilChanged()
+                .drop(1)
+                .collect {
+                    alarmScheduler.scheduleDailyReset()
+                    alarmScheduler.scheduleDaily()
+                }
+        }
 
         // Ob vsaki menjavi logicnega dne (meja dneva, sprememba ure ali pasu) med
         // delovanjem procesa posodobi streake in prerazporedi dnevni alarm

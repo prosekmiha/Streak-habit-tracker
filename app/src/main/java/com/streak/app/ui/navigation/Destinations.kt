@@ -12,6 +12,7 @@ object Routes {
     const val SESSION = "session/{habitId}"
     const val ADD_TASK = "add_task"
     const val EDIT_TASK = "edit_task/{taskId}"
+    const val NOTIFICATION_SETTINGS = "notification_settings"
 
     val TopLevel = setOf(HOME, TASKS, STATS, PROFILE)
 

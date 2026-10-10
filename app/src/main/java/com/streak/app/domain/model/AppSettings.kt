@@ -21,6 +21,11 @@ data class AppSettings(
     val quietHoursEnd: LocalTime? = null,
     // 0 = brez omejitve
     val dailyNotificationCap: Int = 0,
+    // Jutranji povzetek dneva in vecerni opomnik za neopravljene navade
+    val briefingEnabled: Boolean = true,
+    val briefingTime: LocalTime = LocalTime.of(8, 0),
+    val nudgeEnabled: Boolean = true,
+    val nudgeTime: LocalTime = LocalTime.of(20, 0),
     val lastBackupAt: Instant? = null,
     val backupReminderEnabled: Boolean = true
 ) {

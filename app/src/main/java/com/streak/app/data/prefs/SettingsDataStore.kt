@@ -47,6 +47,10 @@ class SettingsDataStore @Inject constructor(
         val QUIET_START = intPreferencesKey("quiet_hours_start_minute")
         val QUIET_END = intPreferencesKey("quiet_hours_end_minute")
         val NOTIF_CAP = intPreferencesKey("daily_notification_cap")
+        val BRIEFING_ON = booleanPreferencesKey("briefing_enabled")
+        val BRIEFING_AT = intPreferencesKey("briefing_minute")
+        val NUDGE_ON = booleanPreferencesKey("nudge_enabled")
+        val NUDGE_AT = intPreferencesKey("nudge_minute")
         val LAST_BACKUP = longPreferencesKey("last_backup_millis")
         val BACKUP_REMINDER = booleanPreferencesKey("backup_reminder_enabled")
     }
@@ -78,6 +82,10 @@ class SettingsDataStore @Inject constructor(
         quietHoursStart = this[Keys.QUIET_START]?.let(::minuteToTime),
         quietHoursEnd = this[Keys.QUIET_END]?.let(::minuteToTime),
         dailyNotificationCap = this[Keys.NOTIF_CAP] ?: 0,
+        briefingEnabled = this[Keys.BRIEFING_ON] ?: true,
+        briefingTime = this[Keys.BRIEFING_AT]?.let(::minuteToTime) ?: LocalTime.of(8, 0),
+        nudgeEnabled = this[Keys.NUDGE_ON] ?: true,
+        nudgeTime = this[Keys.NUDGE_AT]?.let(::minuteToTime) ?: LocalTime.of(20, 0),
         lastBackupAt = this[Keys.LAST_BACKUP]?.let { Instant.ofEpochMilli(it) },
         backupReminderEnabled = this[Keys.BACKUP_REMINDER] ?: true
     )
@@ -95,6 +103,10 @@ class SettingsDataStore @Inject constructor(
         setOrRemove(Keys.QUIET_START, s.quietHoursStart?.let(::timeToMinute))
         setOrRemove(Keys.QUIET_END, s.quietHoursEnd?.let(::timeToMinute))
         this[Keys.NOTIF_CAP] = s.dailyNotificationCap.coerceAtLeast(0)
+        this[Keys.BRIEFING_ON] = s.briefingEnabled
+        this[Keys.BRIEFING_AT] = timeToMinute(s.briefingTime)
+        this[Keys.NUDGE_ON] = s.nudgeEnabled
+        this[Keys.NUDGE_AT] = timeToMinute(s.nudgeTime)
         setOrRemove(Keys.LAST_BACKUP, s.lastBackupAt?.toEpochMilli())
         this[Keys.BACKUP_REMINDER] = s.backupReminderEnabled
     }

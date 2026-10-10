@@ -1,7 +1,6 @@
 package com.streak.app.ui.settings
 
 import android.content.Intent
-import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.streak.app.BuildConfig
 import com.streak.app.R
@@ -88,7 +89,7 @@ import java.time.format.TextStyle
 private enum class ProfileSheet { NAME, ANIMATIONS, FIRST_DAY, DAY_END, ARCHIVED, ABOUT }
 
 @Composable
-fun SettingsScreen(onEditHabit: (String) -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsScreen(onEditHabit: (String) -> Unit, onOpenNotifications: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val s = state.settings
     val context = LocalContext.current
@@ -97,7 +98,11 @@ fun SettingsScreen(onEditHabit: (String) -> Unit, viewModel: SettingsViewModel =
     var sheet by remember { mutableStateOf<ProfileSheet?>(null) }
     var pendingDelete by remember { mutableStateOf<Habit?>(null) }
     val timeFormat = remember(locale) { DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale) }
-    val notificationsOn = remember { NotificationManagerCompat.from(context).areNotificationsEnabled() }
+    var notificationsOn by remember { mutableStateOf(true) }
+    LifecycleResumeEffect(Unit) {
+        notificationsOn = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        onPauseOrDispose { }
+    }
 
     Column(
         Modifier
@@ -128,9 +133,9 @@ fun SettingsScreen(onEditHabit: (String) -> Unit, viewModel: SettingsViewModel =
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 14.dp)) {
-            KpiTile(state.topStreak.toString(), stringResource(R.string.profile_streak), Color(0xFFFFE7D6), Modifier.weight(1f))
-            KpiTile(state.totalDone.toString(), stringResource(R.string.profile_done), Color(0xFFDCF5B6), Modifier.weight(1f))
-            KpiTile(state.habits.size.toString(), stringResource(R.string.profile_habits), Color(0xFFE4E5FB), Modifier.weight(1f))
+            KpiTile(state.topStreak.toString(), pluralStringResource(R.plurals.streak_label_days, state.topStreak), Color(0xFFFFE7D6), Modifier.weight(1f))
+            KpiTile(state.totalDone.toString(), pluralStringResource(R.plurals.profile_done, state.totalDone), Color(0xFFDCF5B6), Modifier.weight(1f))
+            KpiTile(state.habits.size.toString(), pluralStringResource(R.plurals.profile_habits, state.habits.size), Color(0xFFE4E5FB), Modifier.weight(1f))
         }
 
         SettingsGroup {
@@ -157,12 +162,7 @@ fun SettingsScreen(onEditHabit: (String) -> Unit, viewModel: SettingsViewModel =
                 if (s.dayEndsAt == LocalTime.MIDNIGHT) stringResource(R.string.settings_midnight) else s.dayEndsAt.format(timeFormat)
             )
             SettingsRow(
-                stringResource(R.string.notifications_title), Icons.Rounded.Notifications, Bubblegum,
-                {
-                    context.startActivity(
-                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                    )
-                },
+                stringResource(R.string.notifications_title), Icons.Rounded.Notifications, Bubblegum, onOpenNotifications,
                 stringResource(if (notificationsOn) R.string.notifications_on else R.string.notifications_off),
                 showDivider = false
             )

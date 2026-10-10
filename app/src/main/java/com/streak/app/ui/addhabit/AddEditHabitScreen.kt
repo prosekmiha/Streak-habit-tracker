@@ -1,5 +1,14 @@
 package com.streak.app.ui.addhabit
 
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.core.net.toUri
+import androidx.core.app.NotificationManagerCompat
+import android.provider.Settings
+import android.os.Build
+import android.content.Intent
+import android.app.AlarmManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -407,6 +416,7 @@ private fun RemindersSection(form: HabitForm, viewModel: AddEditHabitViewModel) 
             DashedAddButton(stringResource(R.string.add), { picking = true })
         }
     }
+    if (form.reminders.isNotEmpty()) ReminderPermissionHint()
 
     if (picking) {
         TimePickerSheet(
@@ -535,3 +545,34 @@ fun timeOfDayLabel(t: TimeOfDay) = stringResource(
         TimeOfDay.EVENING -> R.string.filter_evening
     }
 )
+
+// Opomniki brez obvestil ali natancnih alarmov ne delujejo (dobro): povej in ponudi nastavitev
+@Composable
+private fun ReminderPermissionHint() {
+    val context = LocalContext.current
+    var notificationsOn by remember { mutableStateOf(true) }
+    var exactOn by remember { mutableStateOf(true) }
+    LifecycleResumeEffect(Unit) {
+        notificationsOn = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        exactOn = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+            context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+        onPauseOrDispose { }
+    }
+    val (text, intent) = when {
+        !notificationsOn -> stringResource(R.string.reminders_hint_notifications) to
+            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        !exactOn && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> stringResource(R.string.reminders_hint_exact) to
+            Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, "package:${context.packageName}".toUri())
+        else -> return
+    }
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .padding(top = 10.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .clickable(role = Role.Button) { runCatching { context.startActivity(intent) } }
+            .padding(vertical = 6.dp)
+    )
+}

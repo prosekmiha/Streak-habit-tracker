@@ -322,10 +322,10 @@
         <item quantity="other">%d dni</item>
     </plurals>
     <plurals name="all_done_detail">
-        <item quantity="one">%1$d navada opravljena. Veriga: %2$d dni.</item>
-        <item quantity="two">%1$d navadi opravljeni. Veriga: %2$d dni.</item>
-        <item quantity="few">%1$d navade opravljene. Veriga: %2$d dni.</item>
-        <item quantity="other">%1$d navad opravljenih. Veriga: %2$d dni.</item>
+        <item quantity="one">%d navada opravljena</item>
+        <item quantity="two">%d navadi opravljeni</item>
+        <item quantity="few">%d navade opravljene</item>
+        <item quantity="other">%d navad opravljenih</item>
     </plurals>
     <string name="add_sheet_title">Kaj dodajava?</string>
     <string name="add_habit_tile">Navada</string>
@@ -402,9 +402,6 @@
         <item quantity="few">%d odprte</item>
         <item quantity="other">%d odprtih</item>
     </plurals>
-    <string name="profile_streak">dni zapored</string>
-    <string name="profile_done">opravljenih</string>
-    <string name="profile_habits">navad</string>
     <string name="notifications_title">Obvestila</string>
     <string name="notifications_on">Vklopljena</string>
     <string name="notifications_off">Izklopljena</string>
@@ -454,4 +451,60 @@
         <item quantity="other">%d sej</item>
     </plurals>
     <string name="session_exact_alarm">Dovoli točno opozorilo ob doseženem cilju</string>
+    <string name="notif_channel_nudge">Večerni opomnik</string>
+    <string name="notif_reminder_hidden_text">Odpri aplikacijo za podrobnosti</string>
+    <string name="notif_reminder_quantity">Še %1$s %2$s do cilja</string>
+    <string name="notif_reminder_duration">Cilj danes: %1$d min</string>
+    <string name="notif_reminder_default">Danes še čaka nate.</string>
+    <string name="notif_action_done">Opravljeno</string>
+    <string name="notif_action_snooze">Čez %1$d min</string>
+    <string name="notif_nudge_title">Dan še ni končan</string>
+    <string name="notif_nudge_names_more">%1$s in še %2$d</string>
+    <plurals name="notif_nudge_count">
+        <item quantity="one">Še %d navada čaka nate</item>
+        <item quantity="two">Še %d navadi čakata nate</item>
+        <item quantity="few">Še %d navade čakajo nate</item>
+        <item quantity="other">Še %d navad čaka nate</item>
+    </plurals>
+    <string name="notif_settings_permission">Dovoljenje za obvestila</string>
+    <string name="notif_settings_exact">Natančni opomniki</string>
+    <string name="notif_settings_allowed">Dovoljeno</string>
+    <string name="notif_settings_not_allowed">Ni dovoljeno</string>
+    <string name="notif_settings_battery">Baterija</string>
+    <string name="notif_settings_unrestricted">Brez omejitev</string>
+    <string name="notif_settings_optimized">Optimizirano</string>
+    <string name="notif_settings_hint_off">Obvestila so izklopljena, zato opomniki ne bodo prikazani.</string>
+    <string name="notif_settings_hint_exact">Brez natančnih alarmov lahko opomniki zamudijo nekaj minut.</string>
+    <string name="notif_settings_hint_battery">Če opomniki ne prihajajo, aplikaciji v nastavitvah baterije dovoli delovanje brez omejitev.</string>
+    <string name="notif_settings_briefing">Jutranji povzetek</string>
+    <string name="notif_settings_nudge">Večerni opomnik</string>
+    <string name="notif_settings_daily_hint">Povzetek pove, koliko navad te čaka danes. Večerni opomnik našteje neopravljene in se ne pošlje, če je vse opravljeno.</string>
+    <string name="notif_settings_quiet">Tihe ure</string>
+    <string name="notif_settings_from">Od</string>
+    <string name="notif_settings_to">Do</string>
+    <string name="notif_settings_quiet_from">Tihe ure od</string>
+    <string name="notif_settings_quiet_to">Tihe ure do</string>
+    <string name="notif_settings_cap">Največ obvestil na dan</string>
+    <string name="notif_settings_cap_none">Brez omejitve</string>
+    <string name="notif_settings_cap_value">%1$d</string>
+    <string name="notif_settings_cap_desc">Velja za opomnike, povzetek in večerni opomnik</string>
+    <string name="notif_settings_quiet_hint">Med tihimi urami pridejo opomniki brez zvoka, povzetek in večerni opomnik pa se ne pošljeta.</string>
+    <string name="notif_settings_hide_names">Skrij imena navad</string>
+    <string name="notif_settings_system">Sistemske nastavitve kanalov</string>
+    <string name="notif_settings_privacy_hint">Na zaklenjenem zaslonu imena navad niso nikoli vidna. Z zgornjo možnostjo jih skriješ tudi v odklenjenem stanju.</string>
+    <string name="notif_settings_time">Ura</string>
+    <string name="reminders_hint_notifications">Obvestila so izklopljena, zato opomniki ne bodo prikazani. Vklopi jih</string>
+    <string name="reminders_hint_exact">Brez natančnih alarmov lahko opomnik zamudi nekaj minut. Dovoli natančne alarme</string>
+    <plurals name="profile_done">
+        <item quantity="one">opravljen</item>
+        <item quantity="two">opravljena</item>
+        <item quantity="few">opravljeni</item>
+        <item quantity="other">opravljenih</item>
+    </plurals>
+    <plurals name="profile_habits">
+        <item quantity="one">navada</item>
+        <item quantity="two">navadi</item>
+        <item quantity="few">navade</item>
+        <item quantity="other">navad</item>
+    </plurals>
 </resources>

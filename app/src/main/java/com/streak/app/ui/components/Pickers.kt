@@ -1,5 +1,10 @@
 package com.streak.app.ui.components
 
+import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -127,7 +132,9 @@ fun TimePickerSheet(
                             .padding(vertical = 8.dp)
                     ) {
                         Text(p.time.toString(), style = MaterialTheme.typography.titleSmall, color = if (isSel) palette.daySelectedInk else palette.ink)
-                        Text(p.label, style = MaterialTheme.typography.labelSmall, color = if (isSel) palette.daySelectedInk.copy(alpha = .7f) else palette.inkSoft)
+                        if (p.label.isNotBlank()) {
+                            Text(p.label, style = MaterialTheme.typography.labelSmall, color = if (isSel) palette.daySelectedInk.copy(alpha = .7f) else palette.inkSoft)
+                        }
                     }
                 }
             }
@@ -153,6 +160,15 @@ private fun Wheel(values: List<String>, selected: Int, resetKey: Int, label: Str
         derivedStateOf { state.firstVisibleItemIndex + if (state.firstVisibleItemScrollOffset > itemPx / 2) 1 else 0 }
     }
 
+    // Kolesce porabi ves preostali zamah: sicer ga prevzame list in se ob hitrem
+    // drsanju navzdol zapre
+    val keepScrollInside = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource) = available
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity) = available
+        }
+    }
+
     LaunchedEffect(resetKey) { if (resetKey > 0) state.animateScrollToItem(selected) }
     LaunchedEffect(state) {
         snapshotFlow { state.isScrollInProgress to centered }.collect { (scrolling, index) ->
@@ -166,6 +182,7 @@ private fun Wheel(values: List<String>, selected: Int, resetKey: Int, label: Str
         contentPadding = PaddingValues(vertical = WheelItem),
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
+            .nestedScroll(keepScrollInside)
             .width(96.dp)
             .height(WheelHeight)
             .semantics {

@@ -387,7 +387,9 @@ private fun AllDoneBanner(state: HomeUiState) {
         Column(Modifier.align(Alignment.CenterStart).padding(start = 20.dp).fillMaxWidth(0.58f)) {
             Text(stringResource(R.string.all_done_title), style = MaterialTheme.typography.headlineSmall, color = InkOnPastel)
             Text(
-                pluralStringResource(R.plurals.all_done_detail, state.doneCount, state.doneCount, state.topStreak),
+                // Vsako stevilo ima svojo mnozinsko obliko (1 dan, 2 dneva, 5 dni ...)
+                pluralStringResource(R.plurals.all_done_detail, state.doneCount, state.doneCount) + " · " +
+                    state.topStreak + " " + pluralStringResource(R.plurals.streak_label_days, state.topStreak),
                 style = MaterialTheme.typography.titleSmall,
                 color = InkOnPastel,
                 modifier = Modifier.padding(top = 6.dp)

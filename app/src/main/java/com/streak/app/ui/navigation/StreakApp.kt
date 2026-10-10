@@ -23,6 +23,7 @@ import com.streak.app.ui.addtask.AddEditTaskScreen
 import com.streak.app.ui.detail.HabitDetailScreen
 import com.streak.app.ui.home.HomeScreen
 import com.streak.app.ui.session.SessionScreen
+import com.streak.app.ui.settings.NotificationSettingsScreen
 import com.streak.app.ui.settings.SettingsScreen
 import com.streak.app.ui.stats.StatsScreen
 import com.streak.app.ui.tasks.TasksScreen
@@ -83,7 +84,13 @@ fun StreakApp(userName: String, pendingRoute: String? = null, onRouteHandled: ()
                 StatsScreen(onOpenHabit = { id -> navController.navigate(Routes.habitDetail(id)) })
             }
             composable(Routes.PROFILE) {
-                SettingsScreen(onEditHabit = { id -> navController.navigate(Routes.editHabit(id)) })
+                SettingsScreen(
+                    onEditHabit = { id -> navController.navigate(Routes.editHabit(id)) },
+                    onOpenNotifications = { navController.navigate(Routes.NOTIFICATION_SETTINGS) }
+                )
+            }
+            composable(Routes.NOTIFICATION_SETTINGS) {
+                NotificationSettingsScreen(onBack = { navController.popBackStack() })
             }
             composable(
                 Routes.ADD_HABIT,
