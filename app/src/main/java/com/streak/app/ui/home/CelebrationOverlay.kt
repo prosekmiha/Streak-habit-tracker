@@ -98,7 +98,7 @@ fun CelebrationOverlay(celebration: Celebration, onDismiss: () -> Unit) {
                         .padding(horizontal = 14.dp, vertical = 8.dp)
                 )
                 Box(Modifier.padding(top = 16.dp).size(width = 300.dp, height = 320.dp)) {
-                    MascotView(MascotMood.CHEER, Modifier.align(Alignment.BottomStart).size(width = 280.dp, height = 303.dp))
+                    MascotView(MascotMood.CHEER, Modifier.align(Alignment.BottomStart).size(width = 280.dp, height = 303.dp), hero = true)
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier

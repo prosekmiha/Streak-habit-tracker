@@ -39,5 +39,5 @@ Iz ukazne vrstice:
 - `domain` — modeli, use-case-i (streak, vpis, izvoz), `time` (logični dan, zaznava skokov ure), `streak` (izpeljava stanja dneva)
 - `data` — Room (entitete, DAO, `DatabaseGuard`), DataStore nastavitve, repozitoriji, `StreakRecalculator` (predpomnilnik streakov in dnevni povzetki)
 - `notifications`, `work` — alarmi, opomniki, menjava logičnega dne
-- `ui` — `onboarding`, `home`, `addhabit`, `tasks`, `addtask`, `stats`, `settings`, `mascot` (2D maskota do 3D rendererja), `components`, `theme`
+- `ui` — `onboarding`, `home`, `addhabit`, `tasks`, `addtask`, `stats`, `settings`, `mascot` (3D maskota prek Filamenta + WebP poze, glej `docs/mascot-pipeline.md`), `components`, `theme`
 - `tools/fonts` — ponovljiva gradnja fontov (Roboto Flex, Manrope; OFL)

@@ -148,7 +148,7 @@ private fun WelcomeStep(onStart: () -> Unit) {
                     .background(Lime)
                     .border(5.dp, InkOnPastel, RoundedCornerShape(50))
             )
-            MascotView(MascotMood.WAVE, Modifier.size(width = 270.dp, height = 292.dp))
+            MascotView(MascotMood.WAVE, Modifier.size(width = 270.dp, height = 292.dp), hero = true)
         }
         StreakButton(stringResource(R.string.onboarding_start), onStart, variant = ButtonVariant.White, height = 58.dp)
         Text(

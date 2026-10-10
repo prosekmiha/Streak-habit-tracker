@@ -1,121 +1,116 @@
 package com.streak.app.ui.mascot
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
+import android.view.TextureView
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.streak.app.R
 import com.streak.app.domain.model.AnimationLevel
 import com.streak.app.ui.theme.LocalAnimationLevel
-import kotlin.math.PI
-import kotlin.math.min
-import kotlin.math.sin
 
-// Prikaz maskote kot ploskovne ilustracije (ista risba kot mockupi). 3D renderer (M7)
-// bo zamenjal le notranjost te komponente; klicna mesta ostanejo enaka.
+private const val ASPECT = 240f / 260f
+
+// Maskota. hero = true: animiran 3D model (Filament) v kljucnih trenutkih (dobrodoslica,
+// praznovanje, seja). Sicer - in na sibkih napravah, z zmanjsanimi ali izklopljenimi
+// animacijami - staticna poza, zrenderirana iz istega 3D modela.
 @Composable
 fun MascotView(
     mood: MascotMood,
     modifier: Modifier = Modifier,
-    description: String? = null
+    description: String? = null,
+    hero: Boolean = false
 ) {
-    val animated = LocalAnimationLevel.current == AnimationLevel.FULL
-    val phase = if (animated) {
-        val transition = rememberInfiniteTransition(label = "mascot")
-        val p by transition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(tween(2600, easing = LinearEasing), RepeatMode.Restart),
-            label = "phase"
-        )
-        p
-    } else 0f
+    val context = LocalContext.current
     val label = description ?: stringResource(mood.description)
-    val elements = remember(mood) { MascotArt.elements(mood).map { it.prepared() } }
+    val animated = LocalAnimationLevel.current == AnimationLevel.FULL
+    val use3d = hero && animated && remember { DeviceCapabilities.supports3d(context) }
+    Box(modifier.aspectRatio(ASPECT).semantics { contentDescription = label }) {
+        if (use3d) {
+            Mascot3D(mood, Modifier.fillMaxSize())
+        } else {
+            Image(
+                painter = painterResource(poseDrawable(mood)),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
 
-    Canvas(modifier = modifier.aspectRatio(MascotArt.VIEW_W / MascotArt.VIEW_H).semantics { contentDescription = label }) {
-        val s = min(size.width / MascotArt.VIEW_W, size.height / MascotArt.VIEW_H)
-        val dx = (size.width - MascotArt.VIEW_W * s) / 2f
-        val dy = (size.height - MascotArt.VIEW_H * s) / 2f
-        val wave = sin(phase * 2 * PI).toFloat()
-        val floating = mood == MascotMood.MEDITATING
-        val bob = (if (floating) 5f else 2.5f) * wave
+@Composable
+private fun Mascot3D(mood: MascotMood, modifier: Modifier) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
 
-        translate(dx, dy) {
-            scale(s, pivot = Offset.Zero) {
-                if (mood == MascotMood.FREEZE) {
-                    drawRoundRect(Color(0xFFBFE3FF), Offset(30f, 30f), Size(180f, 214f), CornerRadius(26f), alpha = .8f)
+    // Izris le, ko je zaslon viden (lifecycle RESUMED); ob izhodu sprosti GPU vire
+    AndroidView(
+        modifier = modifier,
+        factory = { ctx ->
+            TextureView(ctx).also { tv ->
+                val scene = MascotScene(ctx, tv).apply {
+                    if (DeviceCapabilities.reducedFrameRate(ctx)) frameIntervalNanos = 33_000_000L
                 }
-                translate(top = -bob) {
-                    elements.forEach { drawEl(it) }
-                    if (mood == MascotMood.VACATION) drawSunglasses()
+                val observer = LifecycleEventObserver { _, event ->
+                    when (event) {
+                        Lifecycle.Event.ON_RESUME -> scene.resume()
+                        Lifecycle.Event.ON_PAUSE -> scene.pause()
+                        else -> Unit
+                    }
                 }
+                lifecycle.addObserver(observer)
+                tv.tag = SceneHandle(scene) { lifecycle.removeObserver(observer) }
             }
-        }
+        },
+        update = { tv -> (tv.tag as SceneHandle).scene.setAnimation(animationFor(mood)) },
+        onRelease = { tv -> (tv.tag as SceneHandle).release() }
+    )
+}
+
+private class SceneHandle(val scene: MascotScene, private val unregister: () -> Unit) {
+    fun release() {
+        unregister()
+        scene.destroy()
     }
 }
 
-// Poti razcleni le enkrat na pozo
-private sealed interface Prepared {
-    val el: MascotEl
-}
-private data class PreparedPath(override val el: MascotEl.P, val path: Path) : Prepared
-private data class PreparedOther(override val el: MascotEl) : Prepared
-
-private fun MascotEl.prepared(): Prepared = when (this) {
-    is MascotEl.P -> PreparedPath(this, PathParser().parsePathString(d).toPath())
-    else -> PreparedOther(this)
-}
-
-private fun DrawScope.drawEl(p: Prepared) {
-    when (val el = p.el) {
-        is MascotEl.P -> {
-            val path = (p as PreparedPath).path
-            el.fill?.let { drawPath(path, it, alpha = el.alpha) }
-            el.stroke?.let { drawPath(path, it, alpha = el.alpha, style = Stroke(el.width, cap = StrokeCap.Round, join = StrokeJoin.Round)) }
-        }
-        is MascotEl.C -> {
-            el.fill?.let { drawCircle(it, el.r, Offset(el.cx, el.cy)) }
-            el.stroke?.let { drawCircle(it, el.r, Offset(el.cx, el.cy), style = Stroke(el.width)) }
-        }
-        is MascotEl.E -> {
-            val tl = Offset(el.cx - el.rx, el.cy - el.ry)
-            val sz = Size(el.rx * 2, el.ry * 2)
-            el.fill?.let { drawOval(it, tl, sz, alpha = el.alpha) }
-            el.stroke?.let { drawOval(it, tl, sz, alpha = el.alpha, style = Stroke(el.width)) }
-        }
-        is MascotEl.R -> rotate(el.rotate, pivot = Offset(el.x + el.w / 2, el.y + el.h / 2)) {
-            drawRoundRect(el.fill, Offset(el.x, el.y), Size(el.w, el.h), CornerRadius(el.rx))
-        }
-    }
+// Ime animacije v GLB za vsako stanje
+internal fun animationFor(mood: MascotMood): String = when (mood) {
+    MascotMood.IDLE -> "idle"
+    MascotMood.WAVE -> "wave"
+    MascotMood.WALK -> "walk"
+    MascotMood.HAPPY, MascotMood.CHEER, MascotMood.STRETCHING -> "cheer"
+    MascotMood.SAD -> "sad"
+    MascotMood.THINKING, MascotMood.WORKING -> "think"
+    MascotMood.SLEEPING, MascotMood.FREEZE -> "sleep"
+    MascotMood.MEDITATING -> "meditate"
+    MascotMood.THUMBS_UP, MascotMood.VACATION -> "thumbs"
 }
 
-private fun DrawScope.drawSunglasses() {
-    val ink = MascotArt.Ink
-    drawRoundRect(ink, Offset(84f, 100f), Size(32f, 22f), CornerRadius(8f))
-    drawRoundRect(ink, Offset(124f, 100f), Size(32f, 22f), CornerRadius(8f))
-    drawLine(ink, Offset(116f, 108f), Offset(124f, 108f), 5f)
+// Vnaprej zrenderirana poza istega modela (tools/mascot/build_mascot.py)
+@DrawableRes
+fun poseDrawable(mood: MascotMood): Int = when (animationFor(mood)) {
+    "wave" -> R.drawable.mascot_wave
+    "walk" -> R.drawable.mascot_walk
+    "cheer" -> R.drawable.mascot_cheer
+    "sad" -> R.drawable.mascot_sad
+    "think" -> R.drawable.mascot_think
+    "sleep" -> R.drawable.mascot_sleep
+    "meditate" -> R.drawable.mascot_meditate
+    "thumbs" -> R.drawable.mascot_thumbs
+    else -> R.drawable.mascot_idle
 }

@@ -92,7 +92,7 @@ fun SessionScreen(onClose: () -> Unit, viewModel: SessionViewModel = hiltViewMod
         }
 
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            MascotView(MascotMood.MEDITATING, Modifier.size(width = 250.dp, height = 271.dp))
+            MascotView(MascotMood.MEDITATING, Modifier.size(width = 250.dp, height = 271.dp), hero = true)
         }
 
         Text(
