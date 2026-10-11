@@ -12,17 +12,11 @@ Streak deluje brez povezave: brez računa, strežnika, oglasov in analitike. Apl
 - **Izgubljen ključ:** če ključa ni mogoče odviti (npr. ponastavljen Keystore), se stara baza odmakne (`streak.db.unreadable-*`) in začne se z novo. Aplikacija nato ponudi obnovo iz samodejnega posnetka.
 - **Kopija pred migracijo** (`DatabaseGuard`) se naredi tudi za šifrirano bazo.
 
-## Zaklep aplikacije
+## Zasebni zaslon
 
-- **Koda** ima 4 ali 6 števk. Očitne kode (1111, 1234, 4321) so zavrnjene.
-- **Zgoščevanje:** PBKDF2-HMAC-SHA256 (120.000 iteracij, naključna 16-bajtna sol), nato **HMAC s ključem v Keystoru** (`streak_pin_pepper`). Kratke kode zato ni mogoče preizkušati izven naprave, tudi če nekdo pridobi shranjeno zgoščeno vrednost. Primerjava poteka v konstantnem času.
-- **Biometrija** (neobvezno): samo razred `BIOMETRIC_STRONG`. Koda je vedno na voljo kot nadomestek.
-- **Samodejni zaklep:** takoj ali po 1, 5 oziroma 30 minutah v ozadju. Hladen zagon je vedno zaklenjen, obrat zaslona pa ne zaklene.
-- **Napačni poskusi:** prvih 5 je brez zamika, nato 30 s, 1 min, 2 min in tako naprej do največ 1 ure. Zamik se meri z monotono uro (po ponovnem zagonu s stensko), zato ga ne obidejo premik ure, prisilna ustavitev ali ponovni zagon aplikacije.
-- **Obnovitvena koda:** 12 znakov (Crockford base32), prikazana samo ob vklopu ali ob ustvarjanju nove kode. Shranjena je le zgoščena, enako kot koda. Ob uporabi izklopi zaklep, podatki ostanejo. Brez nje je edina pot počiščenje podatkov aplikacije v sistemskih nastavitvah.
-- **Zasebni zaslon** (privzeto vklopljen skupaj z zaklepom): `FLAG_SECURE` in `setRecentsScreenshotEnabled(false)` preprečita posnetke zaslona in skrijeta vsebino v pregledu odprtih aplikacij.
-- **Skrita vsebina:** pod zaklepom je aplikacija skrita bralnikom zaslona (`clearAndSetSemantics`) in nedosegljiva za dotike.
-- **Shramba:** nastavitve zaklepa so v ločenem DataStoru `app_lock`, ki ni v nobeni varnostni kopiji.
+- **Stikalo:** Profil → Zasebni zaslon, privzeto izklopljeno.
+- **Učinek:** `FLAG_SECURE` in `setRecentsScreenshotEnabled(false)` preprečita posnetke zaslona in skrijeta vsebino v pregledu odprtih aplikacij.
+- **Brez zaklepa s kodo:** aplikacija nima lastnega zaklepa (koda ali biometrija). Za zaščito skrbi zaklep zaslona telefona.
 
 ## Varnostne kopije
 
@@ -32,7 +26,7 @@ Streak deluje brez povezave: brez računa, strežnika, oglasov in analitike. Apl
 | CSV | Zapisi za preglednice | Brez šifriranja. Polja, ki bi jih preglednica izvedla kot formulo, so zaščitena. |
 | Androidova varnostna kopija | `files/snapshot/latest.json` in nastavitve | Google Drive kopija je na Androidu 9+ šifrirana z zaklepom zaslona naprave. Posnetek je mogoče izklopiti (Podatki → Androidova varnostna kopija). |
 
-- **Česa ni v Androidovi varnostni kopiji:** šifrirane baze, njenega ključa, kode za zaklep, tekoče seje in dnevnika obvestil. Pravila (`data_extraction_rules.xml`, `backup_rules.xml`) vključujejo le navedeni datoteki.
+- **Česa ni v Androidovi varnostni kopiji:** šifrirane baze, njenega ključa, tekoče seje in dnevnika obvestil. Pravila (`data_extraction_rules.xml`, `backup_rules.xml`) vključujejo le navedeni datoteki.
 - **Uvoz** preveri obliko, verzijo in sklice. Neznana polja prezre, zapise brez navade izpusti, iteracije PBKDF2 pa so omejene, da tuja datoteka ne more "zamrzniti" naprave. Zamenjava podatkov poteka v eni transakciji (vse ali nič).
 - **Prazna baza nikoli ne prepiše posnetka.** Po namestitvi na nov telefon se tako kopija ne izgubi, aplikacija pa obnovo ponudi sama.
 

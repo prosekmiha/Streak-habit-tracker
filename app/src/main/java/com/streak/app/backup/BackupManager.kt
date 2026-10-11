@@ -17,7 +17,6 @@ import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.notifications.AlarmScheduler
 import com.streak.app.session.SessionController
-import com.streak.app.lock.AppLockManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -42,8 +41,7 @@ class BackupManager @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val habitRepository: HabitRepository,
     private val alarmScheduler: AlarmScheduler,
-    private val sessionController: SessionController,
-    private val lockManager: AppLockManager
+    private val sessionController: SessionController
 ) {
     private val codec = BackupCodec()
     private val mutex = Mutex()
@@ -143,7 +141,6 @@ class BackupManager @Inject constructor(
             snapshotFile.delete()
         }
         NotificationManagerCompat.from(context).cancelAll()
-        lockManager.disable()
         settingsRepository.update { AppSettings() }
     }
 

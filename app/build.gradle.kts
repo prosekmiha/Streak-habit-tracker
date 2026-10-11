@@ -67,8 +67,6 @@ dependencies {
     implementation(libs.filament.gltfio)
     // Sifriranje baze (kljuc v Android Keystoru)
     implementation(libs.sqlcipher.android)
-    // Zaklep aplikacije s prstnim odtisom ali obrazom
-    implementation(libs.androidx.biometric)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

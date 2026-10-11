@@ -27,11 +27,8 @@ Zgrajen je v Kotlinu z Jetpack Compose (Material 3), arhitektura je MVVM + Clean
   - Varnostna kopija (JSON, neobvezno z geslom) se shrani v datoteko ali deli. Obnova pokaže predogled in omogoča spoj ali zamenjavo.
   - Izvoz zapisov v CSV in opomnik za varnostno kopijo vsakih 30 dni.
   - Samodejni posnetek za Androidovo varnostno kopijo, ki se po menjavi telefona ponudi za obnovo, in brisanje vseh podatkov.
-- **Zaklep in zasebnost**:
-  - Koda (4 ali 6 števk) in neobvezno prstni odtis.
-  - Samodejni zaklep in stopnjevan premor po napačnih poskusih.
-  - Obnovitvena koda in zasebni zaslon (brez posnetkov zaslona). Baza je vedno šifrirana (SQLCipher, ključ v Keystoru).
-- **Profil**: ime, tema, animacije, prvi dan tedna, "dan se konča ob", obvestila, zaklep, podatki, arhivirane navade in "Preračunaj vse".
+- **Zasebnost**: baza je vedno šifrirana (SQLCipher, ključ v Keystoru). Neobvezni zasebni zaslon prepreči posnetke zaslona. Aplikacija nima zaklepa s kodo.
+- **Profil**: ime, tema, animacije, prvi dan tedna, "dan se konča ob", obvestila, podatki, zasebni zaslon, arhivirane navade in "Preračunaj vse".
 
 ## Zagon
 1. Odpri mapo v **Android Studio**.
@@ -48,7 +45,7 @@ Iz ukazne vrstice:
 ## Dokumentacija
 - [docs/audit.md](docs/audit.md) — Phase 0 audit, tabela vrzeli, tveganja, fazni načrt
 - [docs/data-model.md](docs/data-model.md) — Room shema, logični dan, izračun streaka, migracije
-- [docs/security.md](docs/security.md) — šifriranje baze, zaklep, varnostne kopije, kaj gre v Androidovo kopijo
+- [docs/security.md](docs/security.md) — šifriranje baze, zasebni zaslon, varnostne kopije, kaj gre v Androidovo kopijo
 - [docs/alarms.md](docs/alarms.md) — opomniki, povzetek, večerni opomnik, tihe ure, omejitev, razporejanje in dovoljenja
 - [docs/sessions.md](docs/sessions.md) — trajne seje, obvestilo, opozorilo ob cilju, ambientni zvoki, bližnjice
 - [docs/mascot-pipeline.md](docs/mascot-pipeline.md) — 3D maskota: Blender generator, Filament, fallbacki
@@ -58,6 +55,6 @@ Iz ukazne vrstice:
 - `data` — Room (entitete, DAO, `DatabaseGuard`), DataStore nastavitve, repozitoriji, `StreakRecalculator` (predpomnilnik streakov in dnevni povzetki)
 - `notifications`, `work` — alarmi, opomniki, menjava logičnega dne
 - `session`, `shortcuts` — kontroler seje, obvestilo, ambientna storitev in sintetizator, bližnjice
-- `backup`, `lock` — izvoz/uvoz in samodejni posnetek; zaklep aplikacije (koda, biometrija, premor)
+- `backup` — izvoz/uvoz in samodejni posnetek
 - `ui` — `onboarding`, `home`, `addhabit`, `tasks`, `addtask`, `stats`, `settings`, `mascot` (3D maskota prek Filamenta + WebP poze, glej `docs/mascot-pipeline.md`), `components`, `theme`
 - `tools/fonts` — ponovljiva gradnja fontov (Roboto Flex, Manrope; OFL)

@@ -55,6 +55,7 @@ class SettingsDataStore @Inject constructor(
         val BACKUP_REMINDER = booleanPreferencesKey("backup_reminder_enabled")
         val BACKUP_SNOOZE = longPreferencesKey("backup_reminder_snoozed_until")
         val CLOUD_SNAPSHOT = booleanPreferencesKey("cloud_snapshot_enabled")
+        val PRIVACY_SCREEN = booleanPreferencesKey("privacy_screen")
     }
 
     // Privzeti prvi dan tedna po jeziku naprave, dokler ga uporabnik ne nastavi
@@ -91,7 +92,8 @@ class SettingsDataStore @Inject constructor(
         lastBackupAt = this[Keys.LAST_BACKUP]?.let { Instant.ofEpochMilli(it) },
         backupReminderEnabled = this[Keys.BACKUP_REMINDER] ?: true,
         backupReminderSnoozedUntil = this[Keys.BACKUP_SNOOZE]?.let { Instant.ofEpochMilli(it) },
-        cloudSnapshotEnabled = this[Keys.CLOUD_SNAPSHOT] ?: true
+        cloudSnapshotEnabled = this[Keys.CLOUD_SNAPSHOT] ?: true,
+        privacyScreen = this[Keys.PRIVACY_SCREEN] ?: false
     )
 
     private fun MutablePreferences.write(s: AppSettings) {
@@ -115,6 +117,7 @@ class SettingsDataStore @Inject constructor(
         this[Keys.BACKUP_REMINDER] = s.backupReminderEnabled
         setOrRemove(Keys.BACKUP_SNOOZE, s.backupReminderSnoozedUntil?.toEpochMilli())
         this[Keys.CLOUD_SNAPSHOT] = s.cloudSnapshotEnabled
+        this[Keys.PRIVACY_SCREEN] = s.privacyScreen
     }
 
     private fun <T : Any> MutablePreferences.setOrRemove(key: Preferences.Key<T>, value: T?) {

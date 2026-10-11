@@ -31,7 +31,9 @@ data class AppSettings(
     // "Kasneje" pri opomniku za varnostno kopijo
     val backupReminderSnoozedUntil: Instant? = null,
     // Samodejni posnetek podatkov za Androidovo varnostno kopijo (Google)
-    val cloudSnapshotEnabled: Boolean = true
+    val cloudSnapshotEnabled: Boolean = true,
+    // Brez posnetkov zaslona in skrita vsebina v pregledu odprtih aplikacij
+    val privacyScreen: Boolean = false
 ) {
     companion object {
         val MAX_DAY_ENDS_AT: LocalTime = LocalTime.of(6, 0)

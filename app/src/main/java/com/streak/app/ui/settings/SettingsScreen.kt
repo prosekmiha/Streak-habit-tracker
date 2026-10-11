@@ -1,6 +1,5 @@
 package com.streak.app.ui.settings
 
-import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,6 +25,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.NightsStay
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,6 +66,7 @@ import com.streak.app.ui.components.SettingsRow
 import com.streak.app.ui.components.StreakButton
 import com.streak.app.ui.components.StreakDialog
 import com.streak.app.ui.components.StreakSheet
+import com.streak.app.ui.components.StreakSwitch
 import com.streak.app.ui.components.StreakTextField
 import com.streak.app.ui.components.TextAction
 import com.streak.app.ui.components.parseHexColor
@@ -92,7 +93,6 @@ fun SettingsScreen(
     onEditHabit: (String) -> Unit,
     onOpenNotifications: () -> Unit,
     onOpenData: () -> Unit,
-    onOpenSecurity: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -175,8 +175,10 @@ fun SettingsScreen(
 
         SettingsGroup {
             SettingsRow(stringResource(R.string.settings_archived), Icons.Rounded.Archive, Peach, { sheet = ProfileSheet.ARCHIVED }, state.archived.size.toString())
-            SettingsRow(stringResource(R.string.security_title), Icons.Rounded.Lock, Bubblegum, onOpenSecurity)
             SettingsRow(stringResource(R.string.data_title), Icons.Rounded.Download, Mint, onOpenData)
+            SettingsRow(stringResource(R.string.privacy_screen), Icons.Rounded.VisibilityOff, Lavender, { viewModel.setPrivacyScreen(!s.privacyScreen) }) {
+                StreakSwitch(s.privacyScreen, viewModel::setPrivacyScreen, contentDescription = stringResource(R.string.privacy_screen))
+            }
             SettingsRow(
                 stringResource(if (state.recalculating) R.string.settings_recalculating else R.string.settings_recalculate),
                 Icons.Rounded.Refresh, Lime, viewModel::recalculateAll, showDivider = false

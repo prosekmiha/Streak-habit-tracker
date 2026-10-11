@@ -24,7 +24,6 @@ import com.streak.app.ui.detail.HabitDetailScreen
 import com.streak.app.ui.home.HomeScreen
 import com.streak.app.ui.session.SessionScreen
 import com.streak.app.ui.data.DataScreen
-import com.streak.app.ui.lock.SecurityScreen
 import com.streak.app.ui.settings.NotificationSettingsScreen
 import com.streak.app.ui.settings.SettingsScreen
 import com.streak.app.ui.stats.StatsScreen
@@ -90,12 +89,8 @@ fun StreakApp(userName: String, pendingRoute: String? = null, onRouteHandled: ()
                 SettingsScreen(
                     onEditHabit = { id -> navController.navigate(Routes.editHabit(id)) },
                     onOpenNotifications = { navController.navigate(Routes.NOTIFICATION_SETTINGS) },
-                    onOpenData = { navController.navigate(Routes.DATA) },
-                    onOpenSecurity = { navController.navigate(Routes.SECURITY) }
+                    onOpenData = { navController.navigate(Routes.DATA) }
                 )
-            }
-            composable(Routes.SECURITY) {
-                SecurityScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.DATA) {
                 DataScreen(onBack = { navController.popBackStack() })

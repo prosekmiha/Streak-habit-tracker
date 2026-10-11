@@ -3,12 +3,9 @@ package com.streak.app
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
-import androidx.fragment.app.FragmentActivity
+import androidx.activity.ComponentActivity
 import android.os.Build
 import android.view.WindowManager
-import com.streak.app.lock.AppLockManager
-import com.streak.app.lock.LockState
-import com.streak.app.ui.lock.LockOverlayHost
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import androidx.activity.compose.setContent
@@ -34,10 +31,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : FragmentActivity() {
+class MainActivity : ComponentActivity() {
 
     @Inject lateinit var settingsRepository: SettingsRepository
-    @Inject lateinit var lockManager: AppLockManager
 
     // null, dokler se nastavitve ne nalozijo (splash ostane, da ne utripne onboarding)
     private val settings = MutableStateFlow<AppSettings?>(null)
@@ -50,12 +46,12 @@ class MainActivity : FragmentActivity() {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        splash.setKeepOnScreenCondition { settings.value == null || lockManager.state.value == LockState.LOADING }
+        splash.setKeepOnScreenCondition { settings.value == null }
         lifecycleScope.launch { settingsRepository.settings.collect { settings.value = it } }
         if (savedInstanceState == null) handleIntent(intent)
         // Zasebni zaslon: brez posnetkov zaslona in skrita vsebina v nedavnih aplikacijah
         lifecycleScope.launch {
-            lockManager.config.map { it.privacyScreen }.distinctUntilChanged().collect { secure ->
+            settingsRepository.settings.map { it.privacyScreen }.distinctUntilChanged().collect { secure ->
                 if (secure) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE) else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) setRecentsScreenshotEnabled(!secure)
             }
@@ -65,7 +61,6 @@ class MainActivity : FragmentActivity() {
             val current by loadedSettings.collectAsStateWithLifecycle()
             val s = current ?: return@setContent
             val route by pendingRoute.collectAsStateWithLifecycle()
-            val lockState by lockManager.state.collectAsStateWithLifecycle()
             val dark = when (s.themeMode) {
                 ThemeMode.DARK -> true
                 ThemeMode.LIGHT -> false
@@ -73,25 +68,12 @@ class MainActivity : FragmentActivity() {
             }
             StreakTheme(darkTheme = dark, animationLevel = effectiveAnimationLevel(s.animationLevel)) {
                 if (s.onboardingDone) {
-                    LockOverlayHost(locked = lockState == LockState.LOCKED, onExitApp = { moveTaskToBack(true) }) {
-                        StreakApp(userName = s.userName, pendingRoute = route, onRouteHandled = { pendingRoute.value = null })
-                    }
+                    StreakApp(userName = s.userName, pendingRoute = route, onRouteHandled = { pendingRoute.value = null })
                 } else {
                     OnboardingScreen()
                 }
             }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        lockManager.onAppForeground()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        // Obrat zaslona ni odhod iz aplikacije
-        if (!isChangingConfigurations) lockManager.onAppBackground()
     }
 
     override fun onNewIntent(intent: Intent) {
