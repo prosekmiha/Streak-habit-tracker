@@ -348,6 +348,7 @@ private fun ProgressRow(state: HomeUiState, level: Int?, onOpenAchievements: () 
             stringResource(R.string.home_progress_short, state.doneCount, state.dueCount),
             style = MaterialTheme.typography.labelLarge,
             color = palette.ink,
+            maxLines = 1,
             modifier = Modifier.padding(horizontal = 10.dp)
         )
         if (state.topStreak > 0) {
@@ -363,6 +364,8 @@ private fun ProgressRow(state: HomeUiState, level: Int?, onOpenAchievements: () 
                     pluralStringResource(R.plurals.days_short, state.topStreak, state.topStreak),
                     style = MaterialTheme.typography.labelLarge,
                     color = InkOnPastel,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(start = 4.dp)
                 )
             }
@@ -384,6 +387,8 @@ private fun ProgressRow(state: HomeUiState, level: Int?, onOpenAchievements: () 
                     stringResource(R.string.level_short, level),
                     style = MaterialTheme.typography.labelLarge,
                     color = InkOnPastel,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(start = 4.dp)
                 )
             }

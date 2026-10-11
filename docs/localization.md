@@ -64,4 +64,8 @@ Nov niz:
 - [ ] **Pisave:** grščina (el) in cirilica (bg) se izrišejo z naslovno pisavo (Roboto Flex pokriva oba)
 - [ ] **Tedenski trak:** kratka imena dni so skrajšana na največ 4 znake (npr. lv "pirmd." → "Pirm")
 - [ ] **Množine** za 1, 2, 3, 5, 11, 21, 101 v sl, pl, cs, lt, lv, ga, mt
-- [ ] **Pregled domačih govorcev:** vsi prevodi razen sl in en so strojno pripravljeni brez pregleda. Posebej ga (irščina) in mt (malteščina).
+- [ ] **Pregled domačih govorcev:** vsi prevodi razen sl in en so strojno pripravljeni brez pregleda. Posebej ga (irščina: mutacije po števnikih niso dosledne) in mt (malteščina: dvojina in oblike po števnikih).
+
+## Stanje
+
+Vseh 24 jezikov je popolnih (`build.py` brez težav, lint brez `MissingTranslation`/`MissingQuantity`). Na emulatorju preverjeno: de, el, sl, en in psevdojezik en-XA. Pri slednjem se je vrstica napredka na domačem zaslonu prelamljala, zdaj so čipi omejeni na eno vrstico.

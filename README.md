@@ -36,6 +36,7 @@ Zgrajen je v Kotlinu z Jetpack Compose (Material 3), arhitektura je MVVM + Clean
   - Izvoz zapisov v CSV in opomnik za varnostno kopijo vsakih 30 dni.
   - Samodejni posnetek za Androidovo varnostno kopijo, ki se po menjavi telefona ponudi za obnovo, in brisanje vseh podatkov.
 - **Zasebnost**: baza je vedno šifrirana (SQLCipher, ključ v Keystoru). Neobvezni zasebni zaslon prepreči posnetke zaslona. Aplikacija nima zaklepa s kodo.
+- **Jeziki**: 24 uradnih jezikov EU (angleščina privzeto), izbira jezika v aplikaciji in v sistemskih nastavitvah (Android 13+).
 - **Profil**: ime, tema, animacije, prvi dan tedna, "dan se konča ob", obvestila, podatki, zasebni zaslon, skrivanje podrobnosti na widgetih, arhivirane navade in "Preračunaj vse".
 
 ## Zagon
@@ -57,6 +58,7 @@ Iz ukazne vrstice:
 - [docs/alarms.md](docs/alarms.md) — opomniki, povzetek, večerni opomnik, tihe ure, omejitev, razporejanje in dovoljenja
 - [docs/sessions.md](docs/sessions.md) — trajne seje, obvestilo, opozorilo ob cilju, ambientni zvoki, bližnjice
 - [docs/gamification.md](docs/gamification.md) — XP, nivoji, izzivi, značke, praznovanja, deljenje
+- [docs/localization.md](docs/localization.md) — prevodi: postopek, preverjanje, slovar, QA
 - [docs/widgets.md](docs/widgets.md) — widgeti: vsebina, dotiki, osveževanje, zasebnost, videz
 - [docs/mascot-pipeline.md](docs/mascot-pipeline.md) — 3D maskota: Blender generator, Filament, fallbacki
 
