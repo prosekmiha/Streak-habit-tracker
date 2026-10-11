@@ -1,7 +1,9 @@
 package com.streak.app.widget
 
 import android.appwidget.AppWidgetManager
+import android.content.Context
 import android.content.Intent
+import com.streak.app.locale.AppLocale
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -80,6 +82,10 @@ class WidgetConfigActivity : ComponentActivity() {
                 ConfigScreen(items, quantityOnly, onPick = { pick(appWidgetId, quantityOnly, it) }, onClose = ::finish)
             }
         }
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
     }
 
     private fun pick(appWidgetId: Int, quantity: Boolean, habit: Habit) {

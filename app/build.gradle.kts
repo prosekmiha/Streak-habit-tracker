@@ -22,6 +22,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Psevdojeziki (en-XA dolgi nizi, ar-XB zrcaljenje) za preverjanje postavitve
+            isPseudoLocalesEnabled = true
+        }
         release {
             // R8: krajsanje kode in odstranjevanje neuporabljenih virov
             isMinifyEnabled = true
@@ -46,6 +50,12 @@ android {
     }
     androidResources {
         noCompress += "glb"
+        // locales_config.xml za izbiro jezika v sistemskih nastavitvah (Android 13+)
+        generateLocaleConfig = true
+    }
+    bundle {
+        // Jezik se izbira v aplikaciji, zato morajo biti v namestitvi vsi jeziki
+        language { enableSplit = false }
     }
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }

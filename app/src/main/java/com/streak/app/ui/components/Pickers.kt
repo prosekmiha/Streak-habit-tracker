@@ -322,9 +322,10 @@ fun MonthGrid(
     }
 }
 
-// Kratko ime dneva brez pike ("pon." -> "Pon")
+// Kratko ime dneva brez pike ("pon." -> "Pon"); najvec 4 znaki, da se prilega
+// tedenskemu traku tudi v jezikih z dolgimi okrajsavami (npr. latviscina "pirmd.")
 fun shortDayName(day: DayOfWeek, locale: java.util.Locale): String =
-    day.getDisplayName(TextStyle.SHORT_STANDALONE, locale).trimEnd('.').replaceFirstChar { it.titlecase(locale) }
+    day.getDisplayName(TextStyle.SHORT_STANDALONE, locale).trimEnd('.').take(4).replaceFirstChar { it.titlecase(locale) }
 
 // Začetek tedna (za hitre izbire, npr. "ponedeljek")
 fun nextWeekStart(today: LocalDate, firstDayOfWeek: DayOfWeek): LocalDate =

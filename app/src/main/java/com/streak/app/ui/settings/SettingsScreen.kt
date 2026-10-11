@@ -26,6 +26,9 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.NightsStay
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Translate
+import androidx.activity.compose.LocalActivity
+import com.streak.app.locale.AppLocale
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.MaterialTheme
@@ -88,7 +91,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.format.TextStyle
 
-private enum class ProfileSheet { NAME, ANIMATIONS, FIRST_DAY, DAY_END, ARCHIVED, ABOUT }
+private enum class ProfileSheet { NAME, ANIMATIONS, LANGUAGE, FIRST_DAY, DAY_END, ARCHIVED, ABOUT }
 
 @Composable
 fun SettingsScreen(
@@ -102,6 +105,8 @@ fun SettingsScreen(
     val s = state.settings
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
+    val activity = LocalActivity.current
+    val currentLanguage = remember(locale) { AppLocale.current(context) }
     val palette = StreakTheme.palette
     var sheet by remember { mutableStateOf<ProfileSheet?>(null) }
     var pendingDelete by remember { mutableStateOf<Habit?>(null) }
@@ -162,6 +167,10 @@ fun SettingsScreen(
 
         SettingsGroup {
             SettingsRow(
+                stringResource(R.string.language_title), Icons.Rounded.Translate, Mint, { sheet = ProfileSheet.LANGUAGE },
+                currentLanguage?.let { AppLocale.nativeName(it) } ?: stringResource(R.string.language_system)
+            )
+            SettingsRow(
                 stringResource(R.string.settings_first_day), Icons.Rounded.CalendarMonth, Sun, { sheet = ProfileSheet.FIRST_DAY },
                 s.firstDayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, locale).replaceFirstChar { it.titlecase(locale) }
             )
@@ -209,6 +218,19 @@ fun SettingsScreen(
             label = { stringResource(animationLabel(it)) },
             description = { stringResource(animationDescription(it)) },
             onSelect = viewModel::setAnimations,
+            onDismiss = { sheet = null }
+        )
+        ProfileSheet.LANGUAGE -> OptionSheet(
+            title = stringResource(R.string.language_title),
+            options = listOf<String?>(null) + AppLocale.sorted(locale),
+            selected = currentLanguage,
+            label = { it?.let(AppLocale::nativeName) ?: stringResource(R.string.language_system) },
+            // Ime v trenutnem jeziku, ce se razlikuje (npr. "Deutsch" - "nemscina")
+            description = { tag ->
+                tag?.let { java.util.Locale.forLanguageTag(it).getDisplayName(locale) }
+                    ?.takeIf { it != AppLocale.nativeName(tag) && !it.equals(AppLocale.nativeName(tag), ignoreCase = true) }
+            },
+            onSelect = { tag -> activity?.let { AppLocale.set(it, tag) } },
             onDismiss = { sheet = null }
         )
         ProfileSheet.FIRST_DAY -> OptionSheet(

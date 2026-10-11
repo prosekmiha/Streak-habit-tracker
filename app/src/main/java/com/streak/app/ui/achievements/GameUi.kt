@@ -64,7 +64,7 @@ fun Badge.describe(res: Resources): String = when (this) {
     Badge.DONE_100, Badge.DONE_1000 -> res.getQuantityString(R.plurals.badge_done_desc, target, target)
     Badge.FIRST_SESSION -> res.getString(R.string.badge_first_session_desc)
     Badge.FOCUS_10H -> res.getQuantityString(R.plurals.badge_focus_desc, target / 60, target / 60)
-    Badge.EARLY_BIRD -> res.getString(R.string.badge_early_bird_desc, target)
+    Badge.EARLY_BIRD -> res.getQuantityString(R.plurals.badge_early_bird_desc, target, target)
     Badge.REFLECTIVE -> res.getQuantityString(R.plurals.badge_reflective_desc, target, target)
     Badge.CHALLENGER -> res.getQuantityString(R.plurals.badge_challenger_desc, target, target)
     Badge.LEVEL_5, Badge.LEVEL_10 -> res.getString(R.string.badge_level_desc, target)

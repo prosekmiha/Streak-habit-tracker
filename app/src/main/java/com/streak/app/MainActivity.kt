@@ -1,6 +1,8 @@
 package com.streak.app
 
+import android.content.Context
 import android.content.Intent
+import com.streak.app.locale.AppLocale
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -74,6 +76,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
     }
 
     override fun onNewIntent(intent: Intent) {

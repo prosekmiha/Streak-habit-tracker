@@ -65,7 +65,7 @@ class ReminderDispatcher @Inject constructor(
     } else {
         val (names, more) = NotificationRules.nudgeNames(pending)
         val list = names.joinToString(", ")
-        if (more > 0) context.getString(R.string.notif_nudge_names_more, list, more) else list
+        if (more > 0) context.resources.getQuantityString(R.plurals.notif_nudge_names_more, more, list, more) else list
     }
 
     // "Opravljeno" iz obvestila

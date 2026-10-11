@@ -1,6 +1,8 @@
 package com.streak.app
 
 import android.app.Application
+import android.content.Context
+import com.streak.app.locale.AppLocale
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.streak.app.data.local.DatabaseGuard
@@ -51,6 +53,11 @@ class StreakApplication : Application(), Configuration.Provider {
     @Inject lateinit var widgetUpdater: WidgetUpdater
     @Inject lateinit var gameEvents: GameEvents
     @Inject @ApplicationScope lateinit var appScope: CoroutineScope
+
+    // Jezik aplikacije pred Androidom 13 (obvestila in widgeti uporabljajo ta Context)
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(AppLocale.wrap(base))
+    }
 
     @OptIn(FlowPreview::class)
     override fun onCreate() {
