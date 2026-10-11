@@ -19,6 +19,10 @@ import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.LogResult
 import com.streak.app.domain.usecase.ToggleHabitUseCase
 import com.streak.app.session.SessionController
+import com.streak.app.backup.BackupManager
+import com.streak.app.backup.SnapshotInfo
+import com.streak.app.domain.backup.BackupReminder
+import java.time.Instant
 import com.streak.app.ui.components.HabitCardUi
 import com.streak.app.ui.components.WeekDayStatus
 import com.streak.app.ui.components.WeekDayUi
@@ -61,7 +65,9 @@ data class HomeUiState(
     val dbHealth: DatabaseHealth = DatabaseHealth.Ok,
     // Najdaljsa trenutna veriga med navadami (za cip ob traku napredka)
     val topStreak: Int = 0,
-    val celebration: Celebration? = null
+    val celebration: Celebration? = null,
+    // Cas za varnostno kopijo (30 dni)
+    val backupDue: Boolean = false
 ) {
     val isToday: Boolean get() = selectedDate == today
     val allDone: Boolean get() = dueCount > 0 && doneCount >= dueCount
@@ -86,6 +92,7 @@ class HomeViewModel @Inject constructor(
     private val dayClock: DayClock,
     private val logHabit: ToggleHabitUseCase,
     private val sessionController: SessionController,
+    private val backupManager: BackupManager,
     databaseGuard: DatabaseGuard
 ) : ViewModel() {
 
@@ -141,7 +148,14 @@ class HomeViewModel @Inject constructor(
             clockStatus = ClockSanity.check(settings.lastKnownDate, today),
             dbHealth = health,
             topStreak = habits.filter { it.habit.schedule.streakUnit == StreakUnit.DAY }.maxOfOrNull { it.streak.currentStreak } ?: 0,
-            celebration = celebrating
+            celebration = celebrating,
+            backupDue = BackupReminder.isDue(
+                now = Instant.now(),
+                enabled = settings.backupReminderEnabled,
+                lastBackup = settings.lastBackupAt,
+                snoozedUntil = settings.backupReminderSnoozedUntil,
+                oldestHabitCreatedAt = habits.minOfOrNull { it.habit.createdAt }?.let(Instant::ofEpochMilli)
+            )
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
 
@@ -189,6 +203,30 @@ class HomeViewModel @Inject constructor(
     }
 
     fun dismissCelebration() { celebration.value = null }
+
+    // Prazna baza + samodejni posnetek (npr. nov telefon): ponudi obnovo
+    private val _restoreOffer = MutableStateFlow<SnapshotInfo?>(null)
+    val restoreOffer: StateFlow<SnapshotInfo?> = _restoreOffer
+
+    init {
+        viewModelScope.launch { _restoreOffer.value = backupManager.pendingSnapshot() }
+    }
+
+    fun acceptRestore() {
+        _restoreOffer.value = null
+        viewModelScope.launch { backupManager.restoreSnapshot() }
+    }
+
+    fun declineRestore() {
+        _restoreOffer.value = null
+        viewModelScope.launch { backupManager.discardSnapshot() }
+    }
+
+    fun snoozeBackupReminder() {
+        viewModelScope.launch {
+            settingsRepository.update { it.copy(backupReminderSnoozedUntil = Instant.now().plus(BackupReminder.SNOOZE)) }
+        }
+    }
 
     // Ce je vpis uporabnika podaljsal verigo do mejnika, pokazi praznovanje (enkrat na mejnik)
     private fun checkMilestones(habits: List<HabitWithStreak>) {

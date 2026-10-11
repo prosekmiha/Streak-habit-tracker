@@ -1,5 +1,6 @@
 package com.streak.app.ui.components
 
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -61,12 +62,16 @@ fun StreakTextField(
     singleLine: Boolean = true,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
-    isError: Boolean = false
+    isError: Boolean = false,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    trailingIcon: (@Composable () -> Unit)? = null
 ) {
     val palette = StreakTheme.palette
     Column(modifier) {
         if (label != null) FieldLabel(label)
         OutlinedTextField(
+            visualTransformation = visualTransformation,
+            trailingIcon = trailingIcon,
             value = value,
             onValueChange = onValueChange,
             singleLine = singleLine,

@@ -27,7 +27,11 @@ data class AppSettings(
     val nudgeEnabled: Boolean = true,
     val nudgeTime: LocalTime = LocalTime.of(20, 0),
     val lastBackupAt: Instant? = null,
-    val backupReminderEnabled: Boolean = true
+    val backupReminderEnabled: Boolean = true,
+    // "Kasneje" pri opomniku za varnostno kopijo
+    val backupReminderSnoozedUntil: Instant? = null,
+    // Samodejni posnetek podatkov za Androidovo varnostno kopijo (Google)
+    val cloudSnapshotEnabled: Boolean = true
 ) {
     companion object {
         val MAX_DAY_ENDS_AT: LocalTime = LocalTime.of(6, 0)

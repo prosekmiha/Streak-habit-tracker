@@ -1,5 +1,7 @@
 package com.streak.app.ui.home
 
+import com.streak.app.ui.theme.Sky
+import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.foundation.background
 import com.streak.app.session.SessionNotifier
 import androidx.compose.material.icons.rounded.Pause
@@ -85,11 +87,13 @@ fun HomeScreen(
     onOpenHabit: (String) -> Unit,
     onOpenSession: (String) -> Unit,
     onOpenStats: () -> Unit,
+    onOpenData: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val pendingClock by viewModel.hasPendingClockAction.collectAsStateWithLifecycle()
     val activeSession by viewModel.activeSession.collectAsStateWithLifecycle()
+    val restoreOffer by viewModel.restoreOffer.collectAsStateWithLifecycle()
     var sheetFor by rememberSaveable { mutableStateOf<String?>(null) }
     var inboxOpen by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
@@ -124,6 +128,7 @@ fun HomeScreen(
             }
             activeSession?.let { bar -> fullSpan { ActiveSessionBanner(bar) { onOpenSession(bar.habitId) } } }
             banners(state, onConfirmClock = viewModel::confirmClock)
+            if (state.backupDue && state.isToday) fullSpan { BackupBanner(onExport = onOpenData, onLater = viewModel::snoozeBackupReminder) }
             if (!state.isToday) fullSpan { PastDayBar(state, onBack = viewModel::backToToday) }
 
             if (state.loaded && !state.hasHabits) {
@@ -191,6 +196,21 @@ fun HomeScreen(
         }
     }
 
+    restoreOffer?.let { offer ->
+        val locale = LocalConfiguration.current.locales[0]
+        val date = offer.createdAt?.atZone(java.time.ZoneId.systemDefault())?.toLocalDate()
+            ?.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)).orEmpty()
+        StreakDialog(
+            onDismiss = {},
+            title = stringResource(R.string.restore_offer_title),
+            text = pluralStringResource(R.plurals.restore_offer_text, offer.habits, date, offer.habits),
+            mascot = MascotMood.WAVE
+        ) {
+            DialogAction(stringResource(R.string.restore_offer_accept), ButtonVariant.Dark, viewModel::acceptRestore)
+            DialogAction(stringResource(R.string.restore_offer_decline), ButtonVariant.Secondary, viewModel::declineRestore)
+        }
+    }
+
     state.celebration?.let { c ->
         CelebrationOverlay(celebration = c, onDismiss = viewModel::dismissCelebration)
     }
@@ -231,6 +251,24 @@ private fun ActiveSessionBanner(bar: ActiveSessionBar, onOpen: () -> Unit) {
         ) {
             Text(stringResource(R.string.home_session_open), style = MaterialTheme.typography.labelLarge, color = Lime)
         }
+    }
+}
+
+// Opomnik za varnostno kopijo (vsakih 30 dni)
+@Composable
+private fun BackupBanner(onExport: () -> Unit, onLater: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(Sky)
+            .padding(start = 14.dp, end = 6.dp, top = 10.dp, bottom = 10.dp)
+    ) {
+        Icon(Icons.Rounded.CloudUpload, contentDescription = null, tint = InkOnPastel)
+        Text(stringResource(R.string.backup_banner), style = MaterialTheme.typography.bodyMedium, color = InkOnPastel, modifier = Modifier.weight(1f).padding(horizontal = 10.dp))
+        TextAction(stringResource(R.string.later), onLater, color = InkOnPastel.copy(alpha = .7f))
+        TextAction(stringResource(R.string.backup_banner_action), onExport, color = InkOnPastel)
     }
 }
 

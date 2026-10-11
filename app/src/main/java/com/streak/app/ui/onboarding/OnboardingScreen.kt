@@ -1,5 +1,9 @@
 package com.streak.app.ui.onboarding
 
+import com.streak.app.ui.data.BusyDialog
+import com.streak.app.ui.data.ImportStep
+import com.streak.app.ui.data.ImportFlow
+import com.streak.app.ui.data.DataViewModel
 import android.Manifest
 import android.app.Activity
 import android.os.Build
@@ -89,13 +93,18 @@ import com.streak.app.ui.theme.StreakTheme
 import com.streak.app.ui.theme.Sun
 
 @Composable
-fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
+fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel(), dataViewModel: DataViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val data by dataViewModel.state.collectAsStateWithLifecycle()
+    val openBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { dataViewModel.readImport(it) }
     BackHandler(enabled = state.step != OnboardingStep.WELCOME) { viewModel.back() }
 
     AnimatedContent(targetState = state.step, label = "onboarding") { step ->
         when (step) {
-            OnboardingStep.WELCOME -> WelcomeStep(onStart = { viewModel.goTo(OnboardingStep.NAME) })
+            OnboardingStep.WELCOME -> WelcomeStep(
+                onStart = { viewModel.goTo(OnboardingStep.NAME) },
+                onRestore = { openBackup.launch(arrayOf("*/*")) }
+            )
             OnboardingStep.NAME -> NameStep(
                 name = state.name,
                 onNameChange = viewModel::setName,
@@ -116,10 +125,19 @@ fun OnboardingScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
             )
         }
     }
+
+    // Obnova iz datoteke (preskoci onboarding)
+    ImportFlow(
+        step = data.import,
+        onPassword = dataViewModel::submitPassword,
+        onConfirm = dataViewModel::confirmImport,
+        onClose = { if (data.import is ImportStep.Done) dataViewModel.finishOnboarding() else dataViewModel.closeImport() }
+    )
+    if (data.import is ImportStep.Working) BusyDialog()
 }
 
 @Composable
-private fun WelcomeStep(onStart: () -> Unit) {
+private fun WelcomeStep(onStart: () -> Unit, onRestore: () -> Unit) {
     LightStatusBarIcons()
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -151,6 +169,7 @@ private fun WelcomeStep(onStart: () -> Unit) {
             MascotView(MascotMood.WAVE, Modifier.size(width = 270.dp, height = 292.dp), hero = true)
         }
         StreakButton(stringResource(R.string.onboarding_start), onStart, variant = ButtonVariant.White, height = 58.dp)
+        TextAction(stringResource(R.string.onboarding_restore), onRestore, color = Color.White, modifier = Modifier.padding(top = 6.dp))
         Text(
             stringResource(R.string.onboarding_privacy),
             style = MaterialTheme.typography.bodySmall,

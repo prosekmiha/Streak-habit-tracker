@@ -8,7 +8,6 @@ import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.ThemeMode
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
-import com.streak.app.domain.usecase.ExportDataUseCase
 import com.streak.app.notifications.AlarmScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +26,6 @@ data class SettingsUiState(
     val topStreak: Int = 0,
     val totalDone: Int = 0,
     val archived: List<Habit> = emptyList(),
-    val exportJson: String? = null,
     val recalculating: Boolean = false
 )
 
@@ -35,27 +33,23 @@ data class SettingsUiState(
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val habitRepository: HabitRepository,
-    private val exportData: ExportDataUseCase,
     private val alarmScheduler: AlarmScheduler
 ) : ViewModel() {
 
-    private val exportJson = MutableStateFlow<String?>(null)
     private val recalculating = MutableStateFlow(false)
 
     val state: StateFlow<SettingsUiState> = combine(
         settingsRepository.settings,
         habitRepository.observeHabits(),
         habitRepository.observeArchivedHabits(),
-        exportJson,
         recalculating
-    ) { settings, habits, archived, export, recalc ->
+    ) { settings, habits, archived, recalc ->
         SettingsUiState(
             settings = settings,
             habits = habits.map { it.habit },
             topStreak = habits.maxOfOrNull { it.streak.currentStreak } ?: 0,
             totalDone = habits.sumOf { it.streak.totalDone },
             archived = archived,
-            exportJson = export,
             recalculating = recalc
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
@@ -87,12 +81,6 @@ class SettingsViewModel @Inject constructor(
             habitRepository.deleteHabit(habit.id)
         }
     }
-
-    fun export() {
-        viewModelScope.launch { exportJson.value = exportData() }
-    }
-
-    fun clearExport() { exportJson.value = null }
 
     fun recalculateAll() {
         if (recalculating.value) return

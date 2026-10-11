@@ -246,8 +246,6 @@
     <string name="settings_day_ends_at_desc">Vpisi pred to uro štejejo za prejšnji dan. Primerno, če greš pozno spat.</string>
     <string name="settings_midnight">Polnoč</string>
     <string name="settings_archived">Arhivirane</string>
-    <string name="settings_export">Izvozi v JSON</string>
-    <string name="export_title">Izvoz (JSON)</string>
     <string name="settings_recalculate">Preračunaj vse streake</string>
     <string name="settings_recalculating">Preračunavam …</string>
     <string name="settings_about">O aplikaciji</string>
@@ -405,7 +403,6 @@
     <string name="notifications_title">Obvestila</string>
     <string name="notifications_on">Vklopljena</string>
     <string name="notifications_off">Izklopljena</string>
-    <string name="export_hint">Kopija vseh navad in zapisov. Shrani jo na varno mesto (popoln uvoz in varnostne kopije prideta kmalu).</string>
     <string name="share">Deli</string>
     <string name="archived_empty">Ni arhiviranih navad.</string>
     <string name="animations_full_desc">Maskota in praznovanja se premikajo</string>
@@ -507,4 +504,96 @@
         <item quantity="few">navade</item>
         <item quantity="other">navad</item>
     </plurals>
+    <string name="data_title">Podatki in varnostna kopija</string>
+    <string name="data_saved">Varnostna kopija je shranjena</string>
+    <string name="data_csv_saved">CSV je shranjen</string>
+    <string name="data_write_failed">Datoteke ni bilo mogoče shraniti</string>
+    <string name="data_export">Izvozi varnostno kopijo</string>
+    <string name="data_import">Obnovi iz varnostne kopije</string>
+    <string name="data_reminder">Opomnik vsakih 30 dni</string>
+    <string name="data_backup_hint">Varnostna kopija vsebuje vse navade, zapise, seje, naloge in nastavitve. Shrani jo izven telefona, npr. v svoj oblak ali na računalnik.</string>
+    <string name="data_csv">Izvozi zapise (CSV)</string>
+    <string name="data_csv_hint">Za pregled v preglednici (Excel, LibreOffice, Google Sheets). CSV ni mogoče uvoziti nazaj.</string>
+    <string name="data_cloud">Androidova varnostna kopija</string>
+    <string name="data_cloud_hint">Ko Android varnostno kopira napravo, shrani tudi kopijo tvojih navad in jo po menjavi telefona ponudi za obnovo. Na napravah z zaklenjenim zaslonom je ta kopija šifrirana.</string>
+    <string name="data_wipe">Izbriši vse podatke</string>
+    <string name="data_wipe_hint">Trajno izbriše navade, zapise, seje, naloge in nastavitve s te naprave.</string>
+    <string name="data_wipe_title">Izbrišem vse?</string>
+    <string name="data_wipe_text">Vse navade, zapisi, seje, naloge in nastavitve bodo trajno izbrisani. Tega ni mogoče razveljaviti. Če jih želiš obdržati, najprej izvozi varnostno kopijo.</string>
+    <string name="data_wipe_confirm">Izbriši vse</string>
+    <string name="data_last_never">Še nikoli</string>
+    <string name="data_last_today">Danes</string>
+    <string name="data_last_yesterday">Včeraj</string>
+    <plurals name="data_last_days">
+        <item quantity="one">Pred %d dnem</item>
+        <item quantity="two">Pred %d dnevoma</item>
+        <item quantity="few">Pred %d dnevi</item>
+        <item quantity="other">Pred %d dnevi</item>
+    </plurals>
+    <string name="data_last_label">Zadnja varnostna kopija</string>
+    <string name="data_export_text">Datoteko lahko zaščitiš z geslom. Brez gesla je ne bo mogoče obnoviti, zato si ga dobro zapomni.</string>
+    <string name="data_password_optional">Geslo (neobvezno)</string>
+    <string name="data_password_repeat">Ponovi geslo</string>
+    <string name="data_password_short">Geslo naj ima vsaj %1$d znakov.</string>
+    <string name="data_password_none_hint">Brez gesla lahko datoteko prebere vsak, ki jo dobi.</string>
+    <string name="data_password_hint">Datoteka bo šifrirana (AES-256). Pozabljenega gesla ni mogoče obnoviti.</string>
+    <string name="data_save_file">Shrani v datoteko</string>
+    <string name="data_password_hide">Skrij geslo</string>
+    <string name="data_password_show">Pokaži geslo</string>
+    <string name="data_import_password_title">Varnostna kopija je zaščitena</string>
+    <string name="data_import_password_text">Vpiši geslo, s katerim je bila datoteka izvožena.</string>
+    <string name="data_password">Geslo</string>
+    <string name="data_password_wrong">Napačno geslo.</string>
+    <string name="data_unlock">Odkleni</string>
+    <string name="data_preview_title">Kaj je v varnostni kopiji</string>
+    <plurals name="data_preview_skipped">
+        <item quantity="one">%d zapis brez navade bo izpuščen</item>
+        <item quantity="two">%d zapisa brez navade bosta izpuščena</item>
+        <item quantity="few">%d zapisi brez navade bodo izpuščeni</item>
+        <item quantity="other">%d zapisov brez navade bo izpuščenih</item>
+    </plurals>
+    <string name="data_merge">Spoji z obstoječimi</string>
+    <string name="data_merge_hint">Tvoji trenutni podatki ostanejo, dodajo se manjkajoči. Pri istem dnevu velja novejši vpis.</string>
+    <string name="data_replace">Zamenjaj vse</string>
+    <string name="data_replace_hint">Trenutni podatki se izbrišejo in nadomestijo s tistimi iz datoteke, skupaj z nastavitvami.</string>
+    <string name="data_import_done">Uvoz končan</string>
+    <string name="data_import_done_text">Navade, zapisi in opomniki so posodobljeni.</string>
+    <string name="data_import_failed">Uvoz ni uspel</string>
+    <string name="data_error_not_backup">Ta datoteka ni varnostna kopija aplikacije Streak.</string>
+    <string name="data_error_newer">Varnostna kopija je nastala v novejši različici aplikacije. Najprej posodobi aplikacijo.</string>
+    <string name="data_error_corrupt">Datoteka je poškodovana ali nepopolna.</string>
+    <string name="data_error_read">Datoteke ni bilo mogoče prebrati.</string>
+    <string name="data_preview_created">Ustvarjena %1$s</string>
+    <plurals name="data_count_habits">
+        <item quantity="one">%d navada</item>
+        <item quantity="two">%d navadi</item>
+        <item quantity="few">%d navade</item>
+        <item quantity="other">%d navad</item>
+    </plurals>
+    <plurals name="data_count_completions">
+        <item quantity="one">%d zapis</item>
+        <item quantity="two">%d zapisa</item>
+        <item quantity="few">%d zapisi</item>
+        <item quantity="other">%d zapisov</item>
+    </plurals>
+    <plurals name="data_count_tasks">
+        <item quantity="one">%d naloga</item>
+        <item quantity="two">%d nalogi</item>
+        <item quantity="few">%d naloge</item>
+        <item quantity="other">%d nalog</item>
+    </plurals>
+    <string name="data_preview_range">Od %1$s do %2$s</string>
+    <string name="later">Kasneje</string>
+    <string name="backup_banner">Čas je za varnostno kopijo tvojih navad.</string>
+    <string name="backup_banner_action">Izvozi</string>
+    <string name="restore_offer_title">Najdena varnostna kopija</string>
+    <plurals name="restore_offer_text">
+        <item quantity="one">Na tej napravi še ni navad, najdena pa je samodejna varnostna kopija z dne %1$s (%2$d navada). Jo obnovim?</item>
+        <item quantity="two">Na tej napravi še ni navad, najdena pa je samodejna varnostna kopija z dne %1$s (%2$d navadi). Jo obnovim?</item>
+        <item quantity="few">Na tej napravi še ni navad, najdena pa je samodejna varnostna kopija z dne %1$s (%2$d navade). Jo obnovim?</item>
+        <item quantity="other">Na tej napravi še ni navad, najdena pa je samodejna varnostna kopija z dne %1$s (%2$d navad). Jo obnovim?</item>
+    </plurals>
+    <string name="restore_offer_accept">Obnovi</string>
+    <string name="restore_offer_decline">Ne, začni na novo</string>
+    <string name="onboarding_restore">Obnovi iz varnostne kopije</string>
 </resources>

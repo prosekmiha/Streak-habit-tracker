@@ -53,6 +53,8 @@ class SettingsDataStore @Inject constructor(
         val NUDGE_AT = intPreferencesKey("nudge_minute")
         val LAST_BACKUP = longPreferencesKey("last_backup_millis")
         val BACKUP_REMINDER = booleanPreferencesKey("backup_reminder_enabled")
+        val BACKUP_SNOOZE = longPreferencesKey("backup_reminder_snoozed_until")
+        val CLOUD_SNAPSHOT = booleanPreferencesKey("cloud_snapshot_enabled")
     }
 
     // Privzeti prvi dan tedna po jeziku naprave, dokler ga uporabnik ne nastavi
@@ -87,7 +89,9 @@ class SettingsDataStore @Inject constructor(
         nudgeEnabled = this[Keys.NUDGE_ON] ?: true,
         nudgeTime = this[Keys.NUDGE_AT]?.let(::minuteToTime) ?: LocalTime.of(20, 0),
         lastBackupAt = this[Keys.LAST_BACKUP]?.let { Instant.ofEpochMilli(it) },
-        backupReminderEnabled = this[Keys.BACKUP_REMINDER] ?: true
+        backupReminderEnabled = this[Keys.BACKUP_REMINDER] ?: true,
+        backupReminderSnoozedUntil = this[Keys.BACKUP_SNOOZE]?.let { Instant.ofEpochMilli(it) },
+        cloudSnapshotEnabled = this[Keys.CLOUD_SNAPSHOT] ?: true
     )
 
     private fun MutablePreferences.write(s: AppSettings) {
@@ -109,6 +113,8 @@ class SettingsDataStore @Inject constructor(
         this[Keys.NUDGE_AT] = timeToMinute(s.nudgeTime)
         setOrRemove(Keys.LAST_BACKUP, s.lastBackupAt?.toEpochMilli())
         this[Keys.BACKUP_REMINDER] = s.backupReminderEnabled
+        setOrRemove(Keys.BACKUP_SNOOZE, s.backupReminderSnoozedUntil?.toEpochMilli())
+        this[Keys.CLOUD_SNAPSHOT] = s.cloudSnapshotEnabled
     }
 
     private fun <T : Any> MutablePreferences.setOrRemove(key: Preferences.Key<T>, value: T?) {

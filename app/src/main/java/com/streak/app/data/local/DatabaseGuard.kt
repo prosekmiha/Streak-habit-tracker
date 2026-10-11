@@ -1,7 +1,6 @@
 package com.streak.app.data.local
 
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -41,8 +40,8 @@ class DatabaseGuard @Inject constructor(
     private var pendingFromVersion: Int = 0
 
     // Klice se tik pred gradnjo Room baze. Prebere verzijo obstojece datoteke
-    // in, ce bo potrebna migracija, naredi kopijo.
-    fun prepareForOpen(name: String, targetVersion: Int) {
+    // (readVersion zna odpreti sifrirano bazo) in, ce bo potrebna migracija, naredi kopijo.
+    fun prepareForOpen(name: String, targetVersion: Int, readVersion: (File) -> Int?) {
         val dbFile = context.getDatabasePath(name)
         if (!dbFile.exists()) return
         val version = readVersion(dbFile) ?: return
@@ -83,10 +82,6 @@ class DatabaseGuard @Inject constructor(
             _health.value = DatabaseHealth.Corrupted(result.take(5).joinToString("; "))
         }
     }
-
-    private fun readVersion(dbFile: File): Int? = runCatching {
-        SQLiteDatabase.openDatabase(dbFile.path, null, SQLiteDatabase.OPEN_READONLY).use { it.version }
-    }.getOrNull()
 
     private fun backup(dbFile: File, version: Int): File {
         backupDir.mkdirs()

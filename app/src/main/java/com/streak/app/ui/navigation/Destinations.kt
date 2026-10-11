@@ -13,6 +13,7 @@ object Routes {
     const val ADD_TASK = "add_task"
     const val EDIT_TASK = "edit_task/{taskId}"
     const val NOTIFICATION_SETTINGS = "notification_settings"
+    const val DATA = "data"
 
     val TopLevel = setOf(HOME, TASKS, STATS, PROFILE)
 

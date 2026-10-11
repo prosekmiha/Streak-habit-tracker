@@ -1,6 +1,5 @@
 package com.streak.app.ui.settings
 
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Animation
@@ -89,7 +87,12 @@ import java.time.format.TextStyle
 private enum class ProfileSheet { NAME, ANIMATIONS, FIRST_DAY, DAY_END, ARCHIVED, ABOUT }
 
 @Composable
-fun SettingsScreen(onEditHabit: (String) -> Unit, onOpenNotifications: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsScreen(
+    onEditHabit: (String) -> Unit,
+    onOpenNotifications: () -> Unit,
+    onOpenData: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel()
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val s = state.settings
     val context = LocalContext.current
@@ -170,7 +173,7 @@ fun SettingsScreen(onEditHabit: (String) -> Unit, onOpenNotifications: () -> Uni
 
         SettingsGroup {
             SettingsRow(stringResource(R.string.settings_archived), Icons.Rounded.Archive, Peach, { sheet = ProfileSheet.ARCHIVED }, state.archived.size.toString())
-            SettingsRow(stringResource(R.string.settings_export), Icons.Rounded.Download, Mint, viewModel::export)
+            SettingsRow(stringResource(R.string.data_title), Icons.Rounded.Download, Mint, onOpenData)
             SettingsRow(
                 stringResource(if (state.recalculating) R.string.settings_recalculating else R.string.settings_recalculate),
                 Icons.Rounded.Refresh, Lime, viewModel::recalculateAll, showDivider = false
@@ -224,34 +227,6 @@ fun SettingsScreen(onEditHabit: (String) -> Unit, onOpenNotifications: () -> Uni
             Text(stringResource(R.string.app_version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.bodyMedium, color = palette.inkSoft, modifier = Modifier.padding(top = 12.dp))
         }
         null -> Unit
-    }
-
-    state.exportJson?.let { json ->
-        StreakSheet(onDismiss = viewModel::clearExport, title = stringResource(R.string.export_title), showClose = true) {
-            Text(stringResource(R.string.export_hint), style = MaterialTheme.typography.bodyMedium, color = palette.inkSoft, modifier = Modifier.padding(bottom = 10.dp))
-            StreakButton(
-                stringResource(R.string.share),
-                {
-                    val send = Intent(Intent.ACTION_SEND).setType("application/json").putExtra(Intent.EXTRA_TEXT, json)
-                    context.startActivity(Intent.createChooser(send, null))
-                },
-                icon = Icons.Rounded.Download
-            )
-            SelectionContainer {
-                Text(
-                    json,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = palette.ink,
-                    modifier = Modifier
-                        .padding(top = 12.dp)
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(palette.surfaceSoft)
-                        .padding(12.dp)
-                        .heightIn(max = 320.dp)
-                )
-            }
-        }
     }
 
     pendingDelete?.let { habit ->

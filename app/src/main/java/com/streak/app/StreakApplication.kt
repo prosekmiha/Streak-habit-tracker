@@ -12,11 +12,17 @@ import com.streak.app.notifications.AlarmScheduler
 import com.streak.app.notifications.NotificationHelper
 import com.streak.app.notifications.ReminderDispatcher
 import com.streak.app.domain.repository.SettingsRepository
+import com.streak.app.domain.repository.HabitRepository
+import com.streak.app.domain.repository.TaskRepository
+import com.streak.app.backup.BackupManager
 import com.streak.app.session.SessionController
 import com.streak.app.shortcuts.ShortcutPublisher
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
@@ -37,8 +43,12 @@ class StreakApplication : Application(), Configuration.Provider {
     @Inject lateinit var shortcutPublisher: ShortcutPublisher
     @Inject lateinit var reminderDispatcher: ReminderDispatcher
     @Inject lateinit var settingsRepository: SettingsRepository
+    @Inject lateinit var habitRepository: HabitRepository
+    @Inject lateinit var taskRepository: TaskRepository
+    @Inject lateinit var backupManager: BackupManager
     @Inject @ApplicationScope lateinit var appScope: CoroutineScope
 
+    @OptIn(FlowPreview::class)
     override fun onCreate() {
         super.onCreate()
         notificationHelper.createChannels()
@@ -60,6 +70,16 @@ class StreakApplication : Application(), Configuration.Provider {
         appScope.launch { shortcutPublisher.run() }
         // Opravljena navada pospravi svoj opomnik, vse opravljeno pa vecerni opomnik
         appScope.launch { reminderDispatcher.syncWithProgress() }
+        // Samodejni posnetek za Androidovo varnostno kopijo, 10 s po zadnji spremembi
+        appScope.launch {
+            combine(
+                habitRepository.observeHabits(),
+                taskRepository.observeTasks(),
+                settingsRepository.settings.map { it.cloudSnapshotEnabled }.distinctUntilChanged()
+            ) { _, _, _ -> Unit }
+                .debounce(SNAPSHOT_DEBOUNCE_MS)
+                .collect { runCatching { backupManager.writeSnapshot() } }
+        }
         // Sprememba ur povzetka/opomnika ali meje dneva: prerazporedi
         appScope.launch {
             settingsRepository.settings
@@ -90,5 +110,6 @@ class StreakApplication : Application(), Configuration.Provider {
 
     private companion object {
         const val INTEGRITY_CHECK_DELAY_MS = 10_000L
+        const val SNAPSHOT_DEBOUNCE_MS = 10_000L
     }
 }

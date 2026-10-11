@@ -42,7 +42,9 @@ class DatabaseMigrationTest {
     @Test fun legacyV1IsBackedUpAndReplaced() = runTest {
         createLegacyV1(context.getDatabasePath(name))
         val guard = DatabaseGuard(context)
-        guard.prepareForOpen(name, StreakDatabase.VERSION)
+        guard.prepareForOpen(name, StreakDatabase.VERSION) { f ->
+            SQLiteDatabase.openDatabase(f.path, null, SQLiteDatabase.OPEN_READONLY).use { it.version }
+        }
 
         val backups = File(context.noBackupFilesDir, "db-backups").listFiles { f -> f.name.startsWith("streak-v1-") && f.name.endsWith(".db") }
         assertEquals(1, backups?.size)

@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
+import com.streak.app.data.local.dao.BackupDao
 import com.streak.app.data.local.dao.CompletionDao
 import com.streak.app.data.local.dao.HabitDao
 import com.streak.app.data.local.dao.SessionDao
@@ -44,6 +45,7 @@ abstract class StreakDatabase : RoomDatabase() {
     abstract fun vacationDao(): VacationDao
     abstract fun sessionDao(): SessionDao
     abstract fun taskDao(): TaskDao
+    abstract fun backupDao(): BackupDao
 
     companion object {
         const val NAME = "streak.db"
