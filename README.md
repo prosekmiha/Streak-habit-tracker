@@ -59,6 +59,7 @@ Iz ukazne vrstice:
 - [docs/sessions.md](docs/sessions.md) — trajne seje, obvestilo, opozorilo ob cilju, ambientni zvoki, bližnjice
 - [docs/gamification.md](docs/gamification.md) — XP, nivoji, izzivi, značke, praznovanja, deljenje
 - [docs/localization.md](docs/localization.md) — prevodi: postopek, preverjanje, slovar, QA
+- [docs/quality.md](docs/quality.md) — dostopnost, posnetki zaslona (Roborazzi), hitrost
 - [docs/widgets.md](docs/widgets.md) — widgeti: vsebina, dotiki, osveževanje, zasebnost, videz
 - [docs/mascot-pipeline.md](docs/mascot-pipeline.md) — 3D maskota: Blender generator, Filament, fallbacki
 

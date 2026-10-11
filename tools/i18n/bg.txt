@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Изпълни %d предизвикателство
 P badge_early_bird_desc=one:Изпълни навик преди 9:00 %d път. | other:Изпълни навик преди 9:00 %d пъти.
 language_title=Език
 language_system=Език на системата
+sheet_handle=Манипулатор за плъзгане

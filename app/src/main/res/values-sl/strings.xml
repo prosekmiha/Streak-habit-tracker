@@ -748,4 +748,5 @@
     </plurals>
     <string name="language_title">Jezik</string>
     <string name="language_system">Jezik sistema</string>
+    <string name="sheet_handle">Ročica lista</string>
 </resources>

@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Suorita %d päivän haaste. | other:Suorita %d päiv
 P badge_early_bird_desc=one:Tee jokin tapa ennen klo 9.00 %d kerran. | other:Tee jokin tapa ennen klo 9.00 %d kertaa.
 language_title=Kieli
 language_system=Järjestelmän kieli
+sheet_handle=Vetokahva

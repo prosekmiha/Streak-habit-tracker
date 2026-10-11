@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Completa %d sfida del giorno. | many:Completa %d sfi
 P badge_early_bird_desc=one:Completa %d volta un'abitudine prima delle 9:00. | many:Completa %d volte un'abitudine prima delle 9:00. | other:Completa %d volte un'abitudine prima delle 9:00.
 language_title=Lingua
 language_system=Lingua di sistema
+sheet_handle=Maniglia di trascinamento

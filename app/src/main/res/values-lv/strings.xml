@@ -711,4 +711,5 @@
     </plurals>
     <string name="language_title">Valoda</string>
     <string name="language_system">Sistēmas valoda</string>
+    <string name="sheet_handle">Vilkšanas turis</string>
 </resources>

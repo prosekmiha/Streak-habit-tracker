@@ -7,6 +7,8 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.sp
 import com.streak.app.R
 
@@ -40,7 +42,7 @@ val TextFamily = FontFamily(
     text(800, FontWeight.ExtraBold)
 )
 
-val StreakTypography = Typography(
+private val BaseTypography = Typography(
     // Onboarding naslov
     displayLarge = TextStyle(fontFamily = DisplayFamily, fontWeight = FontWeight.Black, fontSize = 34.sp, lineHeight = 38.sp),
     // Ime v pozdravu, stevec seje
@@ -58,3 +60,17 @@ val StreakTypography = Typography(
     labelMedium = TextStyle(fontFamily = TextFamily, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp),
     labelSmall = TextStyle(fontFamily = TextFamily, fontWeight = FontWeight.SemiBold, fontSize = 11.sp, lineHeight = 14.sp)
 )
+
+// Deljenje besed povsod: pri veliki pisavi (do 200 %) in v jezikih z dolgimi besedami
+// se besede ne lomijo sredi zloga
+private fun TextStyle.hyphenated() = copy(hyphens = Hyphens.Auto, lineBreak = LineBreak.Paragraph)
+
+val StreakTypography = with(BaseTypography) {
+    Typography(
+        displayLarge = displayLarge.hyphenated(), displayMedium = displayMedium.hyphenated(), displaySmall = displaySmall.hyphenated(),
+        headlineLarge = headlineLarge.hyphenated(), headlineMedium = headlineMedium.hyphenated(), headlineSmall = headlineSmall.hyphenated(),
+        titleLarge = titleLarge.hyphenated(), titleMedium = titleMedium.hyphenated(), titleSmall = titleSmall.hyphenated(),
+        bodyLarge = bodyLarge.hyphenated(), bodyMedium = bodyMedium.hyphenated(), bodySmall = bodySmall.hyphenated(),
+        labelLarge = labelLarge.hyphenated(), labelMedium = labelMedium.hyphenated(), labelSmall = labelSmall.hyphenated()
+    )
+}

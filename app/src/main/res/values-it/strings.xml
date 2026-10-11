@@ -711,4 +711,5 @@
     </plurals>
     <string name="language_title">Lingua</string>
     <string name="language_system">Lingua di sistema</string>
+    <string name="sheet_handle">Maniglia di trascinamento</string>
 </resources>

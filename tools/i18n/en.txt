@@ -552,3 +552,4 @@ P badge_reflective_desc=one:Write %d note on completed habits. | other:Write %d 
 P badge_challenger_desc=one:Complete %d daily challenge. | other:Complete %d daily challenges.
 language_title=Language
 language_system=System default
+sheet_handle=Drag handle

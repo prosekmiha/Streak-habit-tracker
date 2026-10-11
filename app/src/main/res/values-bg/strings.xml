@@ -674,4 +674,5 @@
     </plurals>
     <string name="language_title">Език</string>
     <string name="language_system">Език на системата</string>
+    <string name="sheet_handle">Манипулатор за плъзгане</string>
 </resources>

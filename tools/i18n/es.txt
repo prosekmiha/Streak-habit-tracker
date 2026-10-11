@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Supera %d reto del día. | many:Supera %d retos del 
 P badge_early_bird_desc=one:Completa un hábito antes de las 9:00 %d vez. | many:Completa un hábito antes de las 9:00 %d veces. | other:Completa un hábito antes de las 9:00 %d veces.
 language_title=Idioma
 language_system=Idioma del sistema
+sheet_handle=Controlador de arrastre

@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Haal %d dagelijkse uitdaging. | other:Haal %d dageli
 P badge_early_bird_desc=one:Rond %d keer een gewoonte af voor 9:00. | other:Rond %d keer een gewoonte af voor 9:00.
 language_title=Taal
 language_system=Systeemtaal
+sheet_handle=Sleephendel

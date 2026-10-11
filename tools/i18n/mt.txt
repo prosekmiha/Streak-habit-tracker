@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Lesti %d sfida tal-jum. | two:Lesti %d sfidi tal-jum
 P badge_early_bird_desc=one:Lesti drawwa qabel id-9:00 %d darba. | two:Lesti drawwa qabel id-9:00 %d darbtejn. | few:Lesti drawwa qabel id-9:00 %d darbiet. | many:Lesti drawwa qabel id-9:00 %d darba. | other:Lesti drawwa qabel id-9:00 %d darba.
 language_title=Lingwa
 language_system=Lingwa tas-sistema
+sheet_handle=Manku għall-ġbid

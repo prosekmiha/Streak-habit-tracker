@@ -748,4 +748,5 @@
     </plurals>
     <string name="language_title">Język</string>
     <string name="language_system">Język systemu</string>
+    <string name="sheet_handle">Uchwyt przeciągania</string>
 </resources>

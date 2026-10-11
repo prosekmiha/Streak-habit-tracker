@@ -5,7 +5,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -88,12 +91,15 @@ fun WeekStrip(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .size(width = 56.dp, height = 66.dp)
+                    // Najmanjsa velikost: pri veliki pisavi dan zraste namesto da bi se besedilo odrezalo
+                    .widthIn(min = 56.dp)
+                    .heightIn(min = 66.dp)
                     .clip(shape)
                     .background(bg)
                     .then(if (day.isToday && !isSelected) Modifier.border(2.dp, palette.ink, shape) else Modifier)
                     .selectable(selected = isSelected, role = Role.Tab) { onSelect(day.date) }
                     .semantics(mergeDescendants = true) { contentDescription = "$fullDate, $stateLabel" }
+                    .padding(horizontal = 6.dp, vertical = 4.dp)
             ) {
                 Text(day.date.dayOfMonth.toString(), style = MaterialTheme.typography.titleLarge, color = fg)
                 Text(

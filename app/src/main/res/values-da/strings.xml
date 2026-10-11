@@ -674,4 +674,5 @@
     </plurals>
     <string name="language_title">Sprog</string>
     <string name="language_system">Systemsprog</string>
+    <string name="sheet_handle">Trækhåndtag</string>
 </resources>

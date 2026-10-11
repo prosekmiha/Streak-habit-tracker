@@ -748,4 +748,5 @@
     </plurals>
     <string name="language_title">Jazyk</string>
     <string name="language_system">Jazyk systému</string>
+    <string name="sheet_handle">Úchyt pro přetažení</string>
 </resources>

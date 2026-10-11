@@ -674,4 +674,5 @@
     </plurals>
     <string name="language_title">Γλώσσα</string>
     <string name="language_system">Γλώσσα συστήματος</string>
+    <string name="sheet_handle">Λαβή μεταφοράς</string>
 </resources>

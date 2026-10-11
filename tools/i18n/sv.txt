@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Klara %d av dagens utmaningar. | other:Klara %d av d
 P badge_early_bird_desc=one:Klara en vana före kl. 9.00 %d gång. | other:Klara en vana före kl. 9.00 %d gånger.
 language_title=Språk
 language_system=Systemspråk
+sheet_handle=Draghandtag

@@ -544,3 +544,4 @@ P badge_reflective_desc=one:Zapiši %d opombo k opravljenim navadam. | two:Zapi�
 P badge_challenger_desc=one:Opravi %d dnevni izziv. | two:Opravi %d dnevna izziva. | few:Opravi %d dnevne izzive. | other:Opravi %d dnevnih izzivov.
 language_title=Jezik
 language_system=Jezik sistema
+sheet_handle=Ročica lista

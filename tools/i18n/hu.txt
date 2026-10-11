@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Teljesíts %d napi kihívást. | other:Teljesíts %d
 P badge_early_bird_desc=one:Végezz el %d alkalommal egy szokást 9:00 előtt. | other:Végezz el %d alkalommal egy szokást 9:00 előtt.
 language_title=Nyelv
 language_system=Rendszer nyelve
+sheet_handle=Húzófogantyú

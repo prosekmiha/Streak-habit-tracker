@@ -674,4 +674,5 @@
     </plurals>
     <string name="language_title">Taal</string>
     <string name="language_system">Systeemtaal</string>
+    <string name="sheet_handle">Sleephendel</string>
 </resources>

@@ -674,4 +674,5 @@
     </plurals>
     <string name="language_title">Språk</string>
     <string name="language_system">Systemspråk</string>
+    <string name="sheet_handle">Draghandtag</string>
 </resources>

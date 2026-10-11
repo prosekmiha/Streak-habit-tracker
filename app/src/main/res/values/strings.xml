@@ -682,4 +682,5 @@
     </plurals>
     <string name="language_title">Language</string>
     <string name="language_system">System default</string>
+    <string name="sheet_handle">Drag handle</string>
 </resources>

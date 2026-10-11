@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Splň %d výzvu dňa. | few:Splň %d výzvy dňa. | 
 P badge_early_bird_desc=one:Splň návyk pred 9:00 %d-krát. | few:Splň návyk pred 9:00 %d-krát. | many:Splň návyk pred 9:00 %d-krát. | other:Splň návyk pred 9:00 %d-krát.
 language_title=Jazyk
 language_system=Jazyk systému
+sheet_handle=Úchyt na presunutie

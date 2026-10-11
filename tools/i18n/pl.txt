@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Wykonaj %d wyzwanie dnia. | few:Wykonaj %d wyzwania 
 P badge_early_bird_desc=one:Zrób nawyk przed 9:00 %d raz. | few:Zrób nawyk przed 9:00 %d razy. | many:Zrób nawyk przed 9:00 %d razy. | other:Zrób nawyk przed 9:00 %d razy.
 language_title=Język
 language_system=Język systemu
+sheet_handle=Uchwyt przeciągania

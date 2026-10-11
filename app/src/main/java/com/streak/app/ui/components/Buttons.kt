@@ -126,16 +126,19 @@ fun RoundIconButton(
     tint: Color = StreakTheme.palette.ink,
     size: Dp = 44.dp
 ) {
+    // Dotikalna tarca vsaj 48 dp (pregledovalniki dostopnosti merijo meje elementa),
+    // viden krog pa ostane velik kot v dizajnu
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .size(size.coerceAtLeast(44.dp))
+            .size(size.coerceAtLeast(48.dp))
             .clip(CircleShape)
-            .background(container)
             .clickable(role = Role.Button, onClick = onClick)
             .semantics { this.contentDescription = contentDescription }
     ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(size.coerceAtLeast(44.dp)).clip(CircleShape).background(container)) {
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+        }
     }
 }
 

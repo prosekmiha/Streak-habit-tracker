@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Réussis %d défi du jour. | many:Réussis %d défis
 P badge_early_bird_desc=one:Accomplis %d fois une habitude avant 9 h. | many:Accomplis %d fois une habitude avant 9 h. | other:Accomplis %d fois une habitude avant 9 h.
 language_title=Langue
 language_system=Langue du système
+sheet_handle=Poignée de déplacement

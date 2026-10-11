@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.semantics.contentDescription
 import com.streak.app.R
 import com.streak.app.ui.mascot.MascotMood
 import com.streak.app.ui.mascot.MascotView
@@ -66,13 +67,22 @@ fun StreakSheet(
         scrimColor = palette.scrim,
         tonalElevation = 0.dp,
         dragHandle = {
+            // Rocica z oznako (bralnik zaslona ponudi razsiri/zapri) in tarco vsaj 48 dp
+            val handleLabel = stringResource(R.string.sheet_handle)
             Box(
-                Modifier
-                    .padding(top = 12.dp, bottom = 14.dp)
-                    .size(width = 44.dp, height = 5.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(palette.border)
-            )
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .size(width = 64.dp, height = 48.dp)
+                    .semantics { contentDescription = handleLabel }
+            ) {
+                Box(
+                    Modifier
+                        .size(width = 44.dp, height = 5.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(palette.border)
+                )
+            }
         }
     ) {
         Column(

@@ -748,4 +748,5 @@
     </plurals>
     <string name="language_title">Kalba</string>
     <string name="language_system">Sistemos kalba</string>
+    <string name="sheet_handle">Vilkimo rankenėlė</string>
 </resources>

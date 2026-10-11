@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Erledige %d Tagesherausforderung. | other:Erledige %
 P badge_early_bird_desc=one:Erledige %d-mal eine Gewohnheit vor 9:00 Uhr. | other:Erledige %d-mal eine Gewohnheit vor 9:00 Uhr.
 language_title=Sprache
 language_system=Systemsprache
+sheet_handle=Ziehpunkt

@@ -711,4 +711,5 @@
     </plurals>
     <string name="language_title">Jezik</string>
     <string name="language_system">Jezik sustava</string>
+    <string name="sheet_handle">Ručica za povlačenje</string>
 </resources>

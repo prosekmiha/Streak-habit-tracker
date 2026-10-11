@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Îndeplinește %d provocare a zilei. | few:Îndeplin
 P badge_early_bird_desc=one:Fă un obicei înainte de 9:00 o dată (%d). | few:Fă un obicei înainte de 9:00 de %d ori. | other:Fă un obicei înainte de 9:00 de %d de ori.
 language_title=Limbă
 language_system=Limba sistemului
+sheet_handle=Mâner de glisare

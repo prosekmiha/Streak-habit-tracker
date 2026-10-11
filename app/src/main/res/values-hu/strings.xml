@@ -674,4 +674,5 @@
     </plurals>
     <string name="language_title">Nyelv</string>
     <string name="language_system">Rendszer nyelve</string>
+    <string name="sheet_handle">Húzófogantyú</string>
 </resources>

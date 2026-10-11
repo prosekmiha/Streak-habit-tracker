@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Täida %d päeva väljakutse. | other:Täida %d päe
 P badge_early_bird_desc=one:Tee mõni harjumus enne kella 9.00 %d korda. | other:Tee mõni harjumus enne kella 9.00 %d korda.
 language_title=Keel
 language_system=Süsteemi keel
+sheet_handle=Lohistamispide

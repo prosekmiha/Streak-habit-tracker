@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Klar %d af dagens udfordringer. | other:Klar %d af d
 P badge_early_bird_desc=one:Klar en vane før kl. 9.00 %d gang. | other:Klar en vane før kl. 9.00 %d gange.
 language_title=Sprog
 language_system=Systemsprog
+sheet_handle=Trækhåndtag

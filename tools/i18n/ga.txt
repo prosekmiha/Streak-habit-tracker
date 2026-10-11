@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Déan %d dúshlán an lae. | two:Déan %d dhúshlán
 P badge_early_bird_desc=one:Déan nós roimh 9:00 %d uair. | two:Déan nós roimh 9:00 %d uair. | few:Déan nós roimh 9:00 %d huaire. | many:Déan nós roimh 9:00 %d n-uaire. | other:Déan nós roimh 9:00 %d uair.
 language_title=Teanga
 language_system=Teanga an chórais
+sheet_handle=Hanla tarraingthe

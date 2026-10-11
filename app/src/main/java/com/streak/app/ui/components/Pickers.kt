@@ -176,6 +176,8 @@ private fun Wheel(values: List<String>, selected: Int, resetKey: Int, label: Str
         }
     }
 
+    val increaseLabel = stringResource(R.string.increase)
+    val decreaseLabel = stringResource(R.string.decrease)
     LazyColumn(
         state = state,
         flingBehavior = rememberSnapFlingBehavior(state),
@@ -189,8 +191,8 @@ private fun Wheel(values: List<String>, selected: Int, resetKey: Int, label: Str
                 contentDescription = label
                 stateDescription = values[centered.coerceIn(0, values.lastIndex)]
                 customActions = listOf(
-                    CustomAccessibilityAction("+") { scope.launch { state.animateScrollToItem((centered + 1).coerceAtMost(values.lastIndex)) }; true },
-                    CustomAccessibilityAction("−") { scope.launch { state.animateScrollToItem((centered - 1).coerceAtLeast(0)) }; true }
+                    CustomAccessibilityAction(increaseLabel) { scope.launch { state.animateScrollToItem((centered + 1).coerceAtMost(values.lastIndex)) }; true },
+                    CustomAccessibilityAction(decreaseLabel) { scope.launch { state.animateScrollToItem((centered - 1).coerceAtLeast(0)) }; true }
                 )
             }
     ) {

@@ -674,4 +674,5 @@
     </plurals>
     <string name="language_title">Sprache</string>
     <string name="language_system">Systemsprache</string>
+    <string name="sheet_handle">Ziehpunkt</string>
 </resources>

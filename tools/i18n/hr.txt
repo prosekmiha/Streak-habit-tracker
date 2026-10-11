@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Obavi %d izazov dana. | few:Obavi %d izazova dana. |
 P badge_early_bird_desc=one:Obavi naviku prije 9:00 %d put. | few:Obavi naviku prije 9:00 %d puta. | other:Obavi naviku prije 9:00 %d puta.
 language_title=Jezik
 language_system=Jezik sustava
+sheet_handle=Ručica za povlačenje

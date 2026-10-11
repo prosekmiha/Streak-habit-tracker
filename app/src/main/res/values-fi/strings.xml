@@ -674,4 +674,5 @@
     </plurals>
     <string name="language_title">Kieli</string>
     <string name="language_system">Järjestelmän kieli</string>
+    <string name="sheet_handle">Vetokahva</string>
 </resources>

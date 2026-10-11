@@ -785,4 +785,5 @@
     </plurals>
     <string name="language_title">Teanga</string>
     <string name="language_system">Teanga an chórais</string>
+    <string name="sheet_handle">Hanla tarraingthe</string>
 </resources>

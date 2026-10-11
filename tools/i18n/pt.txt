@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Conclui %d desafio do dia. | many:Conclui %d desafio
 P badge_early_bird_desc=one:Conclui um hábito antes das 9:00 %d vez. | many:Conclui um hábito antes das 9:00 %d vezes. | other:Conclui um hábito antes das 9:00 %d vezes.
 language_title=Idioma
 language_system=Idioma do sistema
+sheet_handle=Pega de arrastar

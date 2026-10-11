@@ -711,4 +711,5 @@
     </plurals>
     <string name="language_title">Idioma</string>
     <string name="language_system">Idioma del sistema</string>
+    <string name="sheet_handle">Controlador de arrastre</string>
 </resources>

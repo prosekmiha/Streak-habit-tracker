@@ -711,4 +711,5 @@
     </plurals>
     <string name="language_title">Limbă</string>
     <string name="language_system">Limba sistemului</string>
+    <string name="sheet_handle">Mâner de glisare</string>
 </resources>

@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Įvykdyk %d dienos iššūkį. | few:Įvykdyk %d die
 P badge_early_bird_desc=one:Atlik įprotį iki 9:00 %d kartą. | few:Atlik įprotį iki 9:00 %d kartus. | many:Atlik įprotį iki 9:00 %d karto. | other:Atlik įprotį iki 9:00 %d kartų.
 language_title=Kalba
 language_system=Sistemos kalba
+sheet_handle=Vilkimo rankenėlė

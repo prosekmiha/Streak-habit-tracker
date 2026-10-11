@@ -544,3 +544,4 @@ P badge_challenger_desc=zero:Izpildi %d dienas izaicinājumu. | one:Izpildi %d d
 P badge_early_bird_desc=zero:Izdari kādu ieradumu pirms 9:00 %d reižu. | one:Izdari kādu ieradumu pirms 9:00 %d reizi. | other:Izdari kādu ieradumu pirms 9:00 %d reizes.
 language_title=Valoda
 language_system=Sistēmas valoda
+sheet_handle=Vilkšanas turis

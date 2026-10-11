@@ -544,3 +544,4 @@ P badge_challenger_desc=one:Ολοκλήρωσε %d πρόκληση της ημ
 P badge_early_bird_desc=one:Ολοκλήρωσε μια συνήθεια πριν τις 9:00 %d φορά. | other:Ολοκλήρωσε μια συνήθεια πριν τις 9:00 %d φορές.
 language_title=Γλώσσα
 language_system=Γλώσσα συστήματος
+sheet_handle=Λαβή μεταφοράς
