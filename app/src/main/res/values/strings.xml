@@ -534,7 +534,6 @@
     <string name="data_export_text">Datoteko lahko zaščitiš z geslom. Brez gesla je ne bo mogoče obnoviti, zato si ga dobro zapomni.</string>
     <string name="data_password_optional">Geslo (neobvezno)</string>
     <string name="data_password_repeat">Ponovi geslo</string>
-    <string name="data_password_short">Geslo naj ima vsaj %1$d znakov.</string>
     <string name="data_password_none_hint">Brez gesla lahko datoteko prebere vsak, ki jo dobi.</string>
     <string name="data_password_hint">Datoteka bo šifrirana (AES-256). Pozabljenega gesla ni mogoče obnoviti.</string>
     <string name="data_save_file">Shrani v datoteko</string>
@@ -596,4 +595,74 @@
     <string name="restore_offer_accept">Obnovi</string>
     <string name="restore_offer_decline">Ne, začni na novo</string>
     <string name="onboarding_restore">Obnovi iz varnostne kopije</string>
+    <string name="lock_title">Streak je zaklenjen</string>
+    <string name="lock_subtitle">Vpiši kodo za odklep</string>
+    <string name="lock_wait">Preveč napačnih poskusov. Poskusi znova čez %1$d:%2$02d.</string>
+    <plurals name="lock_wrong">
+        <item quantity="one">Napačna koda. Še %d poskus pred premorom.</item>
+        <item quantity="two">Napačna koda. Še %d poskusa pred premorom.</item>
+        <item quantity="few">Napačna koda. Še %d poskusi pred premorom.</item>
+        <item quantity="other">Napačna koda. Še %d poskusov pred premorom.</item>
+    </plurals>
+    <string name="lock_wrong_last">Napačna koda. Naslednji napačen poskus sproži premor.</string>
+    <string name="lock_forgot">Pozabljena koda?</string>
+    <string name="lock_use_biometric">Odkleni z biometrijo</string>
+    <string name="lock_use_pin">Uporabi kodo</string>
+    <string name="lock_biometric_title">Odkleni Streak</string>
+    <string name="lock_delete_digit">Izbriši števko</string>
+    <plurals name="lock_digits_entered">
+        <item quantity="one">Vpisana %1$d od %2$d števk</item>
+        <item quantity="two">Vpisani %1$d od %2$d števk</item>
+        <item quantity="few">Vpisane %1$d od %2$d števk</item>
+        <item quantity="other">Vpisanih %1$d od %2$d števk</item>
+    </plurals>
+    <string name="lock_recovery_title">Obnovitvena koda</string>
+    <string name="lock_recovery_text">Vpiši obnovitveno kodo, prikazano ob vklopu zaklepa. Zaklep se izklopi, podatki ostanejo.</string>
+    <string name="lock_recovery_label">Obnovitvena koda</string>
+    <string name="lock_recovery_wrong">Koda ni pravilna.</string>
+    <string name="lock_recovery_none">Brez obnovitvene kode je edina pot počistiti podatke aplikacije v sistemskih nastavitvah (Aplikacije → Streak → Shramba). S tem se izbrišejo tudi vse navade.</string>
+    <string name="lock_recovery_submit">Izklopi zaklep</string>
+    <string name="security_title">Zaklep in zasebnost</string>
+    <string name="security_lock">Zaklep aplikacije</string>
+    <string name="security_change_pin">Spremeni kodo</string>
+    <string name="security_biometric">Odklepanje z biometrijo</string>
+    <string name="security_timeout">Zakleni</string>
+    <string name="security_timeout_now">Takoj ob izhodu</string>
+    <plurals name="security_timeout_minutes">
+        <item quantity="one">Po %d minuti</item>
+        <item quantity="two">Po %d minutah</item>
+        <item quantity="few">Po %d minutah</item>
+        <item quantity="other">Po %d minutah</item>
+    </plurals>
+    <string name="security_new_recovery">Nova obnovitvena koda</string>
+    <string name="security_lock_hint">Ob vsakem odprtju aplikacije (po izbranem času) je potrebna koda ali prstni odtis.</string>
+    <string name="security_lock_hint_no_bio">Ob vsakem odprtju aplikacije je potrebna koda. Za odklep s prstnim odtisom ga najprej dodaj v sistemskih nastavitvah.</string>
+    <string name="security_privacy_screen">Zasebni zaslon</string>
+    <string name="security_privacy_hint">Prepreči posnetke zaslona in skrije vsebino aplikacije v pregledu odprtih aplikacij.</string>
+    <string name="security_encryption_hint">Podatki na napravi so vedno šifrirani (SQLCipher, ključ v varnem delu telefona). Koda za zaklep se nikoli ne izvozi v varnostno kopijo.</string>
+    <string name="security_verify_title">Potrdi s kodo</string>
+    <string name="security_verify_text">Vpiši trenutno kodo.</string>
+    <string name="security_wrong_pin">Napačna koda.</string>
+    <string name="security_locked_out">Preveč napačnih poskusov. Poskusi znova kasneje.</string>
+    <string name="security_new_pin_title">Nova koda</string>
+    <string name="security_confirm_pin_title">Ponovi kodo</string>
+    <string name="security_new_pin_text">Izberi kodo, ki je drugi ne bi uganili.</string>
+    <string name="security_confirm_pin_text">Za potrditev vpiši kodo še enkrat.</string>
+    <string name="security_weak_pin">Ta koda je preveč očitna. Izberi drugo.</string>
+    <string name="security_mismatch">Kodi se ne ujemata. Poskusi znova.</string>
+    <plurals name="security_digits">
+        <item quantity="one">%d števka</item>
+        <item quantity="two">%d števki</item>
+        <item quantity="few">%d števke</item>
+        <item quantity="other">%d števk</item>
+    </plurals>
+    <string name="security_recovery_title">Shrani obnovitveno kodo</string>
+    <string name="security_recovery_text">Če pozabiš kodo, lahko s to kodo izklopiš zaklep. Zapiši si jo na varno mesto, saj je pozneje ne bo mogoče več prikazati.</string>
+    <string name="security_recovery_done">Končano</string>
+    <plurals name="data_password_short">
+        <item quantity="one">Geslo naj ima vsaj %d znak.</item>
+        <item quantity="two">Geslo naj ima vsaj %d znaka.</item>
+        <item quantity="few">Geslo naj ima vsaj %d znake.</item>
+        <item quantity="other">Geslo naj ima vsaj %d znakov.</item>
+    </plurals>
 </resources>

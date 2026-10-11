@@ -234,7 +234,7 @@ private fun ExportSheet(onDismiss: () -> Unit, onExport: (String, ExportTarget) 
         }
         Text(
             when {
-                tooShort -> stringResource(R.string.data_password_short, MIN_PASSWORD)
+                tooShort -> pluralStringResource(R.plurals.data_password_short, MIN_PASSWORD, MIN_PASSWORD)
                 password.isEmpty() -> stringResource(R.string.data_password_none_hint)
                 else -> stringResource(R.string.data_password_hint)
             },

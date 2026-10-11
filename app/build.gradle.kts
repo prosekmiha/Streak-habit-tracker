@@ -23,7 +23,9 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8: krajsanje kode in odstranjevanje neuporabljenih virov
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -65,6 +67,8 @@ dependencies {
     implementation(libs.filament.gltfio)
     // Sifriranje baze (kljuc v Android Keystoru)
     implementation(libs.sqlcipher.android)
+    // Zaklep aplikacije s prstnim odtisom ali obrazom
+    implementation(libs.androidx.biometric)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

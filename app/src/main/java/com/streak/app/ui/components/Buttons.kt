@@ -33,7 +33,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -66,13 +65,17 @@ fun StreakButton(
     height: Dp = 56.dp
 ) {
     val palette = StreakTheme.palette
-    val (bg, fg) = when (variant) {
+    val (baseBg, baseFg) = when (variant) {
         ButtonVariant.Primary -> MaterialTheme.colorScheme.primary to Color.White
         ButtonVariant.White -> Color.White to InkOnPastel
         ButtonVariant.Secondary -> palette.surfaceSoft to palette.ink
         ButtonVariant.Dark -> palette.ink to MaterialTheme.colorScheme.background
         ButtonVariant.Danger -> palette.dangerSoft to palette.danger
     }
+    // Onemogoceno stanje z barvo, ne z alpha slojem: preklop sloja ob omogocitvi je v
+    // listih (ModalBottomSheet) pustil gumb brez ozadja do naslednjega izrisa
+    val fg = if (enabled) baseFg else baseFg.copy(alpha = baseFg.alpha * 0.55f)
+    val bg = if (enabled) baseBg else baseBg.copy(alpha = baseBg.alpha * 0.55f)
     Row(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
@@ -82,7 +85,6 @@ fun StreakButton(
             .clip(PillShape)
             .background(bg)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .alpha(if (enabled) 1f else 0.45f)
             .padding(horizontal = 20.dp)
     ) {
         if (icon != null) {

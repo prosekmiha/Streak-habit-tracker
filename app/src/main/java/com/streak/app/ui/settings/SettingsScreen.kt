@@ -1,5 +1,6 @@
 package com.streak.app.ui.settings
 
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -91,6 +92,7 @@ fun SettingsScreen(
     onEditHabit: (String) -> Unit,
     onOpenNotifications: () -> Unit,
     onOpenData: () -> Unit,
+    onOpenSecurity: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -173,6 +175,7 @@ fun SettingsScreen(
 
         SettingsGroup {
             SettingsRow(stringResource(R.string.settings_archived), Icons.Rounded.Archive, Peach, { sheet = ProfileSheet.ARCHIVED }, state.archived.size.toString())
+            SettingsRow(stringResource(R.string.security_title), Icons.Rounded.Lock, Bubblegum, onOpenSecurity)
             SettingsRow(stringResource(R.string.data_title), Icons.Rounded.Download, Mint, onOpenData)
             SettingsRow(
                 stringResource(if (state.recalculating) R.string.settings_recalculating else R.string.settings_recalculate),
