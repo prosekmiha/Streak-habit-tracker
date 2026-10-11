@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.streak.app.data.repository.StreakRecalculator
+import com.streak.app.widget.WidgetUpdater
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -15,11 +16,14 @@ import dagger.assisted.AssistedInject
 class DailyResetWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted params: WorkerParameters,
-    private val recalculator: StreakRecalculator
+    private val recalculator: StreakRecalculator,
+    private val widgetUpdater: WidgetUpdater
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
         recalculator.onDayChanged()
+        // Widgeti morajo pokazati nov dan, tudi ce proces takoj nato konca
+        widgetUpdater.updateAll()
         return Result.success()
     }
 

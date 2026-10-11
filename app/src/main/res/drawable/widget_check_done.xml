@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget: opravljeno (zelen krog s kljukico, enako v obeh temah) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFB8EB6C"
+        android:pathData="M12,1a11,11 0,1 1,0 22a11,11 0,1 1,0 -22z" />
+    <path
+        android:strokeColor="#FF111114"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M7.4,12.4L10.6,15.5L16.6,9.1" />
+</vector>

@@ -17,6 +17,7 @@ import com.streak.app.domain.repository.TaskRepository
 import com.streak.app.backup.BackupManager
 import com.streak.app.session.SessionController
 import com.streak.app.shortcuts.ShortcutPublisher
+import com.streak.app.widget.WidgetUpdater
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -46,6 +47,7 @@ class StreakApplication : Application(), Configuration.Provider {
     @Inject lateinit var habitRepository: HabitRepository
     @Inject lateinit var taskRepository: TaskRepository
     @Inject lateinit var backupManager: BackupManager
+    @Inject lateinit var widgetUpdater: WidgetUpdater
     @Inject @ApplicationScope lateinit var appScope: CoroutineScope
 
     @OptIn(FlowPreview::class)
@@ -70,6 +72,8 @@ class StreakApplication : Application(), Configuration.Provider {
         appScope.launch { shortcutPublisher.run() }
         // Opravljena navada pospravi svoj opomnik, vse opravljeno pa vecerni opomnik
         appScope.launch { reminderDispatcher.syncWithProgress() }
+        // Widgeti sledijo podatkom (tudi menjavi dneva, ki sprozi zagon procesa)
+        appScope.launch { widgetUpdater.run() }
         // Samodejni posnetek za Androidovo varnostno kopijo, 10 s po zadnji spremembi
         appScope.launch {
             combine(

@@ -67,6 +67,8 @@ dependencies {
     implementation(libs.filament.gltfio)
     // Sifriranje baze (kljuc v Android Keystoru)
     implementation(libs.sqlcipher.android)
+    // Widgeti na domacem zaslonu
+    implementation(libs.glance.appwidget)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

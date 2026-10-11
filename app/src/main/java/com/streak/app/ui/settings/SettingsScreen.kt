@@ -26,6 +26,7 @@ import androidx.compose.material.icons.rounded.NightsStay
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -178,6 +179,9 @@ fun SettingsScreen(
             SettingsRow(stringResource(R.string.data_title), Icons.Rounded.Download, Mint, onOpenData)
             SettingsRow(stringResource(R.string.privacy_screen), Icons.Rounded.VisibilityOff, Lavender, { viewModel.setPrivacyScreen(!s.privacyScreen) }) {
                 StreakSwitch(s.privacyScreen, viewModel::setPrivacyScreen, contentDescription = stringResource(R.string.privacy_screen))
+            }
+            SettingsRow(stringResource(R.string.settings_hide_widget), Icons.Rounded.Widgets, Sky, { viewModel.setHideWidgetDetails(!s.hideWidgetDetails) }) {
+                StreakSwitch(s.hideWidgetDetails, viewModel::setHideWidgetDetails, contentDescription = stringResource(R.string.settings_hide_widget))
             }
             SettingsRow(
                 stringResource(if (state.recalculating) R.string.settings_recalculating else R.string.settings_recalculate),

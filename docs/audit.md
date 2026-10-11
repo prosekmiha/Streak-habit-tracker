@@ -103,13 +103,13 @@ Vsak milestone se konča z zelenim buildom, testi in commitom ter je samostojno 
 | Milestone | Vsebina | Ocena |
 |---|---|---|
 | **M0** ✅ | Git, nadgradnja orodij, testna infrastruktura, karakterizacijski testi, kritični popravek, odstranitev oblaka, ta audit | — |
-| **M1** | Room v2 (nov model), `DayClock`, nov streak izračun s testi, agregati, `DatabaseGuard`, razširjene nastavitve | velik |
-| **M2** | Dizajn sistem (barve, font, komponente), novi zasloni: onboarding, Home, nova navada, statistika, naloge, profil; mesto za maskoto | velik |
-| **M3** | Časovne seje (timer, ki preživi process death, ongoing obvestilo, ambientni zvoki, bližnjice) | srednji |
-| **M4** | Obvestila in alarmi (več opomnikov, nudge, kanali, reschedule, quiet hours, zasebnost) | srednji |
-| **M5** | Izvoz/uvoz JSON/CSV, geslo, Auto Backup + snapshot, SQLCipher, FLAG_SECURE, R8. Zaklep s kodo je bil narejen in nato na željo uporabnika odstranjen. | velik |
-| **M6** | Glance widgeti (mali, srednji, streak, količina) | srednji |
-| **M7** | 3D maskota: Blender generator, poze, SceneView renderer, state machine, sprožilci, fallbacki | velik |
+| **M1** ✅ | Room v2 (nov model), `DayClock`, nov streak izračun s testi, agregati, `DatabaseGuard`, razširjene nastavitve | velik |
+| **M2** ✅ | Dizajn sistem (barve, font, komponente), novi zasloni: onboarding, Home, nova navada, statistika, naloge, profil; mesto za maskoto | velik |
+| **M3** ✅ | Časovne seje (timer, ki preživi process death, ongoing obvestilo, ambientni zvoki, bližnjice) | srednji |
+| **M4** ✅ | Obvestila in alarmi (več opomnikov, nudge, kanali, reschedule, quiet hours, zasebnost) | srednji |
+| **M5** ✅ | Izvoz/uvoz JSON/CSV, geslo, Auto Backup + snapshot, SQLCipher, FLAG_SECURE, R8. Zaklep s kodo je bil narejen in nato na željo uporabnika odstranjen. | velik |
+| **M6** ✅ | Glance widgeti (mali, srednji, streak, količina) | srednji |
+| **M7** ✅ | 3D maskota: Blender generator, poze, SceneView renderer, state machine, sprožilci, fallbacki | velik |
 | **M8** | Gamifikacija (XP, nivoji, značke, izzivi, deljenje) + razširjena statistika | srednji |
 | **M9** | 24 EU jezikov, plurals, per-app language, pseudolokalizacija | srednji |
 | **M10** | Dostopnost, screenshot testi, Macrobenchmark + Baseline Profile | srednji |

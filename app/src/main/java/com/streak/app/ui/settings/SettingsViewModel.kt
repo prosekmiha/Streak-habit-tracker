@@ -59,6 +59,7 @@ class SettingsViewModel @Inject constructor(
     fun setAnimations(level: AnimationLevel) = update { it.copy(animationLevel = level) }
     fun setFirstDayOfWeek(day: DayOfWeek) = update { it.copy(firstDayOfWeek = day) }
     fun setPrivacyScreen(enabled: Boolean) = update { it.copy(privacyScreen = enabled) }
+    fun setHideWidgetDetails(enabled: Boolean) = update { it.copy(hideWidgetDetails = enabled) }
 
     // Sprememba meje dneva vpliva na "danes", streake in dnevni alarm
     fun setDayEndsAt(time: LocalTime) {

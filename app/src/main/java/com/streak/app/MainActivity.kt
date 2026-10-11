@@ -86,6 +86,7 @@ class MainActivity : ComponentActivity() {
         pendingRoute.value = when (intent?.action) {
             ACTION_OPEN_SESSION, ACTION_START_SESSION -> habitId?.let(Routes::session)
             ACTION_NEW_HABIT -> Routes.addHabit()
+            ACTION_OPEN_HABIT -> habitId?.let(Routes::habitDetail)
             else -> null
         } ?: pendingRoute.value
     }
@@ -100,6 +101,7 @@ class MainActivity : ComponentActivity() {
         const val ACTION_OPEN_SESSION = "com.streak.app.action.OPEN_SESSION"
         const val ACTION_START_SESSION = "com.streak.app.action.START_SESSION"
         const val ACTION_NEW_HABIT = "com.streak.app.action.NEW_HABIT"
+        const val ACTION_OPEN_HABIT = "com.streak.app.action.OPEN_HABIT"
         const val EXTRA_HABIT_ID = "habit_id"
     }
 }

@@ -19,6 +19,7 @@ desugar = "2.1.5"
 splashscreen = "1.2.0"
 filament = "1.75.1"
 sqlcipher = "4.19.1"
+glance = "1.2.0"
 # Test
 junit = "4.13.2"
 mockk = "1.14.6"
@@ -60,6 +61,7 @@ androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscree
 filament-android = { group = "com.google.android.filament", name = "filament-android", version.ref = "filament" }
 filament-gltfio = { group = "com.google.android.filament", name = "gltfio-android", version.ref = "filament" }
 sqlcipher-android = { group = "net.zetetic", name = "sqlcipher-android", version.ref = "sqlcipher" }
+glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
 # Test
 junit = { group = "junit", name = "junit", version.ref = "junit" }

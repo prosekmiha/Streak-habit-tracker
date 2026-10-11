@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Streak</string>
 
     <!-- Splosno -->
@@ -602,4 +602,55 @@
         <item quantity="few">Geslo naj ima vsaj %d znake.</item>
         <item quantity="other">Geslo naj ima vsaj %d znakov.</item>
     </plurals>
+    <string name="widget_progress_name">Napredek dneva</string>
+    <string name="widget_progress_desc">Koliko navad je danes opravljenih, z maskoto.</string>
+    <string name="widget_habits_name">Današnje navade</string>
+    <string name="widget_habits_desc">Navade označiš kar na domačem zaslonu.</string>
+    <string name="widget_streak_name">Streak navade</string>
+    <string name="widget_streak_desc">Veriga izbrane navade.</string>
+    <string name="widget_quantity_name">Količina</string>
+    <string name="widget_quantity_desc">Prištej ali odštej pri navadi s količino.</string>
+    <string name="widget_today">Danes</string>
+    <string name="widget_all_done">Vse opravljeno!</string>
+    <string name="widget_add_first">Dodaj prvo navado</string>
+    <string name="widget_rest_day">Danes ni ničesar na sporedu</string>
+    <plurals name="widget_remaining">
+        <item quantity="one">Še %d navada</item>
+        <item quantity="two">Še %d navadi</item>
+        <item quantity="few">Še %d navade</item>
+        <item quantity="other">Še %d navad</item>
+    </plurals>
+    <string name="widget_progress_a11y">Opravljeno %1$d od %2$d. %3$s</string>
+    <string name="widget_open_app">Tapni za ogled</string>
+    <string name="widget_pick_habit">Tapni in izberi navado</string>
+    <string name="widget_pick_quantity">Tapni in izberi navado s količino</string>
+    <string name="widget_best">Rekord: %d</string>
+    <!-- Stevilo je prikazano posebej, vecje -->
+    <plurals name="widget_unit_days" tools:ignore="ImpliedQuantity">
+        <item quantity="one">dan zapored</item>
+        <item quantity="two">dneva zapored</item>
+        <item quantity="few">dnevi zapored</item>
+        <item quantity="other">dni zapored</item>
+    </plurals>
+    <plurals name="widget_unit_weeks" tools:ignore="ImpliedQuantity">
+        <item quantity="one">teden zapored</item>
+        <item quantity="two">tedna zapored</item>
+        <item quantity="few">tedni zapored</item>
+        <item quantity="other">tednov zapored</item>
+    </plurals>
+    <plurals name="widget_unit_months" tools:ignore="ImpliedQuantity">
+        <item quantity="one">mesec zapored</item>
+        <item quantity="two">meseca zapored</item>
+        <item quantity="few">meseci zapored</item>
+        <item quantity="other">mesecev zapored</item>
+    </plurals>
+    <string name="widget_a11y_done">Označi kot opravljeno: %s</string>
+    <string name="widget_a11y_undo">Opravljeno: %s. Tapni za preklic.</string>
+    <string name="widget_a11y_add_one">Dodaj 1: %s</string>
+    <string name="widget_a11y_session">Začni sejo: %s</string>
+    <string name="widget_config_title">Izberi navado</string>
+    <string name="widget_config_quantity_title">Izberi navado s količino</string>
+    <string name="widget_config_empty">Najprej dodaj navado v aplikaciji.</string>
+    <string name="widget_config_empty_quantity">Nobena navada nima cilja po količini. Dodaj jo v aplikaciji.</string>
+    <string name="settings_hide_widget">Skrij podrobnosti na widgetih</string>
 </resources>
