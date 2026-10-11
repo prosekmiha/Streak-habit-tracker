@@ -22,6 +22,10 @@ Zgrajen je v Kotlinu z Jetpack Compose (Material 3), arhitektura je MVVM + Clean
   - Jutranji povzetek in večerni opomnik z neopravljenimi navadami; večerni se umakne, ko je vse opravljeno.
   - Tihe ure, dnevna omejitev in skrivanje imen. Zaklenjen zaslon nikoli ne pokaže imen navad.
   - Zaslon s stanjem dovoljenj (obvestila, natančni alarmi, baterija). Alarmi se prerazporedijo po ponovnem zagonu, posodobitvi ter spremembi ure ali časovnega pasu.
+- **Dosežki**:
+  - XP, nivoji in 16 značk, izpeljani iz zapisov (odznačitev XP vrne).
+  - Dnevni izziv, misel dneva, nabiralnik (zvonec) in praznovanja z maskoto.
+  - Deljenje dosežka kot slika.
 - **Widgeti**:
   - Napredek dneva z maskoto in današnje navade z označevanjem kar na domačem zaslonu.
   - Streak izbrane navade in količina z gumboma +1/−1.
@@ -52,6 +56,7 @@ Iz ukazne vrstice:
 - [docs/security.md](docs/security.md) — šifriranje baze, zasebni zaslon, varnostne kopije, kaj gre v Androidovo kopijo
 - [docs/alarms.md](docs/alarms.md) — opomniki, povzetek, večerni opomnik, tihe ure, omejitev, razporejanje in dovoljenja
 - [docs/sessions.md](docs/sessions.md) — trajne seje, obvestilo, opozorilo ob cilju, ambientni zvoki, bližnjice
+- [docs/gamification.md](docs/gamification.md) — XP, nivoji, izzivi, značke, praznovanja, deljenje
 - [docs/widgets.md](docs/widgets.md) — widgeti: vsebina, dotiki, osveževanje, zasebnost, videz
 - [docs/mascot-pipeline.md](docs/mascot-pipeline.md) — 3D maskota: Blender generator, Filament, fallbacki
 
@@ -61,6 +66,7 @@ Iz ukazne vrstice:
 - `notifications`, `work` — alarmi, opomniki, menjava logičnega dne
 - `session`, `shortcuts` — kontroler seje, obvestilo, ambientna storitev in sintetizator, bližnjice
 - `backup` — izvoz/uvoz in samodejni posnetek
+- `game` — stanje igrifikacije, praznovanja in nabiralnik (pravila v `domain/gamification`)
 - `widget` — Glance widgeti, izbira navade, osveževanje (logika v `domain/widget`)
 - `ui` — `onboarding`, `home`, `addhabit`, `tasks`, `addtask`, `stats`, `settings`, `mascot` (3D maskota prek Filamenta + WebP poze, glej `docs/mascot-pipeline.md`), `components`, `theme`
 - `tools/fonts` — ponovljiva gradnja fontov (Roboto Flex, Manrope; OFL)

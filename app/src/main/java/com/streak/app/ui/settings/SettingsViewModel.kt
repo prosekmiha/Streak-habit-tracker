@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalTime
 import javax.inject.Inject
+import com.streak.app.game.GameRepository
 
 data class SettingsUiState(
     val settings: AppSettings = AppSettings(),
@@ -26,14 +27,16 @@ data class SettingsUiState(
     val topStreak: Int = 0,
     val totalDone: Int = 0,
     val archived: List<Habit> = emptyList(),
-    val recalculating: Boolean = false
+    val recalculating: Boolean = false,
+    val level: Int? = null
 )
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val habitRepository: HabitRepository,
-    private val alarmScheduler: AlarmScheduler
+    private val alarmScheduler: AlarmScheduler,
+    gameRepository: GameRepository
 ) : ViewModel() {
 
     private val recalculating = MutableStateFlow(false)
@@ -42,15 +45,17 @@ class SettingsViewModel @Inject constructor(
         settingsRepository.settings,
         habitRepository.observeHabits(),
         habitRepository.observeArchivedHabits(),
-        recalculating
-    ) { settings, habits, archived, recalc ->
+        recalculating,
+        gameRepository.state
+    ) { settings, habits, archived, recalc, game ->
         SettingsUiState(
             settings = settings,
             habits = habits.map { it.habit },
             topStreak = habits.maxOfOrNull { it.streak.currentStreak } ?: 0,
             totalDone = habits.sumOf { it.streak.totalDone },
             archived = archived,
-            recalculating = recalc
+            recalculating = recalc,
+            level = game.level.level
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 

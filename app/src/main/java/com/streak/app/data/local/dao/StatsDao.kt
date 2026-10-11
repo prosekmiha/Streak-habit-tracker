@@ -28,6 +28,9 @@ interface StatsDao {
     fun observeAggregates(start: Long, end: Long): Flow<List<DailyAggregateEntity>>
 
     @Query("SELECT * FROM daily_aggregates ORDER BY epochDay ASC")
+    fun observeAllAggregates(): Flow<List<DailyAggregateEntity>>
+
+    @Query("SELECT * FROM daily_aggregates ORDER BY epochDay ASC")
     suspend fun getAllAggregates(): List<DailyAggregateEntity>
 
     @Upsert

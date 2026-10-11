@@ -21,6 +21,7 @@ import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.NightsStay
 import androidx.compose.material.icons.rounded.Notifications
@@ -94,6 +95,7 @@ fun SettingsScreen(
     onEditHabit: (String) -> Unit,
     onOpenNotifications: () -> Unit,
     onOpenData: () -> Unit,
+    onOpenAchievements: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -175,6 +177,10 @@ fun SettingsScreen(
         }
 
         SettingsGroup {
+            SettingsRow(
+                stringResource(R.string.settings_achievements), Icons.Rounded.EmojiEvents, Sun, onOpenAchievements,
+                state.level?.let { stringResource(R.string.level_label, it) }
+            )
             SettingsRow(stringResource(R.string.settings_archived), Icons.Rounded.Archive, Peach, { sheet = ProfileSheet.ARCHIVED }, state.archived.size.toString())
             SettingsRow(stringResource(R.string.data_title), Icons.Rounded.Download, Mint, onOpenData)
             SettingsRow(stringResource(R.string.privacy_screen), Icons.Rounded.VisibilityOff, Lavender, { viewModel.setPrivacyScreen(!s.privacyScreen) }) {

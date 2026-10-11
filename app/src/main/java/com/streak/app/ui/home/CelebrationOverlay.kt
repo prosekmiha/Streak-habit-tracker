@@ -1,6 +1,5 @@
 package com.streak.app.ui.home
 
-import android.content.Intent
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -9,8 +8,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -27,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,20 +54,21 @@ import com.streak.app.domain.model.StreakUnit
 import com.streak.app.ui.components.ButtonVariant
 import com.streak.app.ui.components.StreakButton
 import com.streak.app.ui.components.TextAction
+import com.streak.app.ui.achievements.ShareCard
+import com.streak.app.ui.achievements.ShareCardSpec
 import com.streak.app.ui.mascot.MascotMood
 import com.streak.app.ui.mascot.MascotView
 import com.streak.app.ui.theme.Blurple
 import com.streak.app.ui.theme.InkOnPastel
 import com.streak.app.ui.theme.LocalAnimationLevel
 import com.streak.app.ui.theme.Sun
+import kotlinx.coroutines.launch
 import kotlin.math.sin
 
-// Celozaslonsko praznovanje mejnika: konfeti, maskota, znacka z stevilko in deljenje
+// Celozaslonsko praznovanje mejnika verige
 @Composable
 fun CelebrationOverlay(celebration: Celebration, onDismiss: () -> Unit) {
     val context = LocalContext.current
-    val haptics = LocalHapticFeedback.current
-    LaunchedEffect(celebration) { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
     val unitLabel = stringResource(
         when (celebration.unit) {
             StreakUnit.DAY -> R.string.badge_days
@@ -73,8 +76,40 @@ fun CelebrationOverlay(celebration: Celebration, onDismiss: () -> Unit) {
             StreakUnit.MONTH -> R.string.badge_months
         }
     )
-    val title = streakText(celebration.count, celebration.unit) + "!"
-    val shareText = stringResource(R.string.share_milestone, celebration.habitTitle, streakText(celebration.count, celebration.unit))
+    val streak = streakText(celebration.count, celebration.unit)
+    val label = stringResource(R.string.new_milestone)
+    val text = stringResource(R.string.milestone_text, celebration.habitTitle)
+    val shareText = stringResource(R.string.share_milestone, celebration.habitTitle, streak)
+    CelebrationDialog(
+        label = label,
+        title = "$streak!",
+        text = text,
+        badge = {
+            Text(celebration.count.toString(), style = MaterialTheme.typography.displaySmall, color = InkOnPastel)
+            Text(unitLabel, style = MaterialTheme.typography.labelMedium, color = InkOnPastel)
+        },
+        badgeColor = Sun,
+        onShare = {
+            ShareCard.share(context, ShareCardSpec(label.uppercase(), "$streak!", celebration.habitTitle, Sun, badgeText = celebration.count.toString(), shareText = shareText))
+        },
+        onDismiss = onDismiss
+    )
+}
+
+// Skupna postavitev praznovanja: konfeti, maskota, okrogla znacka, naslov, deljenje (slika)
+@Composable
+fun CelebrationDialog(
+    label: String,
+    title: String,
+    text: String,
+    badge: @Composable ColumnScope.() -> Unit,
+    badgeColor: Color,
+    onShare: suspend () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(title) { haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Box(Modifier.fillMaxSize().background(Blurple)) {
@@ -88,7 +123,7 @@ fun CelebrationOverlay(celebration: Celebration, onDismiss: () -> Unit) {
                     .padding(horizontal = 28.dp, vertical = 24.dp)
             ) {
                 Text(
-                    stringResource(R.string.new_milestone).uppercase(),
+                    label.uppercase(),
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White,
                     modifier = Modifier
@@ -101,19 +136,17 @@ fun CelebrationOverlay(celebration: Celebration, onDismiss: () -> Unit) {
                     MascotView(MascotMood.CHEER, Modifier.align(Alignment.BottomStart).size(width = 280.dp, height = 303.dp), hero = true)
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .offset(x = (-6).dp, y = 4.dp)
                             .rotate(10f)
                             .size(104.dp)
                             .clip(CircleShape)
-                            .background(Sun)
-                            .border(5.dp, InkOnPastel, CircleShape)
-                            .padding(top = 18.dp)
-                    ) {
-                        Text(celebration.count.toString(), style = MaterialTheme.typography.displaySmall, color = InkOnPastel)
-                        Text(unitLabel, style = MaterialTheme.typography.labelMedium, color = InkOnPastel)
-                    }
+                            .background(badgeColor)
+                            .border(5.dp, InkOnPastel, CircleShape),
+                        content = badge
+                    )
                 }
                 Text(
                     title,
@@ -123,7 +156,7 @@ fun CelebrationOverlay(celebration: Celebration, onDismiss: () -> Unit) {
                     modifier = Modifier.padding(top = 16.dp).semantics { heading() }
                 )
                 Text(
-                    stringResource(R.string.milestone_text, celebration.habitTitle),
+                    text,
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color(0xFFE4E5FB),
                     textAlign = TextAlign.Center,
@@ -132,10 +165,7 @@ fun CelebrationOverlay(celebration: Celebration, onDismiss: () -> Unit) {
                 Spacer(Modifier.weight(1f))
                 StreakButton(
                     stringResource(R.string.share_achievement),
-                    {
-                        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, shareText)
-                        context.startActivity(Intent.createChooser(send, null))
-                    },
+                    { scope.launch { onShare() } },
                     variant = ButtonVariant.White,
                     icon = Icons.Rounded.IosShare,
                     height = 58.dp

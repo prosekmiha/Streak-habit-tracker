@@ -23,6 +23,7 @@ import com.streak.app.ui.addtask.AddEditTaskScreen
 import com.streak.app.ui.detail.HabitDetailScreen
 import com.streak.app.ui.home.HomeScreen
 import com.streak.app.ui.session.SessionScreen
+import com.streak.app.ui.achievements.AchievementsScreen
 import com.streak.app.ui.data.DataScreen
 import com.streak.app.ui.settings.NotificationSettingsScreen
 import com.streak.app.ui.settings.SettingsScreen
@@ -73,7 +74,8 @@ fun StreakApp(userName: String, pendingRoute: String? = null, onRouteHandled: ()
                     onOpenHabit = { id -> navController.navigate(Routes.habitDetail(id)) },
                     onOpenSession = { id -> navController.navigate(Routes.session(id)) },
                     onOpenStats = { navController.navigateTopLevel(Routes.STATS) },
-                    onOpenData = { navController.navigate(Routes.DATA) }
+                    onOpenData = { navController.navigate(Routes.DATA) },
+                    onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) }
                 )
             }
             composable(Routes.TASKS) {
@@ -89,8 +91,12 @@ fun StreakApp(userName: String, pendingRoute: String? = null, onRouteHandled: ()
                 SettingsScreen(
                     onEditHabit = { id -> navController.navigate(Routes.editHabit(id)) },
                     onOpenNotifications = { navController.navigate(Routes.NOTIFICATION_SETTINGS) },
-                    onOpenData = { navController.navigate(Routes.DATA) }
+                    onOpenData = { navController.navigate(Routes.DATA) },
+                    onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) }
                 )
+            }
+            composable(Routes.ACHIEVEMENTS) {
+                AchievementsScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.DATA) {
                 DataScreen(onBack = { navController.popBackStack() })

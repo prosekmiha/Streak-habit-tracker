@@ -6,18 +6,11 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.LruCache
-import androidx.compose.ui.graphics.PathFillType
-import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.PathParser
-import androidx.compose.ui.graphics.vector.VectorGroup
-import androidx.compose.ui.graphics.vector.VectorPath
 import androidx.compose.ui.unit.Dp
 import androidx.core.graphics.createBitmap
-import androidx.core.graphics.withSave
-import androidx.core.graphics.withTranslation
 import com.streak.app.ui.components.IconMap
+import com.streak.app.ui.components.drawImageVector
 import com.streak.app.ui.components.parseHexColor
 import com.streak.app.ui.theme.InkOnPastel
 import com.streak.app.ui.theme.Lime
@@ -39,7 +32,7 @@ object WidgetBitmaps {
                 val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = parseHexColor(colorHex).toArgb() }
                 val r = px * 0.3f
                 canvas.drawRoundRect(RectF(0f, 0f, px.toFloat(), px.toFloat()), r, r, paint)
-                drawVector(canvas, IconMap.resolve(icon), px * 0.2f, px * 0.6f, InkOnPastel.toArgb())
+                canvas.drawImageVector(IconMap.resolve(icon), px * 0.2f, px * 0.2f, px * 0.6f, InkOnPastel.toArgb())
             }
         }
     }
@@ -48,7 +41,7 @@ object WidgetBitmaps {
     fun habitIcon(context: Context, icon: String, size: Dp): Bitmap {
         val px = size.toPx(context)
         return cached("icon:$icon:$px") {
-            createBitmap(px, px).also { drawVector(Canvas(it), IconMap.resolve(icon), 0f, px.toFloat(), InkOnPastel.toArgb()) }
+            createBitmap(px, px).also { Canvas(it).drawImageVector(IconMap.resolve(icon), 0f, 0f, px.toFloat(), InkOnPastel.toArgb()) }
         }
     }
 
@@ -71,31 +64,6 @@ object WidgetBitmaps {
                 if (step > 0) {
                     paint.color = Lime.toArgb()
                     canvas.drawArc(rect, -90f, 360f * step / 100f, false, paint)
-                }
-            }
-        }
-    }
-
-    private fun drawVector(canvas: Canvas, vector: ImageVector, offset: Float, size: Float, color: Int) {
-        canvas.withTranslation(offset, offset) {
-            scale(size / vector.viewportWidth, size / vector.viewportHeight)
-            drawGroup(this, vector.root, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color })
-        }
-    }
-
-    private fun drawGroup(canvas: Canvas, group: VectorGroup, paint: Paint): Unit = canvas.withSave {
-        translate(group.translationX + group.pivotX, group.translationY + group.pivotY)
-        rotate(group.rotation)
-        scale(group.scaleX, group.scaleY)
-        translate(-group.pivotX, -group.pivotY)
-        for (node in group) {
-            when (node) {
-                is VectorGroup -> drawGroup(this, node, paint)
-                is VectorPath -> {
-                    val path = PathParser().addPathNodes(node.pathData).toPath().asAndroidPath()
-                    path.fillType = if (node.pathFillType == PathFillType.EvenOdd) android.graphics.Path.FillType.EVEN_ODD else android.graphics.Path.FillType.WINDING
-                    paint.alpha = (node.fillAlpha * 255).roundToInt()
-                    drawPath(path, paint)
                 }
             }
         }

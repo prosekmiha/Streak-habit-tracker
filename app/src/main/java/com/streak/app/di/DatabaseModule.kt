@@ -10,6 +10,8 @@ import androidx.room.Room
 import com.streak.app.data.local.DatabaseGuard
 import com.streak.app.data.local.StreakDatabase
 import com.streak.app.data.local.dao.BackupDao
+import com.streak.app.data.local.dao.GameDao
+import com.streak.app.data.local.dao.StatsDao
 import com.streak.app.data.local.dao.TaskDao
 import dagger.Module
 import dagger.Provides
@@ -57,4 +59,6 @@ object DatabaseModule {
 
     @Provides fun provideTaskDao(db: StreakDatabase): TaskDao = db.taskDao()
     @Provides fun provideBackupDao(db: StreakDatabase): BackupDao = db.backupDao()
+    @Provides fun provideGameDao(db: StreakDatabase): GameDao = db.gameDao()
+    @Provides fun provideStatsDao(db: StreakDatabase): StatsDao = db.statsDao()
 }

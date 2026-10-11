@@ -58,6 +58,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.streak.app.R
+import com.streak.app.ui.achievements.titleRes
+import com.streak.app.ui.achievements.GameCelebrationOverlay
+import com.streak.app.ui.theme.Lavender
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.platform.LocalResources
 import com.streak.app.data.local.DatabaseHealth
 import com.streak.app.domain.model.TimeOfDay
 import com.streak.app.domain.time.ClockStatus
@@ -88,8 +96,13 @@ fun HomeScreen(
     onOpenSession: (String) -> Unit,
     onOpenStats: () -> Unit,
     onOpenData: () -> Unit,
+    onOpenAchievements: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
+    val gameCelebration by viewModel.gameCelebration.collectAsStateWithLifecycle()
+    val inbox by viewModel.inbox.collectAsStateWithLifecycle()
+    val level by viewModel.level.collectAsStateWithLifecycle()
+    val resources = LocalResources.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     val pendingClock by viewModel.hasPendingClockAction.collectAsStateWithLifecycle()
     val activeSession by viewModel.activeSession.collectAsStateWithLifecycle()
@@ -104,6 +117,9 @@ fun HomeScreen(
             when (event) {
                 HomeEvent.FutureBlocked -> snackbar.showSnackbar(futureMsg)
                 is HomeEvent.OpenSession -> onOpenSession(event.habitId)
+                is HomeEvent.ChallengeDone -> snackbar.showSnackbar(
+                    resources.getString(R.string.challenge_done_snackbar, resources.getString(event.challenge.titleRes()))
+                )
             }
         }
     }
@@ -116,7 +132,7 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize().statusBarsPadding()
         ) {
-            fullSpan { Header(state, onOpenStats = onOpenStats, onOpenInbox = { inboxOpen = true }) }
+            fullSpan { Header(state, unread = inbox?.unread ?: 0, onOpenStats = onOpenStats, onOpenInbox = { inboxOpen = true }) }
             fullSpan {
                 // Trak sega cez rob (odmik je v traku samem)
                 WeekStrip(
@@ -134,7 +150,7 @@ fun HomeScreen(
             if (state.loaded && !state.hasHabits) {
                 fullSpan { EmptyState(onAddHabit) }
             } else {
-                if (state.dueCount > 0) fullSpan { ProgressRow(state) }
+                if (state.dueCount > 0) fullSpan { ProgressRow(state, level, onOpenAchievements) }
                 if (state.allDone && state.isToday) fullSpan { AllDoneBanner(state) }
                 state.sections.forEach { section ->
                     section.timeOfDay?.let { tod -> fullSpan { SectionTitle(tod) } }
@@ -186,14 +202,11 @@ fun HomeScreen(
     }
 
     if (inboxOpen) {
-        StreakDialog(
-            onDismiss = { inboxOpen = false },
-            title = stringResource(R.string.inbox_title),
-            text = stringResource(R.string.inbox_empty),
-            mascot = MascotMood.SLEEPING
-        ) {
-            DialogAction(stringResource(R.string.close), ButtonVariant.Secondary) { inboxOpen = false }
-        }
+        InboxSheet(
+            memory = inbox,
+            onOpenAchievements = { inboxOpen = false; viewModel.markInboxRead(); onOpenAchievements() },
+            onDismiss = { inboxOpen = false; viewModel.markInboxRead() }
+        )
     }
 
     restoreOffer?.let { offer ->
@@ -211,8 +224,12 @@ fun HomeScreen(
         }
     }
 
-    state.celebration?.let { c ->
-        CelebrationOverlay(celebration = c, onDismiss = viewModel::dismissCelebration)
+    // Najprej mejnik verige, nato znacke in nivo (nikoli dve praznovanji hkrati)
+    val milestone = state.celebration
+    if (milestone != null) {
+        CelebrationOverlay(celebration = milestone, onDismiss = viewModel::dismissCelebration)
+    } else {
+        gameCelebration?.let { GameCelebrationOverlay(it, onDismiss = viewModel::dismissGameCelebration) }
     }
 }
 
@@ -277,7 +294,7 @@ private fun LazyGridScope.fullSpan(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun Header(state: HomeUiState, onOpenStats: () -> Unit, onOpenInbox: () -> Unit) {
+private fun Header(state: HomeUiState, unread: Int, onOpenStats: () -> Unit, onOpenInbox: () -> Unit) {
     val greeting = stringResource(
         when (state.greeting) {
             Greeting.MORNING -> R.string.greeting_morning
@@ -298,12 +315,29 @@ private fun Header(state: HomeUiState, onOpenStats: () -> Unit, onOpenInbox: () 
             }
         }
         RoundIconButton(Icons.Rounded.AutoGraph, stringResource(R.string.nav_stats), onOpenStats, container = Color.Transparent)
-        RoundIconButton(Icons.Rounded.NotificationsNone, stringResource(R.string.inbox_title), onOpenInbox, container = Color.Transparent)
+        Box {
+            RoundIconButton(
+                Icons.Rounded.NotificationsNone,
+                if (unread > 0) pluralStringResource(R.plurals.inbox_unread_a11y, unread, unread) else stringResource(R.string.inbox_title),
+                onOpenInbox,
+                container = Color.Transparent
+            )
+            if (unread > 0) {
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 8.dp, end = 8.dp)
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun ProgressRow(state: HomeUiState) {
+private fun ProgressRow(state: HomeUiState, level: Int?, onOpenAchievements: () -> Unit) {
     val palette = StreakTheme.palette
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
         ProgressTrack(
@@ -327,6 +361,27 @@ private fun ProgressRow(state: HomeUiState) {
                 Icon(Icons.Rounded.LocalFireDepartment, null, tint = Color(0xFFF4874B), modifier = Modifier.size(16.dp))
                 Text(
                     pluralStringResource(R.plurals.days_short, state.topStreak, state.topStreak),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = InkOnPastel,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
+        }
+        if (level != null) {
+            val description = stringResource(R.string.level_chip_a11y, level)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(start = 6.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Lavender)
+                    .clickable(role = Role.Button, onClick = onOpenAchievements)
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                    .clearAndSetSemantics { contentDescription = description }
+            ) {
+                Icon(Icons.Rounded.Star, null, tint = InkOnPastel, modifier = Modifier.size(16.dp))
+                Text(
+                    stringResource(R.string.level_short, level),
                     style = MaterialTheme.typography.labelLarge,
                     color = InkOnPastel,
                     modifier = Modifier.padding(start = 4.dp)

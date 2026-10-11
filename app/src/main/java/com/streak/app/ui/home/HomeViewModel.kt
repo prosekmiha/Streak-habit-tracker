@@ -40,11 +40,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
+import com.streak.app.domain.gamification.Challenge
+import com.streak.app.game.GameCelebration
+import com.streak.app.game.GameEvents
+import com.streak.app.game.GameMemory
+import com.streak.app.game.GameRepository
+import com.streak.app.game.GameStore
 
 enum class Greeting { MORNING, DAY, EVENING }
 
@@ -77,6 +84,7 @@ data class HomeUiState(
 sealed interface HomeEvent {
     data object FutureBlocked : HomeEvent
     data class OpenSession(val habitId: String) : HomeEvent
+    data class ChallengeDone(val challenge: Challenge) : HomeEvent
 }
 
 // Pasica tekoce seje na vrhu domacega zaslona
@@ -93,8 +101,24 @@ class HomeViewModel @Inject constructor(
     private val logHabit: ToggleHabitUseCase,
     private val sessionController: SessionController,
     private val backupManager: BackupManager,
+    private val gameEvents: GameEvents,
+    private val gameStore: GameStore,
+    gameRepository: GameRepository,
     databaseGuard: DatabaseGuard
 ) : ViewModel() {
+
+    // Igrifikacija: praznovanja (znacka, nivo), nabiralnik in nivo za cip
+    val gameCelebration: StateFlow<GameCelebration?> = gameEvents.celebrations.map { it.firstOrNull() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val inbox: StateFlow<GameMemory?> = gameStore.memory.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    val level: StateFlow<Int?> = gameRepository.state.map { it.level.level }.distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    fun dismissGameCelebration() = gameEvents.consumeCelebration()
+
+    fun markInboxRead() {
+        viewModelScope.launch { gameStore.markRead(dayClock.now().toEpochMilli()) }
+    }
 
     // Tekoca seja (osvezi se vsako sekundo, le ko je zaslon viden)
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -210,6 +234,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { _restoreOffer.value = backupManager.pendingSnapshot() }
+        viewModelScope.launch { gameEvents.challengeDone.collect { events.send(HomeEvent.ChallengeDone(it)) } }
     }
 
     fun acceptRestore() {

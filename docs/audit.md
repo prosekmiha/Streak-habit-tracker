@@ -110,7 +110,7 @@ Vsak milestone se konča z zelenim buildom, testi in commitom ter je samostojno 
 | **M5** ✅ | Izvoz/uvoz JSON/CSV, geslo, Auto Backup + snapshot, SQLCipher, FLAG_SECURE, R8. Zaklep s kodo je bil narejen in nato na željo uporabnika odstranjen. | velik |
 | **M6** ✅ | Glance widgeti (mali, srednji, streak, količina) | srednji |
 | **M7** ✅ | 3D maskota: Blender generator, poze, SceneView renderer, state machine, sprožilci, fallbacki | velik |
-| **M8** | Gamifikacija (XP, nivoji, značke, izzivi, deljenje) + razširjena statistika | srednji |
+| **M8** ✅ | Gamifikacija (XP, nivoji, značke, izzivi, deljenje) + razširjena statistika | srednji |
 | **M9** | 24 EU jezikov, plurals, per-app language, pseudolokalizacija | srednji |
 | **M10** | Dostopnost, screenshot testi, Macrobenchmark + Baseline Profile | srednji |
 | v2 | Health Connect, Wear OS, App Actions, koledar, CSV uvoz iz drugih aplikacij, lock-screen widgeti, 3D značke in outfiti | — |

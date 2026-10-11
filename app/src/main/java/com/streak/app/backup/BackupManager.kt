@@ -15,6 +15,8 @@ import com.streak.app.domain.backup.ParseResult
 import com.streak.app.domain.model.AppSettings
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
+import com.streak.app.game.GameEvents
+import com.streak.app.game.GameStore
 import com.streak.app.notifications.AlarmScheduler
 import com.streak.app.session.SessionController
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -41,7 +43,9 @@ class BackupManager @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val habitRepository: HabitRepository,
     private val alarmScheduler: AlarmScheduler,
-    private val sessionController: SessionController
+    private val sessionController: SessionController,
+    private val gameEvents: GameEvents,
+    private val gameStore: GameStore
 ) {
     private val codec = BackupCodec()
     private val mutex = Mutex()
@@ -80,7 +84,9 @@ class BackupManager @Inject constructor(
         withContext(Dispatchers.Default) { codec.parse(text, password) }
 
     // Uvoz: zamenjava ali spoj, nato preracun streakov in alarmov
-    suspend fun import(incoming: BackupContents, mode: ImportMode) = mutex.withLock {
+    suspend fun import(incoming: BackupContents, mode: ImportMode) = gameEvents.quietly { importLocked(incoming, mode) }
+
+    private suspend fun importLocked(incoming: BackupContents, mode: ImportMode) = mutex.withLock {
         val local = readContents()
         val result = when (mode) {
             ImportMode.REPLACE -> incoming
@@ -133,7 +139,9 @@ class BackupManager @Inject constructor(
     }
 
     // Izbrise vse: podatke, nastavitve, posnetek, tekoco sejo, obvestila in alarme
-    suspend fun wipeAll() = mutex.withLock {
+    suspend fun wipeAll() = gameEvents.quietly { wipeLocked() }
+
+    private suspend fun wipeLocked() = mutex.withLock {
         sessionController.finish(save = false)
         readContents().habits.forEach { alarmScheduler.cancel(it.id) }
         withContext(Dispatchers.IO) {
@@ -141,6 +149,7 @@ class BackupManager @Inject constructor(
             snapshotFile.delete()
         }
         NotificationManagerCompat.from(context).cancelAll()
+        gameStore.clear()
         settingsRepository.update { AppSettings() }
     }
 

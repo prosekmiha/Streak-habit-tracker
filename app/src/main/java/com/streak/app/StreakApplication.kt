@@ -18,6 +18,7 @@ import com.streak.app.backup.BackupManager
 import com.streak.app.session.SessionController
 import com.streak.app.shortcuts.ShortcutPublisher
 import com.streak.app.widget.WidgetUpdater
+import com.streak.app.game.GameEvents
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -48,6 +49,7 @@ class StreakApplication : Application(), Configuration.Provider {
     @Inject lateinit var taskRepository: TaskRepository
     @Inject lateinit var backupManager: BackupManager
     @Inject lateinit var widgetUpdater: WidgetUpdater
+    @Inject lateinit var gameEvents: GameEvents
     @Inject @ApplicationScope lateinit var appScope: CoroutineScope
 
     @OptIn(FlowPreview::class)
@@ -74,6 +76,8 @@ class StreakApplication : Application(), Configuration.Provider {
         appScope.launch { reminderDispatcher.syncWithProgress() }
         // Widgeti sledijo podatkom (tudi menjavi dneva, ki sprozi zagon procesa)
         appScope.launch { widgetUpdater.run() }
+        // Nove znacke, nivo in opravljen izziv dneva -> nabiralnik in praznovanje
+        appScope.launch { gameEvents.run() }
         // Samodejni posnetek za Androidovo varnostno kopijo, 10 s po zadnji spremembi
         appScope.launch {
             combine(
