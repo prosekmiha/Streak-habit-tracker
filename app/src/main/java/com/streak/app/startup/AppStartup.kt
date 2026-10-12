@@ -6,8 +6,11 @@ import com.streak.app.data.repository.StreakRecalculator
 import com.streak.app.di.ApplicationScope
 import com.streak.app.domain.backup.BackupService
 import com.streak.app.domain.gamification.GameEvents
+import com.streak.app.domain.health.DatabaseHealth
 import com.streak.app.domain.notify.ReminderScheduler
+import com.streak.app.domain.repository.GameRepository
 import com.streak.app.domain.repository.HabitRepository
+import com.streak.app.domain.repository.MoodRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.repository.TaskRepository
 import com.streak.app.domain.session.SessionController
@@ -43,6 +46,8 @@ class AppStartup @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val habitRepository: HabitRepository,
     private val taskRepository: TaskRepository,
+    private val moodRepository: MoodRepository,
+    private val gameRepository: GameRepository,
     private val backupService: BackupService,
     private val widgetUpdater: WidgetUpdater,
     private val tileUpdater: TileUpdater,
@@ -56,6 +61,15 @@ class AppStartup @Inject constructor(
         appScope.launch {
             // Odpri bazo (in sprozi morebitno migracijo) v ozadju, z obnovo ob napaki
             databaseGuard.openVerified(database, StreakDatabase.NAME)
+            // Neuspela migracija zapre bazo: brez nje ne zaganjamo nicesar, kar jo bere,
+            // da lahko UI pokaze stanje baze namesto sesutja
+            if (databaseGuard.health.value != DatabaseHealth.Ok) return@launch
+            // Prazna baza (nova namestitev, nastavitve obnovljene iz oblaka): stari "zadnji znani
+            // dan" ni merilo za skok ure
+            if (habitRepository.getHabits(includeArchived = true).isEmpty()) {
+                settingsRepository.update { if (it.lastKnownDate == null) it else it.copy(lastKnownDate = null) }
+            }
+            startDatabaseConsumers()
             // Alarme lahko pobrise sistem (prisilna ustavitev, posodobitev): vedno jih obnovi
             reminders.rescheduleAll()
             // Predpomnjeni streaki morajo veljati za danasnji dan
@@ -67,30 +81,38 @@ class AppStartup @Inject constructor(
 
         // Tekoca seja iz prejsnjega procesa: obvestilo in alarm za cilj
         appScope.launch { sessionController.restore() }
+        // Ploscica seje sledi tekoci seji (zacetek, pavza, konec)
+        appScope.launch {
+            sessionController.active.map { it?.habitId to it?.running }.distinctUntilChanged().collect { tileUpdater.requestAll() }
+        }
+        appScope.launch { rescheduleDailyOnSettingsChange() }
+    }
+
+    // Opravila, ki berejo bazo; zazenejo se sele, ko je baza uspesno odprta
+    private fun startDatabaseConsumers() {
         appScope.launch { shortcutPublisher.run() }
         // Opravljena navada pospravi svoj opomnik, vse opravljeno pa vecerni opomnik
         appScope.launch { reminderDispatcher.syncWithProgress() }
         // Widgeti sledijo podatkom (tudi menjavi dneva, ki sprozi zagon procesa)
         appScope.launch { widgetUpdater.run() }
-        // Ploscica seje sledi tekoci seji (zacetek, pavza, konec)
-        appScope.launch {
-            sessionController.active.map { it?.habitId to it?.running }.distinctUntilChanged().collect { tileUpdater.requestAll() }
-        }
         // Nove znacke, nivo in opravljen izziv dneva -> nabiralnik in praznovanje
         appScope.launch { gameEvents.run() }
         appScope.launch { writeSnapshotOnChanges() }
-        appScope.launch { rescheduleDailyOnSettingsChange() }
         appScope.launch { followDayChanges() }
     }
 
     // Samodejni posnetek za Androidovo varnostno kopijo, 10 s po zadnji spremembi
     @OptIn(FlowPreview::class)
     private suspend fun writeSnapshotOnChanges() {
+        // Razpolozenje in seje (tudi pri navadah, ki niso casovne) ne spremenijo seznama navad,
+        // zato jih spremljamo posebej (stanje igrifikacije vsebuje seje)
         combine(
             habitRepository.observeHabits(),
             taskRepository.observeTasks(),
+            moodRepository.observeAll(),
+            gameRepository.state,
             settingsRepository.settings.map { it.cloudSnapshotEnabled }.distinctUntilChanged()
-        ) { _, _, _ -> Unit }
+        ) { _, _, _, _, _ -> Unit }
             .debounce(SNAPSHOT_DEBOUNCE_MS)
             .collect { runCatching { backupService.writeSnapshot() } }
     }

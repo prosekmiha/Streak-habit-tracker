@@ -61,6 +61,9 @@
     <string name="empty_habits_title">Los geht\'s</string>
     <string name="empty_habits">Füge deine erste Gewohnheit hinzu</string>
     <string name="future_blocked">Zukünftige Tage können nicht abgehakt werden.</string>
+    <string name="long_press_to_uncheck">Zum Entfernen des Häkchens lange drücken.</string>
+    <string name="task_moved_to">Erledigt. Nächstes Mal: %s</string>
+    <string name="undo">Rückgängig</string>
     <string name="inbox_title">Benachrichtigungen</string>
     <string name="inbox_empty">Keine neuen Benachrichtigungen.</string>
     <string name="week_day_all_done">alles erledigt</string>

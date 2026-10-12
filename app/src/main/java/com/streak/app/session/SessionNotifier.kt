@@ -44,8 +44,9 @@ class SessionNotifier @Inject constructor(
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
-            .setVisibility(if (hideNames) NotificationCompat.VISIBILITY_PRIVATE else NotificationCompat.VISIBILITY_PUBLIC)
-            .setPublicVersion(publicVersion())
+            // Zaklenjen zaslon nikoli ne pokaze imena navade (kot opomniki); stoparica ostane
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPublicVersion(publicVersion(session, elapsed))
             .setContentIntent(openIntent(session.habitId))
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
         if (session.running) {
@@ -89,16 +90,30 @@ class SessionNotifier @Inject constructor(
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(openIntent(session.habitId))
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPublicVersion(
+                NotificationCompat.Builder(context, NotificationHelper.CHANNEL_SESSION_ALERTS)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setContentTitle(context.getString(R.string.notif_goal_title))
+                    .setContentText(text)
+                    .build()
+            )
             .build()
         runCatching { NotificationManagerCompat.from(context).notify(GOAL_NOTIFICATION_ID, n) }
     }
 
-    // Na zaklenjenem zaslonu brez imena navade
-    private fun publicVersion(): Notification =
-        NotificationCompat.Builder(context, NotificationHelper.CHANNEL_SESSION)
+    // Na zaklenjenem zaslonu brez imena navade, a s stoparico
+    private fun publicVersion(session: ActiveSession, elapsed: Long): Notification {
+        val builder = NotificationCompat.Builder(context, NotificationHelper.CHANNEL_SESSION)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(R.string.notif_session_generic))
-            .build()
+        if (session.running) {
+            builder.setUsesChronometer(true).setShowWhen(true).setWhen(System.currentTimeMillis() - elapsed)
+        } else {
+            builder.setShowWhen(false).setContentText(context.getString(R.string.notif_session_paused, formatClock(elapsed / 1000)))
+        }
+        return builder.build()
+    }
 
     private fun goalText(session: ActiveSession): String? =
         if (session.targetSeconds > 0) context.getString(R.string.session_goal, session.targetSeconds / 60) else null

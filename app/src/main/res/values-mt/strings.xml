@@ -64,6 +64,9 @@
     <string name="empty_habits_title">Ejja nibdew</string>
     <string name="empty_habits">Żid l-ewwel drawwa tiegħek</string>
     <string name="future_blocked">Il-ġranet futuri ma jistgħux jiġu mmarkati.</string>
+    <string name="long_press_to_uncheck">Agħfas fit-tul biex tneħħi l-marka.</string>
+    <string name="task_moved_to">Lest. Id-darba li jmiss: %s</string>
+    <string name="undo">Ħassar</string>
     <string name="inbox_title">Notifiki</string>
     <string name="inbox_empty">Ebda notifika ġdida.</string>
     <string name="week_day_all_done">kollox lest</string>

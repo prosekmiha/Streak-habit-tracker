@@ -49,7 +49,8 @@ object TaskReminderRules {
             is TaskReminder.DayAt -> date.minusDays(r.daysBefore.toLong()).atTime(r.time).atZone(zone)
             is TaskReminder.Repeat -> {
                 val step = r.everyMinutes.coerceAtLeast(TaskReminder.MIN_INTERVAL).toLong()
-                generateSequence(r.from) { t -> t.plusMinutes(step).takeIf { it > t && it <= r.until } }
+                // Okno "from" za "until" je prazno (sicer bi se sprozil "from" izven okna)
+                generateSequence(r.from.takeIf { it <= r.until }) { t -> t.plusMinutes(step).takeIf { it > t && it <= r.until } }
                     .map { date.atTime(it).atZone(zone) }
                     .firstOrNull { it.isAfter(now) }
             }

@@ -62,6 +62,9 @@
     <string name="empty_habits_title">Cominciamo</string>
     <string name="empty_habits">Aggiungi la tua prima abitudine</string>
     <string name="future_blocked">Non è possibile segnare i giorni futuri.</string>
+    <string name="long_press_to_uncheck">Tieni premuto per deselezionare.</string>
+    <string name="task_moved_to">Fatto. Prossima volta: %s</string>
+    <string name="undo">Annulla</string>
     <string name="inbox_title">Notifiche</string>
     <string name="inbox_empty">Nessuna nuova notifica.</string>
     <string name="week_day_all_done">tutto fatto</string>

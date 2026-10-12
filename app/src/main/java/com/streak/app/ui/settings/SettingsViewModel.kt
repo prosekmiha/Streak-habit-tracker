@@ -10,6 +10,7 @@ import com.streak.app.domain.notify.ReminderScheduler
 import com.streak.app.domain.repository.GameRepository
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
+import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.DeleteHabitUseCase
 import com.streak.app.domain.usecase.SetHabitArchivedUseCase
 import com.streak.app.tiles.TileUpdater
@@ -42,6 +43,7 @@ class SettingsViewModel @Inject constructor(
     private val setHabitArchived: SetHabitArchivedUseCase,
     private val deleteHabit: DeleteHabitUseCase,
     private val tileUpdater: TileUpdater,
+    private val dayClock: DayClock,
     gameRepository: GameRepository
 ) : ViewModel() {
 
@@ -68,7 +70,13 @@ class SettingsViewModel @Inject constructor(
     fun setName(name: String) = update { it.copy(userName = name.trim().take(40)) }
     fun setTheme(mode: ThemeMode) = update { it.copy(themeMode = mode) }
     fun setAnimations(level: AnimationLevel) = update { it.copy(animationLevel = level) }
-    fun setFirstDayOfWeek(day: DayOfWeek) = update { it.copy(firstDayOfWeek = day) }
+    // Tedenski streaki v predpomnilniku so odvisni od prvega dne tedna
+    fun setFirstDayOfWeek(day: DayOfWeek) {
+        viewModelScope.launch {
+            settingsRepository.update { it.copy(firstDayOfWeek = day) }
+            habitRepository.recalculateAll()
+        }
+    }
     fun setPrivacyScreen(enabled: Boolean) = update { it.copy(privacyScreen = enabled) }
     fun setHideWidgetDetails(enabled: Boolean) = update { it.copy(hideWidgetDetails = enabled) }
     fun setTileHabit(id: String?) = update { it.copy(tileHabitId = id) }
@@ -81,7 +89,11 @@ class SettingsViewModel @Inject constructor(
     // Sprememba meje dneva vpliva na "danes", streake in dnevni alarm
     fun setDayEndsAt(time: LocalTime) {
         viewModelScope.launch {
+            val before = dayClock.today()
             settingsRepository.update { it.copy(dayEndsAt = time) }
+            // Premik meje lahko "danes" premakne za dan nazaj: to ni skok ure
+            val after = dayClock.today()
+            if (after != before) settingsRepository.update { if (it.lastKnownDate == before) it.copy(lastKnownDate = after) else it }
             alarmScheduler.scheduleDailyReset()
             habitRepository.recalculateAll()
         }

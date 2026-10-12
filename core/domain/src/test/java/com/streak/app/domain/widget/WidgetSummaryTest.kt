@@ -83,9 +83,10 @@ class WidgetSummaryTest {
         assertEquals(WidgetTap.TOGGLE, tap(GoalType.YES_NO, DayState.PENDING))
         assertEquals(WidgetTap.ADD_ONE, tap(GoalType.QUANTITY, DayState.PARTIAL))
         assertEquals(WidgetTap.OPEN_SESSION, tap(GoalType.DURATION, DayState.PENDING))
-        // Opravljeno se vedno odznaci, tudi kolicina in trajanje
-        assertEquals(WidgetTap.TOGGLE, tap(GoalType.QUANTITY, DayState.DONE))
-        assertEquals(WidgetTap.TOGGLE, tap(GoalType.DURATION, DayState.DONE))
+        // Dotik ne izbrise celega vpisa: opravljena kolicina -1, opravljeno trajanje odpre sejo
+        assertEquals(WidgetTap.TOGGLE, tap(GoalType.YES_NO, DayState.DONE))
+        assertEquals(WidgetTap.REMOVE_ONE, tap(GoalType.QUANTITY, DayState.DONE))
+        assertEquals(WidgetTap.OPEN_SESSION, tap(GoalType.DURATION, DayState.DONE))
         // Zdrs se vpise le v aplikaciji
         assertEquals(WidgetTap.OPEN_APP, tap(GoalType.QUIT, DayState.DONE))
         assertEquals(WidgetTap.OPEN_APP, tap(GoalType.QUIT, DayState.MISSED))

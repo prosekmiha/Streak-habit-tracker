@@ -1,9 +1,11 @@
 package com.streak.app.di
 
+import android.util.Log
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,5 +25,9 @@ object CoroutinesModule {
     @Provides
     @Singleton
     @ApplicationScope
-    fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    fun provideApplicationScope(): CoroutineScope {
+        // Napaka v ozadnem opravilu (npr. zaprta baza po neuspeli migraciji) ne sme sesuti procesa
+        val handler = CoroutineExceptionHandler { _, e -> Log.e("ApplicationScope", "Neulovljena napaka", e) }
+        return CoroutineScope(SupervisorJob() + Dispatchers.Default + handler)
+    }
 }

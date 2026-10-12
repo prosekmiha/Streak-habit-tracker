@@ -78,6 +78,12 @@ class TaskReminderRulesTest {
     }
 
     @Test
+    fun `repeat with an empty window never fires`() {
+        val t = task(reminders = listOf(TaskReminder.Repeat(60, LocalTime.of(12, 0), LocalTime.of(9, 0))))
+        assertNull(next(t, "2026-05-10T22:00"))
+    }
+
+    @Test
     fun `done task or task without date has no trigger`() {
         assertNull(next(task(done = true, reminders = listOf(TaskReminder.BeforeDue(0))), "2026-05-10T09:00"))
         assertNull(next(task(due = null, reminders = listOf(TaskReminder.DayAt(0, LocalTime.NOON))), "2026-05-10T09:00"))

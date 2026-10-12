@@ -1,4 +1,4 @@
-// Podatkovna plast: Room (SQLCipher), DataStore in implementacije domenskih vmesnikov.
+// Podatkovna plast: Room, DataStore in implementacije domenskih vmesnikov.
 // Ne pozna UI-ja ne Androidovih storitev aplikacije (alarmi, seje, widgeti).
 plugins {
     alias(libs.plugins.android.library)
@@ -45,8 +45,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.datastore.preferences)
-    // Sifriranje baze (kljuc v Android Keystoru)
-    implementation(libs.sqlcipher.android)
 
     api(libs.room.runtime)
     implementation(libs.room.ktx)

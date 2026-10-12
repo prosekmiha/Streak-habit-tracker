@@ -62,6 +62,9 @@
     <string name="empty_habits_title">C\'est parti</string>
     <string name="empty_habits">Ajoute ta première habitude</string>
     <string name="future_blocked">Impossible de cocher les jours futurs.</string>
+    <string name="long_press_to_uncheck">Appuyez longuement pour décocher.</string>
+    <string name="task_moved_to">Terminé. Prochaine fois : %s</string>
+    <string name="undo">Annuler</string>
     <string name="inbox_title">Notifications</string>
     <string name="inbox_empty">Aucune nouvelle notification.</string>
     <string name="week_day_all_done">tout est fait</string>

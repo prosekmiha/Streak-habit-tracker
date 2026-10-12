@@ -22,6 +22,7 @@ import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.LogResult
 import com.streak.app.domain.usecase.SetHabitArchivedUseCase
 import com.streak.app.domain.usecase.ToggleHabitUseCase
+import com.streak.app.domain.usecase.TrackKnownDateUseCase
 import com.streak.app.ui.components.HabitCardUi
 import com.streak.app.ui.components.WeekDayUi
 import com.streak.app.ui.home.HomeUiMapping.isDue
@@ -36,7 +37,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -81,6 +81,8 @@ data class HomeUiState(
 
 sealed interface HomeEvent {
     data object FutureBlocked : HomeEvent
+    // Dotik bi izbrisal zapisek ali cas: odznaci se z dolgim pritiskom (meni dejanj)
+    data object NeedsLongPress : HomeEvent
     data class OpenSession(val habitId: String) : HomeEvent
 }
 
@@ -99,6 +101,7 @@ class HomeViewModel @Inject constructor(
     private val setArchived: SetHabitArchivedUseCase,
     private val sessionController: SessionController,
     private val backup: BackupService,
+    private val trackKnownDate: TrackKnownDateUseCase,
     moodRepository: MoodRepository,
     databaseHealth: DatabaseHealthMonitor
 ) : ViewModel() {
@@ -184,12 +187,7 @@ class HomeViewModel @Inject constructor(
     init {
         // Zapomni si zadnji znani dan, ce se ura ni nenavadno premaknila
         viewModelScope.launch {
-            dayClock.todayFlow.collect { today ->
-                val settings = settingsRepository.settings.first()
-                if (ClockSanity.check(settings.lastKnownDate, today) == ClockStatus.Ok && settings.lastKnownDate != today) {
-                    settingsRepository.update { it.copy(lastKnownDate = today) }
-                }
-            }
+            dayClock.todayFlow.collect { trackKnownDate() }
         }
         viewModelScope.launch { _restoreOffer.value = backup.pendingSnapshot() }
     }
@@ -209,22 +207,16 @@ class HomeViewModel @Inject constructor(
         selectedDate.value = null
     }
 
-    // Dotik kartice: da/ne preklopi, kolicina +1, casovna navada odpre sejo,
-    // opravljena kartica se odznaci
+    // Dotik kartice: casovna navada danes odpre sejo, sicer ToggleHabitUseCase.tap (dotik
+    // nikoli ne izbrise vec, kot ga naslednji dotik povrne; ostalo iz menija dejanj)
     fun onTap(item: HabitCardUi) {
-        if (!item.isDone && !item.isNeutral && item.habit.goalType == GoalType.DURATION && state.value.isToday) {
+        if (item.habit.goalType == GoalType.DURATION && !item.isNeutral && state.value.isToday) {
             viewModelScope.launch { events.send(HomeEvent.OpenSession(item.habit.id)) }
             return
         }
         guarded {
-            val date = state.value.selectedDate
             if (!item.isDone) milestones.expect(item.habit.id, item.currentStreak)
-            val result = when {
-                item.isDone -> logHabit(item.habit, date)
-                item.habit.goalType == GoalType.QUANTITY -> logHabit.addProgress(item.habit, date, 1.0)
-                else -> logHabit(item.habit, date)
-            }
-            report(result)
+            report(logHabit.tap(item.habit, state.value.selectedDate))
         }
     }
 
@@ -263,7 +255,8 @@ class HomeViewModel @Inject constructor(
 
     fun acceptRestore() {
         _restoreOffer.value = null
-        viewModelScope.launch { backup.restoreSnapshot() }
+        // Neuspela obnova (posnetek se ne da uvoziti) pusti podatke nespremenjene, brez sesutja
+        viewModelScope.launch { runCatching { backup.restoreSnapshot() } }
     }
 
     fun declineRestore() {
@@ -300,7 +293,11 @@ class HomeViewModel @Inject constructor(
     }
 
     private suspend fun report(result: LogResult) {
-        if (result == LogResult.FUTURE_BLOCKED) events.send(HomeEvent.FutureBlocked)
+        when (result) {
+            LogResult.FUTURE_BLOCKED -> events.send(HomeEvent.FutureBlocked)
+            LogResult.NEEDS_LONG_PRESS -> events.send(HomeEvent.NeedsLongPress)
+            LogResult.OK -> Unit
+        }
     }
 
     private companion object {

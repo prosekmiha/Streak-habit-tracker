@@ -7,10 +7,12 @@ import com.streak.app.domain.model.HabitWithStreak
 import com.streak.app.domain.model.StreakUnit
 import com.streak.app.domain.model.TimeOfDay
 
-// Kaj naredi dotik navade na widgetu (enako kot dotik kartice na domacem zaslonu)
+// Kaj naredi dotik navade na widgetu (enako kot dotik kartice na domacem zaslonu).
+// Dotik nikoli ne izbrise vec, kot ga naslednji dotik povrne (popoln izbris je v aplikaciji).
 enum class WidgetTap {
     TOGGLE,      // da/ne: opravi ali odznaci
     ADD_ONE,     // kolicina: +1
+    REMOVE_ONE,  // opravljena kolicina: -1 (ne izbrise celega vpisa)
     OPEN_SESSION, // trajanje: seja tece v aplikaciji
     OPEN_APP      // opuscanje: zdrs se vpise le v aplikaciji (ne po nesreci z widgeta)
 }
@@ -37,8 +39,8 @@ data class WidgetHabit(
     val tap: WidgetTap
         get() = when {
             habit.isQuit -> WidgetTap.OPEN_APP
-            isDone -> WidgetTap.TOGGLE
-            habit.goalType == GoalType.QUANTITY -> WidgetTap.ADD_ONE
+            habit.goalType == GoalType.QUANTITY -> if (isDone) WidgetTap.REMOVE_ONE else WidgetTap.ADD_ONE
+            // Opravljeno trajanje se ne odznaci (sicer bi izgubili cas sej): odpre se seja
             habit.goalType == GoalType.DURATION -> WidgetTap.OPEN_SESSION
             else -> WidgetTap.TOGGLE
         }

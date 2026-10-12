@@ -63,6 +63,9 @@
     <string name="empty_habits_title">Pojďme na to</string>
     <string name="empty_habits">Přidej svůj první návyk</string>
     <string name="future_blocked">Budoucí dny nelze odškrtnout.</string>
+    <string name="long_press_to_uncheck">Odškrtnutí zrušíte dlouhým stisknutím.</string>
+    <string name="task_moved_to">Hotovo. Příště: %s</string>
+    <string name="undo">Zpět</string>
     <string name="inbox_title">Oznámení</string>
     <string name="inbox_empty">Žádná nová oznámení.</string>
     <string name="week_day_all_done">vše hotovo</string>

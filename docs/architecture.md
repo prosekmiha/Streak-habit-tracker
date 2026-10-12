@@ -18,7 +18,7 @@ MVVM s čistimi sloji v treh modulih. Prevajalnik sam prepreči, da bi domena uv
 |---|---|---|
 | `:core:domain` | Modeli, use-case-i, pravila (streak, logični dan, igrifikacija, obvestila, varnostna kopija) in vmesniki, ki jih implementira aplikacija | Samo Kotlin, coroutines, kotlinx.serialization, `javax.inject` (Dagger generira tovarne že tu) |
 | `:core:domain` `testFixtures` | Skupni fake-i (`FakeHabitRepository`, `FakeReminderScheduler` ...), `testHabit`, `FakeDayClock`, `MainDispatcherRule` | Uporabljajo jih testi domene in aplikacije |
-| `:core:data` | Room (SQLCipher), DataStore, repozitoriji, `DatabaseGuard`, Hilt moduli za bazo in repozitorije, izvozene sheme (`core/data/schemas`) | `:core:domain` (api) |
+| `:core:data` | Room, DataStore, repozitoriji, `DatabaseGuard`, Hilt moduli za bazo in repozitorije, izvozene sheme (`core/data/schemas`) | `:core:domain` (api) |
 | `:app` | UI (Compose), Androidove storitve (alarmi, obvestila, seje, widgeti, varnostna kopija), zagon, DI za storitve | `:core:domain`, `:core:data` |
 | `:benchmark` | Macrobenchmark in Baseline Profile | `:app` |
 

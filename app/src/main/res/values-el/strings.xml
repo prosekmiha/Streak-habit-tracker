@@ -61,6 +61,9 @@
     <string name="empty_habits_title">Ας ξεκινήσουμε</string>
     <string name="empty_habits">Πρόσθεσε την πρώτη σου συνήθεια</string>
     <string name="future_blocked">Οι μελλοντικές ημέρες δεν μπορούν να σημειωθούν.</string>
+    <string name="long_press_to_uncheck">Πατήστε παρατεταμένα για να αφαιρέσετε το σημάδι.</string>
+    <string name="task_moved_to">Ολοκληρώθηκε. Επόμενη φορά: %s</string>
+    <string name="undo">Αναίρεση</string>
     <string name="inbox_title">Ειδοποιήσεις</string>
     <string name="inbox_empty">Δεν υπάρχουν νέες ειδοποιήσεις.</string>
     <string name="week_day_all_done">όλα έγιναν</string>

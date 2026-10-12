@@ -63,6 +63,9 @@
     <string name="empty_habits_title">Let\'s begin</string>
     <string name="empty_habits">Add your first habit</string>
     <string name="future_blocked">Future days can\'t be checked off.</string>
+    <string name="long_press_to_uncheck">Long-press to uncheck.</string>
+    <string name="task_moved_to">Done. Next: %s</string>
+    <string name="undo">Undo</string>
     <string name="inbox_title">Notifications</string>
     <string name="inbox_empty">No new notifications.</string>
     <string name="week_day_all_done">all done</string>

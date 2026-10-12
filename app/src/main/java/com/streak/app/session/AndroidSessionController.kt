@@ -126,6 +126,8 @@ class AndroidSessionController @Inject constructor(
     }
 
     private suspend fun persistHistory(s: ActiveSession, seconds: Long) {
+        // Navada je bila medtem izbrisana: seje ni kam shraniti (tuji kljuc), zavrze se
+        val habit = habitRepository.getHabit(s.habitId) ?: return
         val today = dayClock.today()
         val end = dayClock.now()
         habitRepository.saveSession(
@@ -139,9 +141,7 @@ class AndroidSessionController @Inject constructor(
             )
         )
         // Trajanje se pristeje k napredku le pri casovnih navadah
-        habitRepository.getHabit(s.habitId)
-            ?.takeIf { it.goalType == GoalType.DURATION }
-            ?.let { logHabit.addProgress(it, today, seconds.toDouble()) }
+        if (habit.goalType == GoalType.DURATION) logHabit.addProgress(habit, today, seconds.toDouble())
     }
 
     private suspend fun <R> update(block: suspend (ActiveSession?) -> Pair<ActiveSession?, R>): R {

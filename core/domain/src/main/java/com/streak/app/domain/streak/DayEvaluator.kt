@@ -23,7 +23,9 @@ object DayEvaluator {
         date: LocalDate,
         completion: Completion?,
         vacations: List<Vacation>,
-        today: LocalDate
+        today: LocalDate,
+        // Navada "n-krat na obdobje" je cilj tekocega obdobja ze dosegla (PeriodGoal.isMet)
+        periodGoalMet: Boolean = false
     ): DayState {
         if (date.isAfter(today)) return DayState.FUTURE
         when (completion?.status) {
@@ -40,7 +42,7 @@ object DayEvaluator {
         if (vacations.any { it.contains(date) }) return DayState.VACATION
         val periodic = habit.schedule.type == ScheduleType.TIMES_PER_WEEK ||
             habit.schedule.type == ScheduleType.TIMES_PER_MONTH
-        if (periodic) return if (date == today) DayState.PENDING else DayState.NOT_SCHEDULED
+        if (periodic) return if (date == today && !periodGoalMet) DayState.PENDING else DayState.NOT_SCHEDULED
         if (!isScheduled(habit, date)) return DayState.NOT_SCHEDULED
         return if (date == today) DayState.PENDING else DayState.MISSED
     }

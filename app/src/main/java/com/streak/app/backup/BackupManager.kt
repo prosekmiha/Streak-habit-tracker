@@ -18,6 +18,7 @@ import com.streak.app.domain.backup.SnapshotInfo
 import com.streak.app.domain.gamification.GameEvents
 import com.streak.app.domain.model.AppSettings
 import com.streak.app.domain.notify.ReminderScheduler
+import com.streak.app.domain.notify.TaskReminderScheduler
 import com.streak.app.domain.repository.GameMemoryRepository
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
@@ -41,6 +42,7 @@ class BackupManager @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val habitRepository: HabitRepository,
     private val alarmScheduler: ReminderScheduler,
+    private val taskScheduler: TaskReminderScheduler,
     private val sessionController: SessionController,
     private val gameEvents: GameEvents,
     private val gameStore: GameMemoryRepository
@@ -89,8 +91,9 @@ class BackupManager @Inject constructor(
             ImportMode.REPLACE -> incoming
             ImportMode.MERGE -> BackupMerge.merge(local, incoming)
         }
-        // Alarmi starih navad (pri zamenjavi lahko izginejo)
+        // Alarmi in obvestila starih navad in nalog (pri zamenjavi lahko izginejo)
         local.habits.forEach { alarmScheduler.cancel(it.id) }
+        local.tasks.forEach { taskScheduler.cancel(it.id) }
         writeAll(result)
         if (mode == ImportMode.REPLACE) {
             incoming.settings?.let { s -> settingsRepository.update { BackupCodec.applySettings(s, it) } }
@@ -140,7 +143,9 @@ class BackupManager @Inject constructor(
 
     private suspend fun wipeLocked() = mutex.withLock {
         sessionController.finish(save = false)
-        readContents().habits.forEach { alarmScheduler.cancel(it.id) }
+        val local = readContents()
+        local.habits.forEach { alarmScheduler.cancel(it.id) }
+        local.tasks.forEach { taskScheduler.cancel(it.id) }
         withContext(Dispatchers.IO) {
             dao.clearAll()
             snapshotFile.delete()

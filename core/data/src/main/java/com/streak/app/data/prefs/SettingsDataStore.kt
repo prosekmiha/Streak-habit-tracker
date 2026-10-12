@@ -70,8 +70,12 @@ class SettingsDataStore @Inject constructor(
 
     override suspend fun update(transform: (AppSettings) -> AppSettings) {
         context.dataStore.edit { prefs ->
-            val updated = transform(prefs.toSettings())
+            val current = prefs.toSettings()
+            val firstDayStored = Keys.FIRST_DAY in prefs
+            val updated = transform(current)
             prefs.write(updated)
+            // Prvi dan tedna se shrani le, ce ga je uporabnik spremenil; sicer sledi jeziku naprave
+            if (!firstDayStored && updated.firstDayOfWeek == current.firstDayOfWeek) prefs.remove(Keys.FIRST_DAY)
         }
     }
 

@@ -61,6 +61,9 @@
     <string name="empty_habits_title">Alustame</string>
     <string name="empty_habits">Lisa oma esimene harjumus</string>
     <string name="future_blocked">Tulevasi päevi ei saa märkida.</string>
+    <string name="long_press_to_uncheck">Märke eemaldamiseks vajuta pikalt.</string>
+    <string name="task_moved_to">Tehtud. Järgmine kord: %s</string>
+    <string name="undo">Võta tagasi</string>
     <string name="inbox_title">Teavitused</string>
     <string name="inbox_empty">Uusi teavitusi pole.</string>
     <string name="week_day_all_done">kõik tehtud</string>

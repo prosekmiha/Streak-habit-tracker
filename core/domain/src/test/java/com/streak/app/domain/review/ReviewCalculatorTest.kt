@@ -90,9 +90,20 @@ class ReviewCalculatorTest {
         val quit = testHabit("q", goalType = GoalType.QUIT, target = 0.0, start = day(1))
         val slips = listOf(completion(day(3), CompletionStatus.RELAPSE, habitId = "q", value = 1.0))
         val r = ReviewCalculator.compute(range, input(habits = listOf(quit), completions = slips, archivedOn = mapOf("q" to day(20))))
-        assertEquals(19, r.cleanDays)
+        // Dnevi 1-19 (dan arhiviranja ne steje, kot v dnevnih povzetkih) brez zdrsa 3. dne
+        assertEquals(18, r.cleanDays)
         // Zdrs ni opravljena navada
         assertNull(r.topHabit)
+    }
+
+    @Test fun `skipped and frozen days are not clean days`() {
+        val quit = testHabit("q", goalType = GoalType.QUIT, target = 0.0, start = day(1))
+        val neutral = listOf(
+            completion(day(4), CompletionStatus.SKIPPED, habitId = "q", value = 0.0),
+            completion(day(5), CompletionStatus.FROZEN, habitId = "q", value = 0.0)
+        )
+        val r = ReviewCalculator.compute(range, input(today = day(10), habits = listOf(quit), completions = neutral))
+        assertEquals(8, r.cleanDays)
     }
 
     @Test fun `chronotype needs enough logs`() {

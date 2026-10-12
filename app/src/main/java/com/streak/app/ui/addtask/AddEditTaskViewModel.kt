@@ -9,6 +9,7 @@ import com.streak.app.domain.model.TaskRecurrence
 import com.streak.app.domain.model.TaskReminder
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.repository.TaskRepository
+import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.DeleteTaskUseCase
 import com.streak.app.domain.usecase.SaveTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,7 +40,7 @@ data class TaskForm(
     val morningTime: LocalTime = LocalTime.of(8, 0),
     val eveningTime: LocalTime = LocalTime.of(20, 0)
 ) {
-    val isValid: Boolean get() = title.isNotBlank() && !(isRecurring && repeat == TaskRepeat.WEEKLY && recurringDays.isEmpty())
+    val isValid: Boolean get() = title.isNotBlank()
     val repeat: TaskRepeat
         get() = when {
             !isRecurring -> TaskRepeat.NONE
@@ -56,6 +57,7 @@ class AddEditTaskViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val saveTask: SaveTaskUseCase,
     private val deleteTask: DeleteTaskUseCase,
+    private val dayClock: DayClock,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -73,8 +75,16 @@ class AddEditTaskViewModel @Inject constructor(
             val settings = settingsRepository.settings.first()
             val task = taskId?.let { taskRepository.getTask(it) }
             original = task
-            // Nova naloga: obrazec je ze v uporabi, dopolni le predloge ur
-            _form.update { it.copy(morningTime = settings.briefingTime, eveningTime = settings.nudgeTime) }
+            // Nova naloga: obrazec je ze v uporabi, dopolni le predloge ur in privzeti rok
+            // (logicni dan namesto koledarskega, ce se dan konca po polnoci)
+            val today = dayClock.today()
+            _form.update {
+                it.copy(
+                    morningTime = settings.briefingTime,
+                    eveningTime = settings.nudgeTime,
+                    dueDate = if (task == null && it.dueDate == LocalDate.now()) today else it.dueDate
+                )
+            }
             task?.let { t ->
                 _form.value = _form.value.copy(
                     id = t.id, title = t.title, dueDate = t.dueDate,
@@ -118,9 +128,10 @@ class AddEditTaskViewModel @Inject constructor(
 
     fun removeReminder(reminder: TaskReminder) = _form.update { it.copy(reminders = it.reminders - reminder) }
 
+    // Zadnjega dne ni mogoce odznaciti: prazen nabor bi nalogo tiho spremenil v dnevno
     fun toggleDay(day: DayOfWeek) = _form.update {
         val set = it.recurringDays.toMutableSet()
-        if (!set.add(day)) set.remove(day)
+        if (!set.add(day) && set.size > 1) set.remove(day)
         it.copy(recurringDays = set)
     }
 
@@ -128,10 +139,12 @@ class AddEditTaskViewModel @Inject constructor(
         val f = _form.value
         if (!f.isValid) return
         viewModelScope.launch {
+            // Ponavljanje brez datuma nima terminov (ne v koledarju ne v opomnikih): zacne se danes
+            val due = f.dueDate ?: if (f.isRecurring) dayClock.today() else null
             val task = Task(
                 id = f.id ?: UUID.randomUUID().toString(),
                 title = f.title.trim(),
-                dueDate = f.dueDate,
+                dueDate = due,
                 dueMinuteOfDay = if (f.hasTime) f.dueHour * 60 + f.dueMinute else null,
                 priority = f.priority,
                 isDone = original?.isDone ?: false,

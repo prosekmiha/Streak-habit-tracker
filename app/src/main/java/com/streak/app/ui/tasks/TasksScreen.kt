@@ -18,9 +18,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,58 +67,72 @@ fun TasksScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val palette = StreakTheme.palette
     val open = state.groups.filter { it.first != TaskGroup.DONE }.sumOf { it.second.size }
+    val snackbar = remember { SnackbarHostState() }
+    val locale = LocalConfiguration.current.locales[0]
+    val undoLabel = stringResource(R.string.undo)
+    val movedText = stringResource(R.string.task_moved_to)
+    LaunchedEffect(Unit) {
+        viewModel.advanced.collect { event ->
+            val date = event.next.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
+            val result = snackbar.showSnackbar(movedText.format(date), actionLabel = undoLabel, withDismissAction = true)
+            if (result == SnackbarResult.ActionPerformed) viewModel.undo(event.original)
+        }
+    }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 28.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        item {
-            ScreenTitle(stringResource(R.string.nav_tasks), Modifier.padding(top = 22.dp, bottom = 6.dp)) {
-                if (open > 0) {
-                    Text(
-                        pluralStringResource(R.plurals.tasks_open, open, open),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = palette.inkSoft,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
-                }
-            }
-        }
-        if (state.loaded && state.groups.isEmpty()) {
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding(),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             item {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 28.dp)) {
-                    MascotView(MascotMood.SLEEPING, Modifier.size(width = 160.dp, height = 173.dp))
-                    Text(stringResource(R.string.tasks_empty), style = MaterialTheme.typography.bodyLarge, color = palette.ink, modifier = Modifier.padding(vertical = 16.dp))
-                    StreakButton(stringResource(R.string.add_task), onAddTask)
+                ScreenTitle(stringResource(R.string.nav_tasks), Modifier.padding(top = 22.dp, bottom = 6.dp)) {
+                    if (open > 0) {
+                        Text(
+                            pluralStringResource(R.plurals.tasks_open, open, open),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = palette.inkSoft,
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
+                    }
+                }
+            }
+            if (state.loaded && state.groups.isEmpty()) {
+                item {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 28.dp)) {
+                        MascotView(MascotMood.SLEEPING, Modifier.size(width = 160.dp, height = 173.dp))
+                        Text(stringResource(R.string.tasks_empty), style = MaterialTheme.typography.bodyLarge, color = palette.ink, modifier = Modifier.padding(vertical = 16.dp))
+                        StreakButton(stringResource(R.string.add_task), onAddTask)
+                    }
+                }
+            }
+            state.groups.forEach { (group, tasks) ->
+                item(key = group.name) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 14.dp)) {
+                        Text(
+                            stringResource(group.label()),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = if (group == TaskGroup.OVERDUE) palette.danger else palette.ink,
+                            modifier = Modifier.semantics { heading() }
+                        )
+                        Text(
+                            tasks.size.toString(),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = palette.inkSoft,
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(palette.surfaceSoft)
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+                items(tasks, key = { it.id }) { task ->
+                    TaskRow(task, onToggle = { viewModel.toggle(task) }, onClick = { onEditTask(task.id) })
                 }
             }
         }
-        state.groups.forEach { (group, tasks) ->
-            item(key = group.name) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 14.dp)) {
-                    Text(
-                        stringResource(group.label()),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = if (group == TaskGroup.OVERDUE) palette.danger else palette.ink,
-                        modifier = Modifier.semantics { heading() }
-                    )
-                    Text(
-                        tasks.size.toString(),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = palette.inkSoft,
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(palette.surfaceSoft)
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                }
-            }
-            items(tasks, key = { it.id }) { task ->
-                TaskRow(task, onToggle = { viewModel.toggle(task) }, onClick = { onEditTask(task.id) })
-            }
-        }
+        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(16.dp))
     }
 }
 

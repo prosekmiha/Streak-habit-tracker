@@ -1,6 +1,7 @@
 package com.streak.app.ui.data
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.streak.app.backup.BackupFiles
@@ -12,6 +13,7 @@ import com.streak.app.domain.backup.ParseResult
 import com.streak.app.domain.model.AppSettings
 import com.streak.app.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -109,14 +111,24 @@ class DataViewModel @Inject constructor(
                 local.update { it.copy(import = ImportStep.Failed(ImportError.READ_FAILED)) }
                 return@launch
             }
-            handle(text, backup.parse(text), password = null)
+            handle(text, parseSafely(text, null), password = null)
         }
     }
 
     fun submitPassword(password: String) {
         val step = local.value.import as? ImportStep.NeedsPassword ?: return
         local.update { it.copy(import = ImportStep.Working) }
-        viewModelScope.launch { handle(step.text, backup.parse(step.text, password.toCharArray()), password) }
+        viewModelScope.launch { handle(step.text, parseSafely(step.text, password.toCharArray()), password) }
+    }
+
+    // Nepricakovana napaka pri branju je za uporabnika poskodovana datoteka (ne sesutje)
+    private suspend fun parseSafely(text: String, password: CharArray?): ParseResult = try {
+        backup.parse(text, password)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.e("DataViewModel", "Branje varnostne kopije ni uspelo", e)
+        ParseResult.Corrupt
     }
 
     private fun handle(text: String, result: ParseResult, password: String?) {
@@ -135,8 +147,17 @@ class DataViewModel @Inject constructor(
         val preview = local.value.import as? ImportStep.Preview ?: return
         local.update { it.copy(import = ImportStep.Working) }
         viewModelScope.launch {
-            backup.import(preview.contents, mode)
-            local.update { it.copy(import = ImportStep.Done(mode, preview.summary)) }
+            // Uvoz je ena transakcija: ob napaki ostanejo stari podatki nespremenjeni
+            val step = try {
+                backup.import(preview.contents, mode)
+                ImportStep.Done(mode, preview.summary)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("DataViewModel", "Uvoz ni uspel", e)
+                ImportStep.Failed(ImportError.CORRUPT)
+            }
+            local.update { it.copy(import = step) }
         }
     }
 
@@ -156,7 +177,8 @@ class DataViewModel @Inject constructor(
 
     fun setCloudSnapshot(enabled: Boolean) = viewModelScope.launch {
         settingsRepository.update { it.copy(cloudSnapshotEnabled = enabled) }
-        backup.writeSnapshot()
+        // Posnetek se bo zapisal ob naslednji spremembi; napaka pisanja ne sme sesuti zaslona
+        runCatching { backup.writeSnapshot() }.onFailure { Log.e("DataViewModel", "Posnetka ni mogoce zapisati", it) }
     }
 
     fun wipeAll() = work { backup.wipeAll() }
@@ -166,6 +188,12 @@ class DataViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 block()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Izvoz ali brisanje ni uspelo: sporocilo namesto sesutja
+                Log.e("DataViewModel", "Opravilo s podatki ni uspelo", e)
+                local.update { it.copy(message = DataMessage.WRITE_FAILED) }
             } finally {
                 local.update { it.copy(busy = false) }
             }

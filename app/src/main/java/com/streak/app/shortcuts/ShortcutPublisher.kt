@@ -1,6 +1,7 @@
 package com.streak.app.shortcuts
 
 import android.content.Context
+import android.content.pm.ShortcutManager
 import android.content.Intent
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -44,9 +45,16 @@ class ShortcutPublisher @Inject constructor(
                 )
                 .build()
         }
+        val keep = habits.map { "session_${it.first}" }.toSet()
+        // Navada je spet na voljo (npr. vrnjena iz arhiva): njeno pripeto bliznjico znova omogoci.
+        // Onemogocene bliznjice ni mogoce posodobiti, zato bi sicer spodletela cela objava.
+        runCatching {
+            val manager = context.getSystemService(ShortcutManager::class.java)
+            val reenable = manager.pinnedShortcuts.filter { !it.isEnabled && it.id in keep }.map { it.id }
+            if (reenable.isNotEmpty()) manager.enableShortcuts(reenable)
+        }
         runCatching { ShortcutManagerCompat.setDynamicShortcuts(context, shortcuts) }
         // Pripete bliznjice izbrisanih, arhiviranih ali spremenjenih navad onemogoci
-        val keep = habits.map { "session_${it.first}" }.toSet()
         val stale = ShortcutManagerCompat.getShortcuts(context, ShortcutManagerCompat.FLAG_MATCH_PINNED)
             .map { it.id }
             .filter { it.startsWith("session_") && it !in keep }

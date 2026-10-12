@@ -77,12 +77,21 @@ class HabitDetailViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HabitDetailState())
 
-    // Naknadni vpis: dotik dneva preklopi opravljenost
+    // Naknadni vpis: dotik dneva po enakih pravilih kot kartica na domacem zaslonu
+    // (ne izbrise zapiska ali casa); dolg pritisk dan v celoti preklopi
     fun toggleDay(date: LocalDate) {
         val habit = state.value.item?.habit ?: return
         viewModelScope.launch {
+            val result = logHabit.tap(habit, date)
+            if (result != LogResult.OK) events.send(result)
+        }
+    }
+
+    fun forceToggleDay(date: LocalDate) {
+        val habit = state.value.item?.habit ?: return
+        viewModelScope.launch {
             val result = logHabit(habit, date)
-            if (result == LogResult.FUTURE_BLOCKED) events.send(result)
+            if (result != LogResult.OK) events.send(result)
         }
     }
 }

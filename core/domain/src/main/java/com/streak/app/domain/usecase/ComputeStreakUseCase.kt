@@ -8,12 +8,11 @@ import com.streak.app.domain.model.HabitStreak
 import com.streak.app.domain.model.StreakUnit
 import com.streak.app.domain.model.Vacation
 import com.streak.app.domain.streak.DayEvaluator
+import com.streak.app.domain.streak.PeriodGoal
 import com.streak.app.domain.streak.Periods
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 import javax.inject.Inject
-import kotlin.math.ceil
 
 // Izracun streaka.
 //
@@ -145,10 +144,10 @@ class ComputeStreakUseCase @Inject constructor() {
         var best = 0
         // (opravljeno, zahtevano) za zakljucena obdobja - za delez
         val finished = ArrayList<Pair<Int, Int>>()
-        var current: PeriodResult? = null
+        var current: PeriodGoal.Result? = null
 
         while (!period.isAfter(currentPeriod)) {
-            val result = evaluatePeriod(habit, completions, vacations, period, unit, start, today)
+            val result = PeriodGoal.evaluate(habit, completions, vacations, period, unit, start)
             val isCurrent = period == currentPeriod
             when {
                 result.satisfied -> { run++; if (run > best) best = run }
@@ -169,42 +168,5 @@ class ComputeStreakUseCase @Inject constructor() {
             else -> 0f
         }
         return HabitStreak(run, best, rate.coerceIn(0f, 1f), unit, totalDone)
-    }
-
-    private class PeriodResult(val done: Int, val required: Int) {
-        val satisfied: Boolean get() = done > 0 && done >= required
-    }
-
-    private fun evaluatePeriod(
-        habit: Habit,
-        completions: Map<LocalDate, Completion>,
-        vacations: List<Vacation>,
-        periodStart: LocalDate,
-        unit: StreakUnit,
-        effectiveStart: LocalDate,
-        today: LocalDate
-    ): PeriodResult {
-        val periodEnd = Periods.end(periodStart, unit)
-        val length = ChronoUnit.DAYS.between(periodStart, periodEnd).toInt() + 1
-        var done = 0
-        var neutral = 0
-        var frozen = false
-        var day = periodStart
-        while (!day.isAfter(periodEnd)) {
-            val c = completions[day]
-            when {
-                c?.status == CompletionStatus.DONE -> done++
-                c?.status == CompletionStatus.FROZEN -> frozen = true
-                c?.status == CompletionStatus.SKIPPED -> neutral++
-                day.isBefore(effectiveStart) -> neutral++
-                habit.endDate != null && day.isAfter(habit.endDate) -> neutral++
-                vacations.any { it.contains(day) } -> neutral++
-            }
-            day = day.plusDays(1)
-        }
-        if (frozen) return PeriodResult(done, required = 0)
-        val activeDays = length - neutral
-        val required = ceil(habit.schedule.timesPerPeriod.toDouble() * activeDays / length).toInt()
-        return PeriodResult(done, required)
     }
 }

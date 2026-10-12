@@ -1,5 +1,7 @@
 package com.streak.app.ui.navigation
 
+import android.net.Uri
+
 // Cilji navigacije
 object Routes {
     const val HOME = "home"
@@ -21,9 +23,10 @@ object Routes {
 
     val TopLevel = setOf(HOME, TASKS, STATS, PROFILE)
 
-    fun addHabit(templateId: String? = null) = if (templateId == null) "add_habit" else "add_habit?template=$templateId"
-    fun editHabit(id: String) = "edit_habit/$id"
-    fun habitDetail(id: String) = "habit/$id"
-    fun session(habitId: String) = "session/$habitId"
-    fun editTask(id: String) = "edit_task/$id"
+    // ID-ji so kodirani: ID iz tuje namere (npr. z "/") ne sme pokvariti poti in sesuti navigacije
+    fun addHabit(templateId: String? = null) = if (templateId == null) "add_habit" else "add_habit?template=${Uri.encode(templateId)}"
+    fun editHabit(id: String) = "edit_habit/${Uri.encode(id)}"
+    fun habitDetail(id: String) = "habit/${Uri.encode(id)}"
+    fun session(habitId: String) = "session/${Uri.encode(habitId)}"
+    fun editTask(id: String) = "edit_task/${Uri.encode(id)}"
 }

@@ -63,6 +63,9 @@
     <string name="empty_habits_title">Začnimo</string>
     <string name="empty_habits">Dodaj svojo prvo navado</string>
     <string name="future_blocked">Prihodnjih dni ni mogoče označiti.</string>
+    <string name="long_press_to_uncheck">Za odznačitev pritisni in drži.</string>
+    <string name="task_moved_to">Opravljeno. Naslednjič: %s</string>
+    <string name="undo">Razveljavi</string>
     <string name="inbox_title">Obvestila</string>
     <string name="inbox_empty">Ni novih obvestil.</string>
     <string name="week_day_all_done">vse opravljeno</string>

@@ -73,11 +73,13 @@ fun HomeScreen(
     var inboxOpen by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
     val futureMsg = stringResource(R.string.future_blocked)
+    val longPressMsg = stringResource(R.string.long_press_to_uncheck)
 
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
             when (event) {
                 HomeEvent.FutureBlocked -> snackbar.showSnackbar(futureMsg)
+                HomeEvent.NeedsLongPress -> snackbar.showSnackbar(longPressMsg)
                 is HomeEvent.OpenSession -> onOpenSession(event.habitId)
             }
         }

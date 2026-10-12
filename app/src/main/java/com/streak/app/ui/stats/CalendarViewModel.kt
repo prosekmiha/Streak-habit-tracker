@@ -12,9 +12,11 @@ import com.streak.app.domain.repository.TaskRepository
 import com.streak.app.domain.streak.DayEvaluator
 import com.streak.app.domain.streak.Periods
 import com.streak.app.domain.time.DayClock
+import com.streak.app.domain.usecase.LogResult
 import com.streak.app.domain.usecase.ToggleHabitUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -83,9 +86,14 @@ class CalendarViewModel @Inject constructor(
                 habitRepository.observeVacations()
             ) { habits, completions, vacations ->
                 val byHabit = completions.associateBy { it.habitId }
-                habits.map { it.habit }
-                    .filter { it.isActiveOn(date) || byHabit.containsKey(it.id) }
-                    .map { HabitDay(it, DayEvaluator.stateOn(it, date, byHabit[it.id], vacations, today)) }
+                habits
+                    .filter { it.habit.isActiveOn(date) || byHabit.containsKey(it.habit.id) }
+                    .map { h ->
+                        // Danes velja stanje z upostevanim ciljem obdobja (n-krat na teden/mesec)
+                        val state = h.todayState.takeIf { date == today }
+                            ?: DayEvaluator.stateOn(h.habit, date, byHabit[h.habit.id], vacations, today)
+                        HabitDay(h.habit, state)
+                    }
             }
         }
 
@@ -130,9 +138,21 @@ class CalendarViewModel @Inject constructor(
         selectedDate.value = date
     }
 
-    // Potrdi/preklici opravljenost navade za izbran (tudi pretekli) dan.
-    // Prihodnje dni zavrne ToggleHabitUseCase.
+    // Opozorilo, da se vpis z vrednostjo odznaci z dolgim pritiskom
+    private val _hints = Channel<LogResult>(Channel.BUFFERED)
+    val hints: Flow<LogResult> = _hints.receiveAsFlow()
+
+    // Potrdi/preklici opravljenost navade za izbran (tudi pretekli) dan. Prihodnje dni zavrne
+    // ToggleHabitUseCase; vpisa z zapiskom, kolicino ali casom dotik ne izbrise.
     fun toggleHabitOnDate(habit: Habit, date: LocalDate) {
+        viewModelScope.launch {
+            val result = toggleHabit.toggleProtected(habit, date)
+            if (result == LogResult.NEEDS_LONG_PRESS) _hints.send(result)
+        }
+    }
+
+    // Dolg pritisk: preklop v celoti (tudi izbris vpisa z vrednostjo)
+    fun forceToggleHabitOnDate(habit: Habit, date: LocalDate) {
         viewModelScope.launch { toggleHabit(habit, date) }
     }
 }

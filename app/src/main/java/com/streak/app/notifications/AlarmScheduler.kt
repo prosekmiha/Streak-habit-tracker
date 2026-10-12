@@ -30,7 +30,8 @@ class AlarmScheduler @Inject constructor(
     private val dayClock: DayClock,
     private val settingsRepository: SettingsRepository,
     private val habitRepository: HabitRepository,
-    private val taskScheduler: TaskReminderScheduler
+    private val taskScheduler: TaskReminderScheduler,
+    private val helper: NotificationHelper
 ) : ReminderScheduler {
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
 
@@ -54,7 +55,11 @@ class AlarmScheduler @Inject constructor(
 
     override fun cancel(habitId: String, includeSnooze: Boolean) {
         for (index in 0 until MAX_REMINDERS) alarmManager.cancel(reminderIntent(habitId, index))
-        if (includeSnooze) alarmManager.cancel(reminderIntent(habitId, SNOOZE_SLOT))
+        // Popoln preklic (izbris, arhiv, uvoz): pospravi tudi prikazano obvestilo
+        if (includeSnooze) {
+            alarmManager.cancel(reminderIntent(habitId, SNOOZE_SLOT))
+            helper.cancelReminder(habitId)
+        }
     }
 
     override fun snooze(habitId: String, minutes: Long) {

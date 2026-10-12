@@ -2,6 +2,7 @@ package com.streak.app.domain.usecase
 
 import com.streak.app.testing.FakeHabitRepository
 import com.streak.app.testing.FakeReminderScheduler
+import com.streak.app.testing.FakeSessionController
 import com.streak.app.testing.testHabit
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -44,9 +45,23 @@ class HabitLifecycleUseCasesTest {
     fun `delete removes habit and cancels reminders`() = runTest {
         repository.upsertHabit(testHabit("a"))
 
-        DeleteHabitUseCase(repository, reminders)("a")
+        DeleteHabitUseCase(repository, reminders, FakeSessionController())("a")
 
         assertNull(repository.getHabit("a"))
         assertEquals(listOf("a"), reminders.cancelled)
+    }
+
+    @Test
+    fun `delete discards a running session of that habit only`() = runTest {
+        repository.upsertHabit(testHabit("a"))
+        repository.upsertHabit(testHabit("b"))
+        val sessions = FakeSessionController()
+        sessions.start(testHabit("a"))
+
+        DeleteHabitUseCase(repository, reminders, sessions)("b")
+        assertEquals("a", sessions.active.value?.habitId)
+
+        DeleteHabitUseCase(repository, reminders, sessions)("a")
+        assertNull(sessions.active.value)
     }
 }

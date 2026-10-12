@@ -6,6 +6,7 @@ import android.content.Intent
 import com.streak.app.di.ApplicationScope
 import com.streak.app.domain.notify.ReminderScheduler
 import com.streak.app.domain.session.SessionController
+import com.streak.app.domain.usecase.TrackKnownDateUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -19,6 +20,7 @@ class RescheduleReceiver : BroadcastReceiver() {
 
     @Inject lateinit var alarmScheduler: ReminderScheduler
     @Inject lateinit var sessionController: SessionController
+    @Inject lateinit var trackKnownDate: TrackKnownDateUseCase
     @Inject @ApplicationScope lateinit var scope: CoroutineScope
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -26,6 +28,8 @@ class RescheduleReceiver : BroadcastReceiver() {
         val pending = goAsync()
         scope.launch {
             try {
+                // Med izklopom naprave ure ni mogoce rocno premakniti: sprejmi nov dan
+                if (intent.action == Intent.ACTION_BOOT_COMPLETED) trackKnownDate(afterReboot = true)
                 alarmScheduler.rescheduleAll()
                 // Tekoca seja: obnovi obvestilo in alarm za cilj
                 sessionController.restore()

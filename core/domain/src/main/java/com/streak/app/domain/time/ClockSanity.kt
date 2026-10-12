@@ -23,4 +23,14 @@ object ClockSanity {
             else -> ClockStatus.Ok
         }
     }
+
+    // Nov "zadnji znani dan" ob naravni menjavi dneva (ali null, ce ga ne spremenimo).
+    // Dan se premakne le naprej in le, ce skok ni sumljiv; po ponovnem zagonu naprave
+    // (ure med izklopom ni mogoce rocno premakniti) je sprejemljiv vsak skok naprej.
+    fun advance(lastKnown: LocalDate?, today: LocalDate, afterReboot: Boolean = false): LocalDate? = when {
+        lastKnown == null -> today
+        !today.isAfter(lastKnown) -> null
+        afterReboot || check(lastKnown, today) == ClockStatus.Ok -> today
+        else -> null
+    }
 }

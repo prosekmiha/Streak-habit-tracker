@@ -216,9 +216,9 @@ private fun rowDescription(context: Context, item: WidgetHabit, subtitle: String
     val name = listOfNotNull(item.habit.title, subtitle).joinToString(", ")
     return when {
         item.tap == WidgetTap.OPEN_APP -> name
+        item.tap == WidgetTap.OPEN_SESSION -> context.getString(R.string.widget_a11y_session, name)
         item.isDone -> context.getString(R.string.widget_a11y_undo, name)
         item.tap == WidgetTap.ADD_ONE -> context.getString(R.string.widget_a11y_add_one, name)
-        item.tap == WidgetTap.OPEN_SESSION -> context.getString(R.string.widget_a11y_session, name)
         else -> context.getString(R.string.widget_a11y_done, name)
     }
 }

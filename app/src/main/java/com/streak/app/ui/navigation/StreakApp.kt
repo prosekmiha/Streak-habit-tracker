@@ -54,7 +54,8 @@ fun StreakApp(userName: String, pendingRoute: String? = null, onRouteHandled: ()
         val entry = navController.currentBackStackEntry
         val alreadyOpen = entry?.destination?.route == Routes.SESSION &&
             route == Routes.session(entry.arguments?.getString("habitId").orEmpty())
-        if (!alreadyOpen) navController.navigate(route)
+        // Pot iz tuje namere, ki je navigacija ne pozna, ne sme sesuti aplikacije
+        if (!alreadyOpen) runCatching { navController.navigate(route) }
         onRouteHandled()
     }
 

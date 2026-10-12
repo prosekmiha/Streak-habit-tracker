@@ -1,8 +1,10 @@
 package com.streak.app.ui.stats
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +17,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -26,17 +27,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -68,6 +73,10 @@ import kotlin.math.roundToInt
 @Composable
 fun CalendarTab(viewModel: CalendarViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        viewModel.hints.collect { Toast.makeText(context, R.string.long_press_to_uncheck, Toast.LENGTH_SHORT).show() }
+    }
     ScreenReadyTrace("Stats.ready", state.loaded)
     val locale = LocalConfiguration.current.locales[0]
     val palette = StreakTheme.palette
@@ -115,6 +124,7 @@ fun CalendarTab(viewModel: CalendarViewModel = hiltViewModel()) {
             habits = state.habitsForDate,
             tasks = state.tasksForDate,
             onToggle = { viewModel.toggleHabitOnDate(it.habit, date) },
+            onForceToggle = { viewModel.forceToggleHabitOnDate(it.habit, date) },
             onDismiss = { viewModel.selectDate(null) }
         )
     }
@@ -194,6 +204,7 @@ private fun DaySheet(
     habits: List<HabitDay>,
     tasks: List<com.streak.app.domain.model.Task>,
     onToggle: (HabitDay) -> Unit,
+    onForceToggle: (HabitDay) -> Unit,
     onDismiss: () -> Unit
 ) {
     val locale = LocalConfiguration.current.locales[0]
@@ -217,8 +228,11 @@ private fun DaySheet(
                     .heightIn(min = 60.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(if (done) palette.cardDone else parseHexColor(item.habit.colorHex))
-                    .toggleable(value = done, enabled = !isFuture, role = Role.Checkbox) { onToggle(item) }
-                    .semantics(mergeDescendants = true) { stateDescription = stateText }
+                    .combinedClickable(enabled = !isFuture, role = Role.Checkbox, onClick = { onToggle(item) }, onLongClick = { onForceToggle(item) })
+                    .semantics(mergeDescendants = true) {
+                        stateDescription = stateText
+                        toggleableState = ToggleableState(done)
+                    }
                     .padding(horizontal = 14.dp)
             ) {
                 val ink = if (done) palette.cardDoneInk else InkOnPastel

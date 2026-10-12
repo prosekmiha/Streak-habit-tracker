@@ -62,6 +62,9 @@
     <string name="empty_habits_title">Krenimo</string>
     <string name="empty_habits">Dodaj svoju prvu naviku</string>
     <string name="future_blocked">Buduće dane nije moguće označiti.</string>
+    <string name="long_press_to_uncheck">Dugo pritisni za poništavanje oznake.</string>
+    <string name="task_moved_to">Gotovo. Sljedeći put: %s</string>
+    <string name="undo">Poništi</string>
     <string name="inbox_title">Obavijesti</string>
     <string name="inbox_empty">Nema novih obavijesti.</string>
     <string name="week_day_all_done">sve obavljeno</string>

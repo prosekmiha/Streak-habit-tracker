@@ -10,7 +10,9 @@ import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 
-enum class LogResult { OK, FUTURE_BLOCKED }
+// NEEDS_LONG_PRESS: dotik bi izbrisal nekaj, cesar naslednji dotik ne povrne (zapisek,
+// cas sej) - odznaci se le z dolgim pritiskom oz. iz menija dejanj
+enum class LogResult { OK, FUTURE_BLOCKED, NEEDS_LONG_PRESS }
 
 // Vpisi in spremembe stanja navade za logicni dan.
 // - Prihodnjih dni ni mogoce vpisati (iskren zapis).
@@ -30,6 +32,36 @@ class ToggleHabitUseCase @Inject constructor(
             val full = if (habit.goalType == GoalType.YES_NO) 1.0 else habit.targetValue
             write(habit, date, CompletionStatus.DONE, full, existing)
         }
+    }
+
+    // Dotik kartice ali dneva: da/ne preklopi, kolicina +1 (opravljena -1), trajanje se
+    // oznaci s ciljem. Dotik nikoli ne izbrise vec, kot ga naslednji dotik povrne.
+    suspend fun tap(habit: Habit, date: LocalDate): LogResult {
+        if (habit.isQuit) return LogResult.OK
+        if (date.isAfter(dayClock.today())) return LogResult.FUTURE_BLOCKED
+        val existing = repository.getCompletion(habit.id, date)
+        if (existing?.status != CompletionStatus.DONE) {
+            return if (habit.goalType == GoalType.QUANTITY) addProgress(habit, date, 1.0) else invoke(habit, date)
+        }
+        val hasNote = !existing.note.isNullOrBlank()
+        return when (habit.goalType) {
+            // Cas sej se ne izbrise z dotikom
+            GoalType.DURATION -> LogResult.NEEDS_LONG_PRESS
+            GoalType.QUANTITY ->
+                if (hasNote && existing.value <= 1.0) LogResult.NEEDS_LONG_PRESS else addProgress(habit, date, -1.0)
+            else -> if (hasNote) LogResult.NEEDS_LONG_PRESS else setStatus(habit, date, null)
+        }
+    }
+
+    // Preklop v seznamu s potrditvenimi polji (koledar): oznaci s ciljem ali odznaci, a vpisa
+    // z zapiskom, kolicino ali casom ne izbrise (to le z dolgim pritiskom, tj. invoke)
+    suspend fun toggleProtected(habit: Habit, date: LocalDate): LogResult {
+        if (habit.isQuit) return LogResult.OK
+        if (date.isAfter(dayClock.today())) return LogResult.FUTURE_BLOCKED
+        val existing = repository.getCompletion(habit.id, date)
+        val valuable = existing?.status == CompletionStatus.DONE &&
+            (!existing.note.isNullOrBlank() || habit.goalType == GoalType.QUANTITY || habit.goalType == GoalType.DURATION)
+        return if (valuable) LogResult.NEEDS_LONG_PRESS else invoke(habit, date)
     }
 
     // Nastavi stanje (null = odstrani zapis)

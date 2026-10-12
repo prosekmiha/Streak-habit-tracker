@@ -15,6 +15,7 @@ import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.ToggleHabitUseCase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
+import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -79,10 +80,10 @@ class ReminderDispatcher @Inject constructor(
         if (more > 0) context.resources.getQuantityString(R.plurals.notif_nudge_names_more, more, list, more) else list
     }
 
-    // "Opravljeno" iz obvestila
-    suspend fun markDone(habitId: String) {
+    // "Opravljeno" iz obvestila: za dan, za katerega je bil opomnik (ce je znan)
+    suspend fun markDone(habitId: String, day: LocalDate? = null) {
         val habit = habitRepository.getHabit(habitId) ?: return
-        logHabit.setStatus(habit, dayClock.today(), CompletionStatus.DONE)
+        logHabit.setStatus(habit, day ?: dayClock.today(), CompletionStatus.DONE)
         helper.cancelReminder(habitId)
     }
 

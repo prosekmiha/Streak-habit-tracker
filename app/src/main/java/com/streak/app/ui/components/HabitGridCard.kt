@@ -92,8 +92,9 @@ fun HabitGridCard(
     val detailsLabel = stringResource(R.string.a11y_habit_actions)
     val tapLabel = when {
         item.habit.isQuit -> detailsLabel
+        // Dotik casovne navade vedno odpre sejo (tudi opravljene)
+        item.habit.goalType == GoalType.DURATION && !item.isNeutral -> sessionLabel
         item.isDone -> undoLabel
-        badge == BadgeKind.Play -> sessionLabel
         else -> doneLabel
     }
     val stateText = stateLabel(item)
