@@ -15,6 +15,7 @@ import com.streak.app.domain.time.DayClock
 import com.streak.app.notifications.NotificationHelper
 import com.streak.app.notifications.ReminderDispatcher
 import com.streak.app.shortcuts.ShortcutPublisher
+import com.streak.app.tiles.TileUpdater
 import com.streak.app.widget.WidgetUpdater
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -44,6 +45,7 @@ class AppStartup @Inject constructor(
     private val taskRepository: TaskRepository,
     private val backupService: BackupService,
     private val widgetUpdater: WidgetUpdater,
+    private val tileUpdater: TileUpdater,
     private val gameEvents: GameEvents,
     @ApplicationScope private val appScope: CoroutineScope
 ) {
@@ -70,6 +72,10 @@ class AppStartup @Inject constructor(
         appScope.launch { reminderDispatcher.syncWithProgress() }
         // Widgeti sledijo podatkom (tudi menjavi dneva, ki sprozi zagon procesa)
         appScope.launch { widgetUpdater.run() }
+        // Ploscica seje sledi tekoci seji (zacetek, pavza, konec)
+        appScope.launch {
+            sessionController.active.map { it?.habitId to it?.running }.distinctUntilChanged().collect { tileUpdater.requestAll() }
+        }
         // Nove znacke, nivo in opravljen izziv dneva -> nabiralnik in praznovanje
         appScope.launch { gameEvents.run() }
         appScope.launch { writeSnapshotOnChanges() }

@@ -57,6 +57,7 @@ data class HabitForm(
     val isArchived: Boolean = false
 ) {
     val target: Double? get() = targetText.replace(',', '.').toDoubleOrNull()
+    val isQuit: Boolean get() = goalType == GoalType.QUIT
 
     val titleError: Boolean get() = title.isBlank()
     val targetError: Boolean get() = goalType == GoalType.QUANTITY && (target ?: 0.0) <= 0.0
@@ -147,6 +148,7 @@ class AddEditHabitViewModel @Inject constructor(
                 GoalType.YES_NO -> 1.0
                 GoalType.QUANTITY -> f.target ?: 1.0
                 GoalType.DURATION -> f.durationMinutes.coerceAtLeast(1) * 60.0
+                GoalType.QUIT -> 0.0
             }
             val habit = base.copy(
                 title = f.title.trim(),
@@ -157,7 +159,7 @@ class AddEditHabitViewModel @Inject constructor(
                 goalType = f.goalType,
                 targetValue = target,
                 unit = f.unit.trim().ifBlank { null }.takeIf { f.goalType == GoalType.QUANTITY },
-                schedule = HabitSchedule(f.scheduleType, f.weekdays, f.timesPerPeriod.coerceAtLeast(1)),
+                schedule = if (f.isQuit) HabitSchedule.Daily else HabitSchedule(f.scheduleType, f.weekdays, f.timesPerPeriod.coerceAtLeast(1)),
                 timeOfDay = f.timeOfDay,
                 reminders = f.reminders.map { Reminder(time = it) },
                 startDate = f.startDate,

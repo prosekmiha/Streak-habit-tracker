@@ -16,6 +16,12 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE dueEpochDay = :epochDay ORDER BY dueMinuteOfDay ASC, priority DESC")
     fun observeForDate(epochDay: Long): Flow<List<TaskEntity>>
 
+    @Query("SELECT * FROM tasks WHERE id = :id")
+    suspend fun get(id: String): TaskEntity?
+
+    @Query("SELECT * FROM tasks")
+    suspend fun getAll(): List<TaskEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(task: TaskEntity)
 

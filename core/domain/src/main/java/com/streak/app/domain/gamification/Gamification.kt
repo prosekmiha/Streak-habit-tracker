@@ -31,7 +31,9 @@ data class GameInput(
     val aggregates: List<DailyAggregate>,
     // Najdaljsa veriga katerekoli navade, preracunana v dneve (teden = 7, mesec = 30)
     val bestStreakDays: Int,
-    val today: LocalDate
+    val today: LocalDate,
+    // Cisti dnevi navad za opuscanje (nimajo zapisov, zato niso v activity)
+    val cleanDays: Int = 0
 )
 
 object XpRules {
@@ -166,7 +168,7 @@ object Gamification {
         val challengeDays = (activity.keys + aggregates.keys).count { challengeDone(Challenge.forDate(it), activity[it], aggregates[it]) }
 
         val stats = GameStats(
-            totalDone = activity.values.sumOf { it.done },
+            totalDone = activity.values.sumOf { it.done } + input.cleanDays,
             perfectDays = perfectDates.size,
             longestPerfectRun = longestPerfectRun(aggregates.values.sortedBy { it.date }),
             sessions = sessions.sumOf { it.count },
@@ -197,7 +199,8 @@ object Gamification {
         Challenge.PERFECT_DAY -> aggregate != null && isPerfect(aggregate)
         Challenge.EARLY_START -> (activity?.doneBefore9 ?: 0) > 0
         Challenge.REFLECT -> (activity?.notes ?: 0) > 0
-        Challenge.DONE_BY_EVENING -> aggregate != null && isPerfect(aggregate) && (activity?.doneBefore18 ?: 0) >= aggregate.scheduled
+        // Vsi vpisi dneva pred 18:00 (cisti dnevi opuscanja nimajo vpisa in ne stejejo)
+        Challenge.DONE_BY_EVENING -> aggregate != null && isPerfect(aggregate) && (activity?.doneBefore18 ?: 0) >= (activity?.done ?: 0)
     }
 
     private fun isPerfect(a: DailyAggregate) = a.scheduled > 0 && a.done >= a.scheduled

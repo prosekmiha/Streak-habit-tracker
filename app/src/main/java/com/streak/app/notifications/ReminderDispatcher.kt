@@ -9,6 +9,7 @@ import com.streak.app.domain.notify.NotificationLog
 import com.streak.app.domain.notify.NotificationRules
 import com.streak.app.domain.notify.ReminderScheduler
 import com.streak.app.domain.repository.HabitRepository
+import com.streak.app.domain.repository.MoodRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.ToggleHabitUseCase
@@ -29,7 +30,8 @@ class ReminderDispatcher @Inject constructor(
     private val logHabit: ToggleHabitUseCase,
     private val helper: NotificationHelper,
     private val scheduler: ReminderScheduler,
-    private val log: NotificationLog
+    private val log: NotificationLog,
+    private val moodRepository: MoodRepository
 ) {
     suspend fun onReminder(habitId: String, snoozed: Boolean) {
         val habit = habitRepository.getHabit(habitId) ?: return
@@ -56,8 +58,16 @@ class ReminderDispatcher @Inject constructor(
         val settings = settingsRepository.settings.first()
         scheduler.scheduleDaily(settings)
         if (quiet(settings)) return
-        val pending = NotificationRules.pendingToday(habitRepository.observeHabits().first())
-        if (pending.isEmpty() || !log.tryConsume(dayClock.today(), settings.dailyNotificationCap)) return
+        val habits = habitRepository.observeHabits().first()
+        val pending = NotificationRules.pendingToday(habits)
+        val today = dayClock.today()
+        if (pending.isEmpty()) {
+            // Vse opravljeno: povabi k vpisu razpolozenja, ce ga se ni
+            val active = habits.any { !it.habit.isArchived }
+            if (active && moodRepository.get(today) == null && log.tryConsume(today, settings.dailyNotificationCap)) helper.showMoodPrompt()
+            return
+        }
+        if (!log.tryConsume(today, settings.dailyNotificationCap)) return
         helper.showNudge(nudgeText(pending, settings.hideNamesInNotifications))
     }
 

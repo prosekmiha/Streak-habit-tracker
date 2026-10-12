@@ -86,8 +86,11 @@ fun AddEditHabitScreen(onClose: () -> Unit, viewModel: AddEditHabitViewModel = h
                     filled = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
                 )
-                IntervalSection(form, showErrors, viewModel)
-                GoalSection(form, showErrors, viewModel)
+                QuitSection(form, enabled = !viewModel.isEdit, viewModel)
+                if (!form.isQuit) {
+                    IntervalSection(form, showErrors, viewModel)
+                    GoalSection(form, showErrors, viewModel)
+                }
 
                 FieldLabel(stringResource(R.string.icon_label))
                 IconGrid(selected = form.icon, onSelect = viewModel::selectIcon)

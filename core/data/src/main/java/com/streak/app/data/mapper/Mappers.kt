@@ -4,6 +4,7 @@ import com.streak.app.data.local.entity.CompletionEntity
 import com.streak.app.data.local.entity.DailyAggregateEntity
 import com.streak.app.data.local.entity.HabitEntity
 import com.streak.app.data.local.entity.HabitReminderEntity
+import com.streak.app.data.local.entity.MoodEntity
 import com.streak.app.data.local.entity.SessionEntity
 import com.streak.app.data.local.entity.StreakCacheEntity
 import com.streak.app.data.local.entity.TaskEntity
@@ -14,8 +15,10 @@ import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.HabitSchedule
 import com.streak.app.domain.model.HabitSession
 import com.streak.app.domain.model.HabitStreak
+import com.streak.app.domain.model.MoodEntry
 import com.streak.app.domain.model.Reminder
 import com.streak.app.domain.model.Task
+import com.streak.app.domain.model.TaskReminder
 import com.streak.app.domain.model.Vacation
 import java.time.DayOfWeek
 import java.time.Instant
@@ -130,10 +133,28 @@ fun HabitSession.toEntity(): SessionEntity = SessionEntity(
 fun TaskEntity.toDomain(): Task = Task(
     id, title,
     dueEpochDay?.let { LocalDate.ofEpochDay(it) },
-    dueMinuteOfDay, priority, isDone, isRecurring, recurrenceRule, createdAt
+    dueMinuteOfDay, priority, isDone, isRecurring, recurrenceRule, createdAt,
+    TaskReminder.decode(reminders)
 )
 
 fun Task.toEntity(): TaskEntity = TaskEntity(
     id, title, dueDate?.toEpochDay(), dueMinuteOfDay, priority,
-    isDone, isRecurring, recurrenceRule, createdAt
+    isDone, isRecurring, recurrenceRule, createdAt, TaskReminder.encode(reminders)
+)
+
+// Neveljavne vrednosti (npr. rocno spremenjena baza) se omejijo na veljaven obseg
+fun MoodEntity.toDomain() = MoodEntry(
+    date = LocalDate.ofEpochDay(epochDay),
+    mood = mood.coerceIn(MoodEntry.RANGE),
+    energy = energy?.coerceIn(MoodEntry.RANGE),
+    note = note,
+    loggedAt = Instant.ofEpochMilli(loggedAtMillis)
+)
+
+fun MoodEntry.toEntity() = MoodEntity(
+    epochDay = date.toEpochDay(),
+    mood = mood,
+    energy = energy,
+    note = note,
+    loggedAtMillis = loggedAt.toEpochMilli()
 )

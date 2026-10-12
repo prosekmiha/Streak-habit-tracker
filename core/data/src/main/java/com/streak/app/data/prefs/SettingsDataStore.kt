@@ -42,6 +42,9 @@ class SettingsDataStore @Inject constructor(
         val ANIMATIONS = stringPreferencesKey("animation_level")
         val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
         val LAST_KNOWN_DATE = longPreferencesKey("last_known_epoch_day")
+        val MOOD_DISMISSED_DAY = longPreferencesKey("mood_prompt_dismissed_epoch_day")
+        val TILE_HABIT = stringPreferencesKey("tile_habit_id")
+        val TILE_SESSION_HABIT = stringPreferencesKey("tile_session_habit_id")
         val HIDE_NOTIF_NAMES = booleanPreferencesKey("hide_notification_names")
         val HIDE_WIDGET_DETAILS = booleanPreferencesKey("hide_widget_details")
         val QUIET_START = intPreferencesKey("quiet_hours_start_minute")
@@ -80,6 +83,9 @@ class SettingsDataStore @Inject constructor(
         animationLevel = enumOrDefault(this[Keys.ANIMATIONS], AnimationLevel.FULL),
         onboardingDone = this[Keys.ONBOARDING_DONE] ?: false,
         lastKnownDate = this[Keys.LAST_KNOWN_DATE]?.let { LocalDate.ofEpochDay(it) },
+        moodPromptDismissedDay = this[Keys.MOOD_DISMISSED_DAY]?.let { LocalDate.ofEpochDay(it) },
+        tileHabitId = this[Keys.TILE_HABIT],
+        tileSessionHabitId = this[Keys.TILE_SESSION_HABIT],
         hideNamesInNotifications = this[Keys.HIDE_NOTIF_NAMES] ?: false,
         hideWidgetDetails = this[Keys.HIDE_WIDGET_DETAILS] ?: false,
         quietHoursStart = this[Keys.QUIET_START]?.let(::minuteToTime),
@@ -104,6 +110,9 @@ class SettingsDataStore @Inject constructor(
         this[Keys.ANIMATIONS] = s.animationLevel.name
         this[Keys.ONBOARDING_DONE] = s.onboardingDone
         setOrRemove(Keys.LAST_KNOWN_DATE, s.lastKnownDate?.toEpochDay())
+        setOrRemove(Keys.MOOD_DISMISSED_DAY, s.moodPromptDismissedDay?.toEpochDay())
+        setOrRemove(Keys.TILE_HABIT, s.tileHabitId)
+        setOrRemove(Keys.TILE_SESSION_HABIT, s.tileSessionHabitId)
         this[Keys.HIDE_NOTIF_NAMES] = s.hideNamesInNotifications
         this[Keys.HIDE_WIDGET_DETAILS] = s.hideWidgetDetails
         setOrRemove(Keys.QUIET_START, s.quietHoursStart?.let(::timeToMinute))

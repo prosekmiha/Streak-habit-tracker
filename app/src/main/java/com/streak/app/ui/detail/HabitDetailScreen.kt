@@ -227,6 +227,7 @@ private fun streakUnitLabel(item: com.streak.app.domain.model.HabitWithStreak): 
 fun habitSummary(habit: Habit, locale: java.util.Locale): String {
     val goal = when (habit.goalType) {
         GoalType.YES_NO -> null
+        GoalType.QUIT -> stringResource(R.string.goal_quit).lowercase(locale)
         GoalType.QUANTITY -> "${formatAmount(habit.targetValue)} ${habit.unit.orEmpty()}".trim()
         GoalType.DURATION -> stringResource(R.string.duration_minutes_value, (habit.targetValue / 60).toInt())
     }

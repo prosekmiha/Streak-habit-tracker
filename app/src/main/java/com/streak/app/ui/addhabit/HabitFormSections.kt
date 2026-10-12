@@ -73,6 +73,7 @@ import com.streak.app.ui.components.RoundIconButton
 import com.streak.app.ui.components.SegmentedControl
 import com.streak.app.ui.components.SelectField
 import com.streak.app.ui.components.Stepper
+import com.streak.app.ui.components.StreakSwitch
 import com.streak.app.ui.components.StreakTextField
 import com.streak.app.ui.components.TimePickerSheet
 import com.streak.app.ui.components.TimePreset
@@ -150,10 +151,35 @@ internal fun IntervalSection(form: HabitForm, showErrors: Boolean, viewModel: Ad
     }
 }
 
+// Navada za opuscanje (npr. brez kajenja): steje dneve brez zdrsa, cilj in urnik nista potrebna.
+// Pri urejanju vrste ni mogoce spremeniti, ker bi to spremenilo pomen obstojecih zapisov.
+@Composable
+internal fun QuitSection(form: HabitForm, enabled: Boolean, viewModel: AddEditHabitViewModel) {
+    val palette = StreakTheme.palette
+    val title = stringResource(R.string.quit_toggle_title)
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(top = 18.dp)) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, color = palette.ink)
+            Text(stringResource(R.string.quit_toggle_desc), style = MaterialTheme.typography.bodySmall, color = palette.inkSoft)
+        }
+        if (enabled) {
+            StreakSwitch(
+                checked = form.isQuit,
+                onCheckedChange = { q ->
+                    viewModel.update {
+                        it.copy(goalType = if (q) GoalType.QUIT else GoalType.YES_NO, scheduleType = if (q) ScheduleType.DAILY else it.scheduleType)
+                    }
+                },
+                contentDescription = title
+            )
+        }
+    }
+}
+
 @Composable
 internal fun GoalSection(form: HabitForm, showErrors: Boolean, viewModel: AddEditHabitViewModel) {
     FieldLabel(stringResource(R.string.goal_label))
-    SegmentedControl(GoalType.entries, form.goalType, { goalLabel(it) }, { g -> viewModel.update { it.copy(goalType = g) } })
+    SegmentedControl(GoalType.entries - GoalType.QUIT, form.goalType, { goalLabel(it) }, { g -> viewModel.update { it.copy(goalType = g) } })
     when (form.goalType) {
         GoalType.QUANTITY -> Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 10.dp)) {
             AmountStepper(
@@ -184,7 +210,7 @@ internal fun GoalSection(form: HabitForm, showErrors: Boolean, viewModel: AddEdi
                 modifier = Modifier.padding(top = 10.dp)
             )
         }
-        GoalType.YES_NO -> Unit
+        GoalType.YES_NO, GoalType.QUIT -> Unit
     }
 }
 

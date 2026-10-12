@@ -337,6 +337,7 @@ private fun SummaryText(summary: BackupSummary) {
         Text(pluralStringResource(R.plurals.data_count_completions, summary.completions, summary.completions), style = MaterialTheme.typography.bodyLarge, color = palette.ink)
         if (summary.sessions > 0) Text(pluralStringResource(R.plurals.detail_session_count, summary.sessions, summary.sessions), style = MaterialTheme.typography.bodyLarge, color = palette.ink)
         if (summary.tasks > 0) Text(pluralStringResource(R.plurals.data_count_tasks, summary.tasks, summary.tasks), style = MaterialTheme.typography.bodyLarge, color = palette.ink)
+        if (summary.moods > 0) Text(stringResource(R.string.data_count_moods, summary.moods), style = MaterialTheme.typography.bodyLarge, color = palette.ink)
         val first = summary.firstDate
         val last = summary.lastDate
         if (first != null && last != null) {

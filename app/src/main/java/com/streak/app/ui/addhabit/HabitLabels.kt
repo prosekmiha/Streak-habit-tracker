@@ -36,6 +36,7 @@ internal fun goalLabel(type: GoalType) = stringResource(
         GoalType.YES_NO -> R.string.goal_yes_no
         GoalType.QUANTITY -> R.string.goal_quantity
         GoalType.DURATION -> R.string.goal_duration
+        GoalType.QUIT -> R.string.goal_quit
     }
 )
 

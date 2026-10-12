@@ -78,4 +78,15 @@ class HomeUiMappingTest {
         )
         assertEquals(5, HomeUiMapping.topDailyStreak(habits))
     }
+
+    @Test
+    fun `mood prompt in the evening or when all is done, never after logging or dismissing`() {
+        val morning = java.time.LocalTime.of(9, 0)
+        val evening = java.time.LocalTime.of(18, 0)
+        assertEquals(false, HomeUiMapping.showMoodPrompt(logged = false, dismissedToday = false, allDone = false, now = morning))
+        assertEquals(true, HomeUiMapping.showMoodPrompt(logged = false, dismissedToday = false, allDone = false, now = evening))
+        assertEquals(true, HomeUiMapping.showMoodPrompt(logged = false, dismissedToday = false, allDone = true, now = morning))
+        assertEquals(false, HomeUiMapping.showMoodPrompt(logged = true, dismissedToday = false, allDone = true, now = evening))
+        assertEquals(false, HomeUiMapping.showMoodPrompt(logged = false, dismissedToday = true, allDone = true, now = evening))
+    }
 }

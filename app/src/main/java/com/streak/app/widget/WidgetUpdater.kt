@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.glance.appwidget.updateAll
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
+import com.streak.app.tiles.TileUpdater
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.combine
@@ -19,7 +20,8 @@ import javax.inject.Singleton
 class WidgetUpdater @Inject constructor(
     @ApplicationContext private val context: Context,
     private val habitRepository: HabitRepository,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val tileUpdater: TileUpdater
 ) {
     suspend fun updateAll() {
         runCatching {
@@ -28,13 +30,17 @@ class WidgetUpdater @Inject constructor(
             StreakWidget().updateAll(context)
             QuantityWidget().updateAll(context)
         }
+        // Ploscici v hitrih nastavitvah prikazujeta iste podatke
+        tileUpdater.requestAll()
     }
 
     @OptIn(FlowPreview::class)
     suspend fun run() {
         combine(
             habitRepository.observeHabits(),
-            settingsRepository.settings.map { listOf(it.themeMode, it.hideWidgetDetails, it.lastKnownDate) }.distinctUntilChanged()
+            settingsRepository.settings.map {
+                listOf(it.themeMode, it.hideWidgetDetails, it.lastKnownDate, it.hideNamesInNotifications, it.tileHabitId, it.tileSessionHabitId)
+            }.distinctUntilChanged()
         ) { _, _ -> Unit }
             .debounce(DEBOUNCE_MS)
             .collect { updateAll() }

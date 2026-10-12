@@ -1,5 +1,6 @@
 package com.streak.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.streak.app.domain.model.Priority
@@ -14,5 +15,7 @@ data class TaskEntity(
     val isDone: Boolean,
     val isRecurring: Boolean,
     val recurrenceRule: String?,
-    val createdAt: Long
+    val createdAt: Long,
+    // TaskReminder.encode; prazno = brez opomnikov
+    @ColumnInfo(defaultValue = "''") val reminders: String = ""
 )

@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.shareIn
 import java.time.LocalDate
@@ -26,7 +27,7 @@ import javax.inject.Singleton
 
 @Singleton
 class GameRepositoryImpl @Inject constructor(
-    gameDao: GameDao,
+    private val gameDao: GameDao,
     statsDao: StatsDao,
     dayClock: DayClock,
     @ApplicationScope scope: CoroutineScope
@@ -35,22 +36,33 @@ class GameRepositoryImpl @Inject constructor(
         gameDao.observeDayActivity(),
         gameDao.observeDaySessions(),
         statsDao.observeAllAggregates(),
-        statsDao.observeStreaks(),
+        combine(statsDao.observeStreaks(), gameDao.observeCleanDays(), ::Pair),
         dayClock.todayFlow
-    ) { activity, sessions, aggregates, streaks, today ->
+    ) { activity, sessions, aggregates, (streaks, cleanDays), today ->
         Gamification.compute(
             GameInput(
                 activity = activity.map { DayActivity(LocalDate.ofEpochDay(it.epochDay), it.done, it.doneBefore9, it.doneBefore18, it.notes) },
                 sessions = sessions.map { DaySessions(LocalDate.ofEpochDay(it.epochDay), it.count, it.seconds, it.units) },
                 aggregates = aggregates.map { it.toDomain() },
                 bestStreakDays = streaks.maxOfOrNull { it.bestStreak * daysPer(it.unit) } ?: 0,
-                today = today
+                today = today,
+                cleanDays = cleanDays
             )
         )
     }
         .flowOn(Dispatchers.Default)
         .distinctUntilChanged()
         .shareIn(scope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), replay = 1)
+
+    override suspend fun activityBetween(start: LocalDate, end: LocalDate): List<DayActivity> =
+        gameDao.observeDayActivity().first()
+            .filter { it.epochDay in start.toEpochDay()..end.toEpochDay() }
+            .map { DayActivity(LocalDate.ofEpochDay(it.epochDay), it.done, it.doneBefore9, it.doneBefore18, it.notes) }
+
+    override suspend fun sessionsBetween(start: LocalDate, end: LocalDate): List<DaySessions> =
+        gameDao.observeDaySessions().first()
+            .filter { it.epochDay in start.toEpochDay()..end.toEpochDay() }
+            .map { DaySessions(LocalDate.ofEpochDay(it.epochDay), it.count, it.seconds, it.units) }
 
     private fun daysPer(unit: StreakUnit) = when (unit) {
         StreakUnit.DAY -> 1

@@ -12,6 +12,7 @@ import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.usecase.DeleteHabitUseCase
 import com.streak.app.domain.usecase.SetHabitArchivedUseCase
+import com.streak.app.tiles.TileUpdater
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,6 +41,7 @@ class SettingsViewModel @Inject constructor(
     private val alarmScheduler: ReminderScheduler,
     private val setHabitArchived: SetHabitArchivedUseCase,
     private val deleteHabit: DeleteHabitUseCase,
+    private val tileUpdater: TileUpdater,
     gameRepository: GameRepository
 ) : ViewModel() {
 
@@ -69,6 +71,12 @@ class SettingsViewModel @Inject constructor(
     fun setFirstDayOfWeek(day: DayOfWeek) = update { it.copy(firstDayOfWeek = day) }
     fun setPrivacyScreen(enabled: Boolean) = update { it.copy(privacyScreen = enabled) }
     fun setHideWidgetDetails(enabled: Boolean) = update { it.copy(hideWidgetDetails = enabled) }
+    fun setTileHabit(id: String?) = update { it.copy(tileHabitId = id) }
+    fun setTileSessionHabit(id: String?) = update { it.copy(tileSessionHabitId = id) }
+
+    fun requestAddTile(session: Boolean) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) runCatching { tileUpdater.requestAdd(session) }
+    }
 
     // Sprememba meje dneva vpliva na "danes", streake in dnevni alarm
     fun setDayEndsAt(time: LocalTime) {

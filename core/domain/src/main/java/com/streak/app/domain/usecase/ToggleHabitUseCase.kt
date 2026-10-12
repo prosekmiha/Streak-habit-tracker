@@ -19,8 +19,10 @@ class ToggleHabitUseCase @Inject constructor(
     private val repository: HabitRepository,
     private val dayClock: DayClock
 ) {
-    // Preklopi med "opravljeno" in "brez zapisa"
+    // Preklopi med "opravljeno" in "brez zapisa". Pri opuscanju ne naredi nic:
+    // cist dan nima zapisa, zdrs se vpise le z addRelapse (brez nenamernega tapa).
     suspend operator fun invoke(habit: Habit, date: LocalDate): LogResult {
+        if (habit.isQuit) return LogResult.OK
         val existing = repository.getCompletion(habit.id, date)
         return if (existing?.status == CompletionStatus.DONE) {
             setStatus(habit, date, null)
@@ -42,6 +44,8 @@ class ToggleHabitUseCase @Inject constructor(
             CompletionStatus.DONE -> if (habit.goalType == GoalType.YES_NO) 1.0 else habit.targetValue
             CompletionStatus.PARTIAL -> existing?.value ?: 0.0
             CompletionStatus.SKIPPED, CompletionStatus.FROZEN -> 0.0
+            CompletionStatus.RELAPSE -> (existing?.value?.takeIf { existing.status == CompletionStatus.RELAPSE } ?: 0.0)
+                .coerceAtLeast(1.0)
         }
         return write(habit, date, status, value, existing)
     }
@@ -54,6 +58,16 @@ class ToggleHabitUseCase @Inject constructor(
         if (value <= 0.0) return setStatus(habit, date, null)
         val status = if (habit.meetsGoal(value)) CompletionStatus.DONE else CompletionStatus.PARTIAL
         return write(habit, date, status, value, existing)
+    }
+
+    // Pristeje (ali odsteje) zdrs pri navadi za opuscanje; 0 zdrsov = cist dan (brez zapisa)
+    suspend fun addRelapse(habit: Habit, date: LocalDate, delta: Int): LogResult {
+        if (!habit.isQuit) return LogResult.OK
+        val existing = repository.getCompletion(habit.id, date)
+        val base = if (existing?.status == CompletionStatus.RELAPSE) existing.value else 0.0
+        val value = (base + delta).coerceAtLeast(0.0)
+        if (value <= 0.0) return setStatus(habit, date, null)
+        return write(habit, date, CompletionStatus.RELAPSE, value, existing)
     }
 
     private suspend fun write(

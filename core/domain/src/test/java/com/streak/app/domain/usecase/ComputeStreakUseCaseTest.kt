@@ -1,5 +1,7 @@
 package com.streak.app.domain.usecase
 
+import com.streak.app.domain.model.GoalType
+import com.streak.app.domain.model.CompletionStatus.RELAPSE
 import com.streak.app.domain.model.CompletionStatus.FROZEN
 import com.streak.app.domain.model.CompletionStatus.PARTIAL
 import com.streak.app.domain.model.CompletionStatus.SKIPPED
@@ -204,5 +206,36 @@ class ComputeStreakUseCaseTest {
         val s = compute(testHabit(start = today.plusDays(3)), emptyMap(), emptyList(), today)
         assertEquals(0, s.currentStreak)
         assertEquals(0, s.bestStreak)
+    }
+
+    // --- Opuscanje ---
+
+    private fun quit(start: LocalDate = ago(9)) = testHabit(goalType = GoalType.QUIT, target = 0.0, start = start)
+
+    @Test fun `quit - every day without a slip is clean, including today`() {
+        val s = compute(quit(), emptyMap(), emptyList(), today)
+        assertEquals(10, s.currentStreak)
+        assertEquals(10, s.bestStreak)
+        assertEquals(10, s.totalDone)
+        assertEquals(1f, s.completionRate)
+    }
+
+    @Test fun `quit - a slip resets the run, best is the longest gap`() {
+        val s = compute(quit(), completions(completion(ago(3), RELAPSE, value = 2.0)), emptyList(), today)
+        assertEquals(3, s.currentStreak) // ago(2), ago(1), danes
+        assertEquals(6, s.bestStreak) // ago(9)..ago(4)
+        assertEquals(9, s.totalDone)
+    }
+
+    @Test fun `quit - slip today breaks the run immediately`() {
+        val s = compute(quit(), completions(completion(ago(0), RELAPSE, value = 1.0)), emptyList(), today)
+        assertEquals(0, s.currentStreak)
+        assertEquals(9, s.bestStreak)
+    }
+
+    @Test fun `quit - future start gives zero`() {
+        val s = compute(quit(start = today.plusDays(1)), emptyMap(), emptyList(), today)
+        assertEquals(0, s.currentStreak)
+        assertEquals(0, s.totalDone)
     }
 }

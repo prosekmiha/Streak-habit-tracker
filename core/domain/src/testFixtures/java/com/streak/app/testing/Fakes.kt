@@ -15,9 +15,11 @@ import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.HabitSession
 import com.streak.app.domain.model.HabitStreak
 import com.streak.app.domain.model.HabitWithStreak
+import com.streak.app.domain.model.MoodEntry
 import com.streak.app.domain.model.Vacation
 import com.streak.app.domain.notify.ReminderScheduler
 import com.streak.app.domain.repository.HabitRepository
+import com.streak.app.domain.repository.MoodRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.session.ActiveSession
 import com.streak.app.domain.session.AmbientSound
@@ -176,3 +178,15 @@ fun withStreak(
     completions: Map<LocalDate, Completion> = emptyMap(),
     streak: HabitStreak = HabitStreak.Empty
 ) = HabitWithStreak(habit = habit, completions = completions, days = days, streak = streak, today = today)
+
+class FakeMoodRepository : MoodRepository {
+    val entries = MutableStateFlow<Map<LocalDate, MoodEntry>>(emptyMap())
+
+    override fun observe(date: LocalDate): Flow<MoodEntry?> = entries.map { it[date] }
+    override fun observeRange(start: LocalDate, end: LocalDate): Flow<List<MoodEntry>> =
+        entries.map { m -> m.values.filter { !it.date.isBefore(start) && !it.date.isAfter(end) }.sortedBy { it.date } }
+    override fun observeAll(): Flow<List<MoodEntry>> = entries.map { m -> m.values.sortedBy { it.date } }
+    override suspend fun get(date: LocalDate): MoodEntry? = entries.value[date]
+    override suspend fun save(entry: MoodEntry) { entries.value = entries.value + (entry.date to entry) }
+    override suspend fun delete(date: LocalDate) { entries.value = entries.value - date }
+}

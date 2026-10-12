@@ -24,6 +24,10 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
+    // Izvozene sheme za MigrationTestHelper
+    sourceSets {
+        getByName("test").assets.srcDir("$projectDir/schemas")
+    }
 }
 
 kotlin {

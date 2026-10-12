@@ -6,12 +6,14 @@ import com.streak.app.data.prefs.SessionDataStore
 import com.streak.app.data.prefs.SettingsDataStore
 import com.streak.app.data.repository.GameRepositoryImpl
 import com.streak.app.data.repository.HabitRepositoryImpl
+import com.streak.app.data.repository.MoodRepositoryImpl
 import com.streak.app.data.repository.TaskRepositoryImpl
 import com.streak.app.data.time.SystemDayClock
 import com.streak.app.domain.notify.NotificationLog
 import com.streak.app.domain.repository.GameMemoryRepository
 import com.streak.app.domain.repository.GameRepository
 import com.streak.app.domain.repository.HabitRepository
+import com.streak.app.domain.repository.MoodRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.repository.TaskRepository
 import com.streak.app.domain.session.ActiveSessionStore
@@ -32,6 +34,9 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindTaskRepository(impl: TaskRepositoryImpl): TaskRepository
+
+    @Binds @Singleton
+    abstract fun bindMoodRepository(impl: MoodRepositoryImpl): MoodRepository
 
     @Binds @Singleton
     abstract fun bindSettingsRepository(impl: SettingsDataStore): SettingsRepository

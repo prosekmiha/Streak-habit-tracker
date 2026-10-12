@@ -140,4 +140,18 @@ class GamificationTest {
         )
         assertEquals(0, state.xp.total)
     }
+
+    @Test
+    fun `clean days of quit habits earn habit xp`() {
+        val state = Gamification.compute(GameInput(emptyList(), emptyList(), emptyList(), 0, today, cleanDays = 4))
+        assertEquals(4, state.stats.totalDone)
+        assertEquals(40, state.xp.habits)
+    }
+
+    @Test
+    fun `done by evening ignores clean quit days without a record`() {
+        // 3 nacrtovane: 2 vpisani pred 18:00 + 1 cist dan opuscanja (brez vpisa)
+        val perfect = DailyAggregate(today, scheduled = 3, done = 3)
+        assertTrue(Gamification.challengeDone(Challenge.DONE_BY_EVENING, DayActivity(today, 2, 0, 2, 0), perfect))
+    }
 }

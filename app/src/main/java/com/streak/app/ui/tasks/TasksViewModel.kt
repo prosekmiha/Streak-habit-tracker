@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.streak.app.domain.model.Task
 import com.streak.app.domain.repository.TaskRepository
 import com.streak.app.domain.time.DayClock
+import com.streak.app.domain.usecase.SetTaskDoneUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +23,8 @@ data class TasksUiState(
 
 @HiltViewModel
 class TasksViewModel @Inject constructor(
-    private val taskRepository: TaskRepository,
+    taskRepository: TaskRepository,
+    private val setTaskDone: SetTaskDoneUseCase,
     dayClock: DayClock
 ) : ViewModel() {
 
@@ -44,6 +46,6 @@ class TasksViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TasksUiState())
 
     fun toggle(task: Task) {
-        viewModelScope.launch { taskRepository.setDone(task.id, !task.isDone) }
+        viewModelScope.launch { setTaskDone(task, !task.isDone) }
     }
 }

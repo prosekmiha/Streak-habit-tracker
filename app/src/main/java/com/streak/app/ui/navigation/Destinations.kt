@@ -15,6 +15,9 @@ object Routes {
     const val NOTIFICATION_SETTINGS = "notification_settings"
     const val DATA = "data"
     const val ACHIEVEMENTS = "achievements"
+    const val REVIEW = "review"
+    // Ni zaslon: odpre list za razpolozenje (obvestilo)
+    const val MOOD = "mood"
 
     val TopLevel = setOf(HOME, TASKS, STATS, PROFILE)
 

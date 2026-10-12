@@ -33,12 +33,14 @@ No account, no server, no ads, no analytics: everything you log stays on your ph
 | | |
 |---|---|
 | **Home** | Time-of-day greeting, a week strip for logging past days, and pastel habit cards. Tap to complete or add +1; long-press to skip, freeze, add a note, edit or archive. |
-| **Habits** | Goals can be yes/no, a quantity with a unit, or a duration. Schedules: daily, chosen weekdays, or X times per week/month. Each habit can have a category, part of day, several reminders, and start/end dates. |
+| **Habits** | Goals can be yes/no, a quantity with a unit, a duration, or a habit to quit (counts days without a slip; slips are logged on purpose, never by an accidental tap). Schedules: daily, chosen weekdays, or X times per week/month. Each habit can have a category, part of day, several reminders, and start/end dates. |
 | **Sessions** | Timed sessions that keep running in the background, with a stopwatch notification (Pause/Finish), a goal alert, on-device generated ambient sounds (brown noise, rain, waves, fire) and session history. Launcher shortcuts start a session or a new habit. |
 | **Statistics** | Three tabs. **Overview:** weekly summary and a month calendar with backfill. **Habits:** current/best streak, completion rate, best weekday, last 8 weeks, heatmap. **Plan:** a week grid of what's scheduled, done or missed. |
 | **Reminders** | Only fire if the habit isn't done yet, with *Done* and *Snooze 15 min* actions. There is a morning brief and an evening nudge, plus quiet hours and a daily cap. Habit names are never shown on the lock screen. Alarms survive reboots, updates and time-zone changes. |
+| **Mood** | A daily mood (1–5) with optional energy and a note, logged from a Home card, the + menu or an evening notification. The Mood tab in Statistics shows a calendar, the average and how mood relates to completed habits. |
+| **Review** | A month or year in review: habits done, perfect days, the longest run, the most consistent habit, best weekday, focus time and mood, shareable as an image without habit names. |
 | **Achievements** | XP, levels and 16 badges, all derived from your records. Unchecking a habit takes its XP back. Also a daily challenge, a quote of the day, an inbox, and achievements shared as images. |
-| **Widgets** | Daily progress with the mascot; today's habits with tap-to-complete; a streak widget; a quantity widget with +1/−1. Details can be hidden. |
+| **Widgets & tiles** | Daily progress with the mascot; today's habits with tap-to-complete; a streak widget; a quantity widget with +1/−1. Details can be hidden. Two Quick Settings tiles log a chosen habit or pause/resume a session. |
 | **Tasks** | One-off to-dos with a due date, priority and repetition. |
 | **Your data** | JSON backup, optionally password-protected, saved to a file or shared. Restore shows a preview and can merge or replace. Also CSV export, a backup reminder every 30 days, an automatic snapshot for Android's device backup, and "delete everything". |
 | **Languages** | All 24 official EU languages (English by default), with plural rules for each. The language can be picked in the app or in system settings (Android 13+). |

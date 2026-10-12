@@ -16,13 +16,15 @@ data class BackupFile(
     val sessions: List<BSession> = emptyList(),
     val vacations: List<BVacation> = emptyList(),
     val tasks: List<BTask> = emptyList(),
+    // Od sheme 3
+    val moods: List<BMood> = emptyList(),
     // Nastavitve brez varnostnih podatkov (koda za zaklep se nikoli ne izvozi)
     val settings: BSettings? = null
 ) {
     companion object {
         const val FORMAT_PLAIN = "streak-backup"
         const val FORMAT_ENCRYPTED = "streak-backup-encrypted"
-        const val SCHEMA_VERSION = 2
+        const val SCHEMA_VERSION = 3
     }
 }
 
@@ -77,6 +79,15 @@ data class BSession(
 )
 
 @Serializable
+data class BMood(
+    val date: String,
+    val mood: Int,
+    val energy: Int? = null,
+    val note: String? = null,
+    val loggedAt: Long = 0
+)
+
+@Serializable
 data class BVacation(val startDate: String, val endDate: String)
 
 @Serializable
@@ -89,7 +100,18 @@ data class BTask(
     val isDone: Boolean = false,
     val isRecurring: Boolean = false,
     val recurrenceRule: String? = null,
-    val createdAt: Long
+    val createdAt: Long,
+    val reminders: List<BTaskReminder> = emptyList()
+)
+
+// kind: BEFORE (minutes), DAY_AT (days, time), REPEAT (minutes, time-until); ure v ISO obliki
+@Serializable
+data class BTaskReminder(
+    val kind: String,
+    val minutes: Int = 0,
+    val days: Int = 0,
+    val time: String? = null,
+    val until: String? = null
 )
 
 @Serializable

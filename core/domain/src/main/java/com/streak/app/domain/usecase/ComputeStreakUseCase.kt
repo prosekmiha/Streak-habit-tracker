@@ -28,6 +28,10 @@ import kotlin.math.ceil
 // - zahtevano stevilo se sorazmerno zmanjsa za nevtralne dni (preskok, dopust,
 //   dnevi pred zacetkom ali po koncu navade); zamrznitev zascitit celo obdobje
 // - tekoce obdobje prekine verigo sele, ko se konca
+//
+// Opuscanje (QUIT) - enota je dan:
+// - vsak aktiven dan brez zdrsa (tudi danes) je cist in poveca verigo, zdrs jo prekine
+// - totalDone je stevilo cistih dni (zapisa za ciste dni ni)
 class ComputeStreakUseCase @Inject constructor() {
 
     operator fun invoke(
@@ -37,6 +41,7 @@ class ComputeStreakUseCase @Inject constructor() {
         today: LocalDate,
         firstDayOfWeek: DayOfWeek = DayOfWeek.MONDAY
     ): HabitStreak {
+        if (habit.isQuit) return quitStreak(habit, completions, vacations, today)
         val totalDone = completions.values.count { it.status == CompletionStatus.DONE }
         val firstCompletion = completions.keys.minOrNull()
         val effectiveStart = listOfNotNull(habit.startDate, firstCompletion).min()
@@ -87,6 +92,41 @@ class ComputeStreakUseCase @Inject constructor() {
         }
         val rate = if (counted == 0) 0f else done.toFloat() / counted
         return HabitStreak(run, best, rate, StreakUnit.DAY, totalDone)
+    }
+
+    private fun quitStreak(
+        habit: Habit,
+        completions: Map<LocalDate, Completion>,
+        vacations: List<Vacation>,
+        today: LocalDate
+    ): HabitStreak {
+        if (habit.startDate.isAfter(today)) return HabitStreak(0, 0, 0f, StreakUnit.DAY, 0)
+        var run = 0
+        var best = 0
+        var clean = 0
+        var day = habit.startDate
+        while (!day.isAfter(today)) {
+            when (DayEvaluator.stateOn(habit, day, completions[day], vacations, today)) {
+                DayState.DONE -> { run++; clean++; if (run > best) best = run }
+                DayState.MISSED -> run = 0
+                else -> Unit // preskok, zamrznitev, izven trajanja
+            }
+            day = day.plusDays(1)
+        }
+        val windowStart = maxOf(habit.startDate, today.minusDays(29))
+        var done = 0
+        var counted = 0
+        day = windowStart
+        while (!day.isAfter(today)) {
+            when (DayEvaluator.stateOn(habit, day, completions[day], vacations, today)) {
+                DayState.DONE -> { done++; counted++ }
+                DayState.MISSED -> counted++
+                else -> Unit
+            }
+            day = day.plusDays(1)
+        }
+        val rate = if (counted == 0) 0f else done.toFloat() / counted
+        return HabitStreak(run, best, rate, StreakUnit.DAY, clean)
     }
 
     private fun periodStreak(

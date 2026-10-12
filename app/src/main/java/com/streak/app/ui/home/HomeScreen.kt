@@ -41,6 +41,7 @@ import com.streak.app.ui.components.StreakDialog
 import com.streak.app.ui.components.WeekStrip
 import com.streak.app.ui.components.bleed
 import com.streak.app.ui.mascot.MascotMood
+import com.streak.app.ui.mood.MoodCard
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -53,6 +54,7 @@ fun HomeScreen(
     onOpenStats: () -> Unit,
     onOpenData: () -> Unit,
     onOpenAchievements: () -> Unit,
+    onLogMood: (Int) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     gameViewModel: HomeGameViewModel = hiltViewModel()
 ) {
@@ -114,12 +116,14 @@ fun HomeScreen(
             } else {
                 if (state.dueCount > 0) fullSpan { ProgressRow(state, level, onOpenAchievements) }
                 if (state.allDone && state.isToday) fullSpan { AllDoneBanner(state) }
+                if (state.moodPrompt && state.isToday) fullSpan { MoodCard(onPick = { onLogMood(it) }, onLater = viewModel::dismissMoodPrompt) }
                 state.sections.forEach { section ->
                     section.timeOfDay?.let { tod -> fullSpan { SectionTitle(tod) } }
                     items(section.items, key = { it.habit.id }) { item ->
                         HabitGridCard(
                             item = item,
-                            onTap = { viewModel.onTap(item) },
+                            // Pri opuscanju tap odpre dejanja, da zdrs ni vpisan po nesreci
+                            onTap = { if (item.habit.isQuit) sheetFor = item.habit.id else viewModel.onTap(item) },
                             onLongPress = { sheetFor = item.habit.id }
                         )
                     }
@@ -142,6 +146,7 @@ fun HomeScreen(
                 onToggle = { viewModel.toggleDone(item) },
                 onSetStatus = { viewModel.setStatus(item.habit, it) },
                 onAddProgress = { viewModel.addProgress(item.habit, it) },
+                onAddRelapse = { viewModel.addRelapse(item.habit, it) },
                 onSaveNote = { viewModel.saveNote(item.habit, it) },
                 onStartSession = { sheetFor = null; onOpenSession(id) },
                 onDetails = { sheetFor = null; onOpenHabit(id) },

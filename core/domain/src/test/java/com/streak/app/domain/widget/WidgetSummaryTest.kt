@@ -86,6 +86,9 @@ class WidgetSummaryTest {
         // Opravljeno se vedno odznaci, tudi kolicina in trajanje
         assertEquals(WidgetTap.TOGGLE, tap(GoalType.QUANTITY, DayState.DONE))
         assertEquals(WidgetTap.TOGGLE, tap(GoalType.DURATION, DayState.DONE))
+        // Zdrs se vpise le v aplikaciji
+        assertEquals(WidgetTap.OPEN_APP, tap(GoalType.QUIT, DayState.DONE))
+        assertEquals(WidgetTap.OPEN_APP, tap(GoalType.QUIT, DayState.MISSED))
     }
 
     @Test

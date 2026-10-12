@@ -373,6 +373,7 @@ internal fun TemplateCard(template: HabitTemplate, selected: Boolean, onClick: (
 @Composable
 internal fun templateTag(t: HabitTemplate): String = when {
     t.goalType == GoalType.QUANTITY -> stringResource(R.string.goal_quantity)
+    t.goalType == GoalType.QUIT -> stringResource(R.string.goal_quit)
     t.goalType == GoalType.DURATION -> stringResource(R.string.tag_session)
     t.schedule.type == ScheduleType.TIMES_PER_WEEK -> stringResource(R.string.times_per_week_value, t.schedule.timesPerPeriod)
     t.timeOfDay == TimeOfDay.MORNING -> stringResource(R.string.filter_morning)

@@ -1,19 +1,20 @@
-# Podatkovni model (Room v2)
+# Podatkovni model (Room v4)
 
-Shema je izvožena v `core/data/schemas/com.streak.app.data.local.StreakDatabase/2.json`.
+Shema je izvožena v `core/data/schemas/com.streak.app.data.local.StreakDatabase/4.json` (starejše verzije so v isti mapi).
 
 ## Tabele
 
 | Tabela | Namen | Ključ / indeksi |
 |---|---|---|
-| `habits` | Navada: naslov, opis, ikona, barva, kategorija, tip cilja (`YES_NO`/`QUANTITY`/`DURATION`) s ciljno vrednostjo in enoto, urnik (`DAILY`/`WEEKDAYS`/`TIMES_PER_WEEK`/`TIMES_PER_MONTH` + bitna maska dni + X na obdobje), del dneva, začetek/konec, `archivedAt` | PK `id`, indeks `archivedAt` |
+| `habits` | Navada: naslov, opis, ikona, barva, kategorija, tip cilja (`YES_NO`/`QUANTITY`/`DURATION`/`QUIT`) s ciljno vrednostjo in enoto, urnik (`DAILY`/`WEEKDAYS`/`TIMES_PER_WEEK`/`TIMES_PER_MONTH` + bitna maska dni + X na obdobje), del dneva, začetek/konec, `archivedAt` | PK `id`, indeks `archivedAt` |
 | `habit_reminders` | Več opomnikov na navado (minuta v dnevu, vklopljen) | FK → habits (CASCADE), indeks `habitId` |
-| `completions` | En zapis na navado in logični dan: status (`DONE`/`PARTIAL`/`SKIPPED`/`FROZEN`), vrednost, UTC trenutek vpisa, zamik pasu ob vpisu, opomba, `manuallyEdited` (backfill) | FK → habits (CASCADE), unikatno (`habitId`, `epochDay`), indeks `epochDay` |
+| `completions` | En zapis na navado in logični dan: status (`DONE`/`PARTIAL`/`SKIPPED`/`FROZEN`/`RELAPSE`), vrednost (pri `RELAPSE` število zdrsov), UTC trenutek vpisa, zamik pasu ob vpisu, opomba, `manuallyEdited` (backfill) | FK → habits (CASCADE), unikatno (`habitId`, `epochDay`), indeks `epochDay` |
 | `sessions` | Zaključene časovne seje | FK → habits (CASCADE), indeksa `habitId`, `epochDay` |
 | `streak_cache` | Predpomnjen streak na navado + dan, za katerega velja | PK/FK `habitId` |
 | `daily_aggregates` | Načrtovane/opravljene navade po dnevih (koledar, heatmap) | PK `epochDay` |
 | `vacations` | Obdobja dopusta (veljajo za vse navade) | PK `id` |
-| `tasks` | Naloge (nespremenjeno iz v1) | PK `id` |
+| `tasks` | Naloge: rok (datum, neobvezna ura), prioriteta, ponavljanje (preprost RRULE), opravljeno; od v4 še `reminders` (opomniki, kodirani z `TaskReminder.encode`, npr. `B60;D1@1200;R30@540-1260`) | PK `id` |
+| `mood_entries` | Razpoloženje na logični dan (od v3): razpoloženje 1–5, neobvezna energija 1–5, opomba, trenutek vpisa | PK `epochDay` |
 
 ## Ključna pravila
 
@@ -27,6 +28,7 @@ Shema je izvožena v `core/data/schemas/com.streak.app.data.local.StreakDatabase
 ## Izračun streaka (`ComputeStreakUseCase`)
 
 - **Dnevni urniki** (enota dan): `DONE` podaljša verigo (tudi na dan izven urnika). `SKIPPED`, `FROZEN`, dopust, dnevi izven urnika ali trajanja navade so nevtralni. Načrtovan pretekli dan brez `DONE` (tudi `PARTIAL`) verigo prekine. Današnji dan je "v teku", dokler ne mine.
+- **Opuščanje** (`QUIT`, vedno dnevno): vsak aktiven dan brez zapisa je čist (`DONE`), tudi današnji in med dopustom. Zdrs (`RELAPSE`) verigo prekine. `totalDone` je število čistih dni; ti prinesejo XP (`GameDao.observeCleanDays`) in štejejo v popolne dni. Dotik kartice ali widgeta zdrsa ne vpiše, vpis je mogoč le v listu z dejanji.
 - **Obdobni urniki** (enota teden/mesec, prvi dan tedna iz nastavitev): obdobje je izpolnjeno pri ≥ zahtevanem številu `DONE` dni. Zahtevano število se sorazmerno zmanjša za nevtralne dni, zamrznitev pa zaščiti celo obdobje.
 - **Delež:** zadnjih 30 dni (opravljeni / opravljeni + zgrešeni) oziroma zadnja 4 zaključena obdobja.
 - Na popolnih zgodovinah se ujema s starim izračunom (`StreakEquivalenceTest`). Edina namerna razlika je, da dan brez zapisa zdaj prekine tudi rekord.
@@ -45,5 +47,7 @@ Domači zaslon bere le predpomnjene streake in zapise zadnjih 35 dni. Podrobnost
 ## Migracije in varnost podatkov
 
 - v1 ni imela izvožene sheme in produkcijskih podatkov, zato je prehod **1 → 2 edini dovoljeni destruktivni prehod** (`fallbackToDestructiveMigrationFrom(1)`). Splošnega destruktivnega fallbacka ni.
+- **2 → 3** doda tabelo `mood_entries` (`MIGRATION_2_3`). `DatabaseMigrationTest` jo preveri z dejanskimi podatki prek `MigrationTestHelper` (sheme so testni asset; v Robolectricu je treba podati absolutno pot baze).
+- **3 → 4** doda stolpec `tasks.reminders` (`TEXT NOT NULL DEFAULT ''`, `MIGRATION_3_4`). Opomniki so vezani na nalogo in se ne poizvedujejo ločeno, zato niso v svoji tabeli.
 - Vsaka nova verzija mora dodati migracijo v `StreakDatabase.MIGRATIONS`. `DatabaseMigrationTest` preveri, da migracija obstaja za vsak korak in da je shema izvožena.
 - `DatabaseGuard` pred vsako migracijo kopira bazo (+ WAL) v `no_backup/db-backups` in obdrži zadnje 3 kopije. Odpre bazo v ozadju in ob napaki obnovi kopijo. Enkrat na 7 dni, 10 s po zagonu, izvede `PRAGMA quick_check`. Stanje (`DatabaseHealth`) bo UI prikazal v M2/M5 s ponudbo uvoza varnostne kopije.

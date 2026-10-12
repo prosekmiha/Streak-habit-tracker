@@ -28,7 +28,7 @@ object NotificationRules {
     fun needsReminder(state: DayState?): Boolean = state == DayState.PENDING || state == DayState.PARTIAL
 
     fun pendingToday(habits: List<HabitWithStreak>): List<Habit> =
-        habits.filter { !it.habit.isArchived && needsReminder(it.todayState) }.map { it.habit }
+        habits.filter { !it.habit.isArchived && !it.habit.isQuit && needsReminder(it.todayState) }.map { it.habit }
 
     // Besedilo vecernega opomnika: najvec tri imena, ostalo kot stevilo
     fun nudgeNames(pending: List<Habit>, max: Int = 3): Pair<List<String>, Int> =

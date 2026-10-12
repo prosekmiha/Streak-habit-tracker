@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.NightsStay
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.ToggleOn
 import androidx.compose.material.icons.rounded.Translate
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.Widgets
@@ -91,7 +92,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.format.TextStyle
 
-private enum class ProfileSheet { NAME, ANIMATIONS, LANGUAGE, FIRST_DAY, DAY_END, ARCHIVED, ABOUT }
+private enum class ProfileSheet { NAME, ANIMATIONS, LANGUAGE, FIRST_DAY, DAY_END, ARCHIVED, TILES, ABOUT }
 
 @Composable
 fun SettingsScreen(
@@ -198,6 +199,7 @@ fun SettingsScreen(
             SettingsRow(stringResource(R.string.settings_hide_widget), Icons.Rounded.Widgets, Sky, { viewModel.setHideWidgetDetails(!s.hideWidgetDetails) }) {
                 StreakSwitch(s.hideWidgetDetails, viewModel::setHideWidgetDetails, contentDescription = stringResource(R.string.settings_hide_widget))
             }
+            SettingsRow(stringResource(R.string.tiles_title), Icons.Rounded.ToggleOn, Sun, { sheet = ProfileSheet.TILES })
             SettingsRow(
                 stringResource(if (state.recalculating) R.string.settings_recalculating else R.string.settings_recalculate),
                 Icons.Rounded.Refresh, Lime, viewModel::recalculateAll, showDivider = false
@@ -255,6 +257,15 @@ fun SettingsScreen(
             onRestore = viewModel::unarchive,
             onOpen = { sheet = null; onEditHabit(it.id) },
             onDelete = { pendingDelete = it },
+            onDismiss = { sheet = null }
+        )
+        ProfileSheet.TILES -> TilesSheet(
+            habits = state.habits,
+            habitTile = s.tileHabitId,
+            sessionTile = s.tileSessionHabitId,
+            onHabitTile = viewModel::setTileHabit,
+            onSessionTile = viewModel::setTileSessionHabit,
+            onAddTile = viewModel::requestAddTile,
             onDismiss = { sheet = null }
         )
         ProfileSheet.ABOUT -> StreakSheet(onDismiss = { sheet = null }, title = stringResource(R.string.settings_about), showClose = true) {

@@ -31,9 +31,12 @@ object DayEvaluator {
             CompletionStatus.SKIPPED -> return DayState.SKIPPED
             CompletionStatus.FROZEN -> return DayState.FROZEN
             CompletionStatus.PARTIAL -> return DayState.PARTIAL
+            CompletionStatus.RELAPSE -> return DayState.MISSED
             null -> Unit
         }
         if (!habit.isActiveOn(date)) return DayState.INACTIVE
+        // Opuscanje: vsak aktiven dan brez zdrsa (tudi danes in med dopustom) je cist
+        if (habit.isQuit) return DayState.DONE
         if (vacations.any { it.contains(date) }) return DayState.VACATION
         val periodic = habit.schedule.type == ScheduleType.TIMES_PER_WEEK ||
             habit.schedule.type == ScheduleType.TIMES_PER_MONTH

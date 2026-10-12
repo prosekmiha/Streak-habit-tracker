@@ -3,11 +3,14 @@ package com.streak.app.data.local
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.streak.app.data.local.entity.StreakCacheEntity
 import com.streak.app.data.mapper.reminderEntities
 import com.streak.app.data.mapper.toEntity
 import com.streak.app.domain.model.Completion
 import com.streak.app.domain.model.CompletionStatus
+import com.streak.app.domain.model.GoalType
 import com.streak.app.domain.model.HabitSession
+import com.streak.app.domain.model.StreakUnit
 import com.streak.app.testing.testHabit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -34,8 +37,8 @@ class GameDaoTest {
 
     @After fun tearDown() = db.close()
 
-    private suspend fun habit(id: String) {
-        val h = testHabit(id = id)
+    private suspend fun habit(id: String, goalType: GoalType = GoalType.YES_NO) {
+        val h = testHabit(id = id, goalType = goalType)
         db.habitDao().upsertWithReminders(h.toEntity(), h.reminderEntities())
     }
 
@@ -84,5 +87,15 @@ class GameDaoTest {
         assertEquals(3, row.count)
         assertEquals((12 + 4 + 90) * 60L, row.seconds)
         assertEquals(14, row.units)
+    }
+
+    @Test fun cleanDaysSumOnlyQuitHabits() = runTest {
+        habit("q1", GoalType.QUIT)
+        habit("q2", GoalType.QUIT)
+        habit("y")
+        fun cache(id: String, total: Int) = StreakCacheEntity(id, 0, 0, 0f, StreakUnit.DAY, total, day.toEpochDay())
+        assertEquals(0, db.gameDao().observeCleanDays().first())
+        db.statsDao().upsertStreaks(listOf(cache("q1", 5), cache("q2", 3), cache("y", 40)))
+        assertEquals(8, db.gameDao().observeCleanDays().first())
     }
 }

@@ -57,6 +57,7 @@ class BackupManager @Inject constructor(
             sessions = dao.sessions().map { it.toDomain() },
             vacations = dao.vacations().map { it.toDomain() },
             tasks = dao.tasks().map { it.toDomain() },
+            moods = dao.moods().map { it.toDomain() },
             settings = BackupCodec.settingsOf(settingsRepository.settings.first())
         )
     }
@@ -156,7 +157,8 @@ class BackupManager @Inject constructor(
             completions = c.completions.map { it.toEntity() },
             sessions = c.sessions.map { it.toEntity() },
             vacations = c.vacations.map { it.copy(id = 0).toEntity() },
-            tasks = c.tasks.map { it.toEntity() }
+            tasks = c.tasks.map { it.toEntity() },
+            moods = c.moods.map { it.toEntity() }
         )
     }
 

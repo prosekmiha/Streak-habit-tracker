@@ -91,6 +91,7 @@ fun HabitGridCard(
     val sessionLabel = stringResource(R.string.a11y_start_session)
     val detailsLabel = stringResource(R.string.a11y_habit_actions)
     val tapLabel = when {
+        item.habit.isQuit -> detailsLabel
         item.isDone -> undoLabel
         badge == BadgeKind.Play -> sessionLabel
         else -> doneLabel
@@ -148,6 +149,9 @@ fun cardSubtitle(item: HabitCardUi): String {
         DayState.FROZEN -> stringResource(R.string.day_frozen)
         DayState.VACATION -> stringResource(R.string.day_vacation)
         else -> when (habit.goalType) {
+            GoalType.QUIT -> if (item.state == DayState.MISSED) {
+                stringResource(R.string.quit_relapses_today, item.value.toInt().coerceAtLeast(1))
+            } else stringResource(R.string.quit_clean_days, item.currentStreak)
             GoalType.YES_NO -> habit.description
             GoalType.QUANTITY -> stringResource(R.string.habit_progress_quantity, formatAmount(item.value), formatAmount(habit.targetValue), habit.unit.orEmpty()).trim()
             GoalType.DURATION -> if (item.value > 0) {
@@ -159,11 +163,11 @@ fun cardSubtitle(item: HabitCardUi): String {
 
 @Composable
 private fun stateLabel(item: HabitCardUi): String = when (item.state) {
-    DayState.DONE -> stringResource(R.string.state_done)
+    DayState.DONE -> stringResource(if (item.habit.isQuit) R.string.state_clean else R.string.state_done)
+    DayState.MISSED -> stringResource(if (item.habit.isQuit) R.string.state_relapse else R.string.day_missed)
     DayState.PARTIAL -> stringResource(R.string.state_partial)
     DayState.SKIPPED -> stringResource(R.string.day_skipped)
     DayState.FROZEN -> stringResource(R.string.day_frozen)
     DayState.VACATION -> stringResource(R.string.day_vacation)
-    DayState.MISSED -> stringResource(R.string.day_missed)
     else -> stringResource(R.string.state_not_done)
 } + if (item.currentStreak > 0) ", " + pluralStringResource(R.plurals.streak_days_a11y, item.currentStreak, item.currentStreak) else ""
