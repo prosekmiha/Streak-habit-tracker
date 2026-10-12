@@ -61,6 +61,9 @@
     <string name="empty_habits_title">Lad os komme i gang</string>
     <string name="empty_habits">Tilføj din første vane</string>
     <string name="future_blocked">Fremtidige dage kan ikke markeres.</string>
+    <string name="long_press_to_uncheck">Hold nede for at fjerne markeringen.</string>
+    <string name="task_moved_to">Udført. Næste gang: %s</string>
+    <string name="undo">Fortryd</string>
     <string name="inbox_title">Notifikationer</string>
     <string name="inbox_empty">Ingen nye notifikationer.</string>
     <string name="week_day_all_done">alt klaret</string>

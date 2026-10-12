@@ -34,7 +34,7 @@ class DatabaseGuard @Inject constructor(
     private var pendingFromVersion: Int = 0
 
     // Klice se tik pred gradnjo Room baze. Prebere verzijo obstojece datoteke
-    // (readVersion zna odpreti sifrirano bazo) in, ce bo potrebna migracija, naredi kopijo.
+    // in, ce bo potrebna migracija, naredi kopijo.
     fun prepareForOpen(name: String, targetVersion: Int, readVersion: (File) -> Int?) {
         val dbFile = context.getDatabasePath(name)
         if (!dbFile.exists()) return

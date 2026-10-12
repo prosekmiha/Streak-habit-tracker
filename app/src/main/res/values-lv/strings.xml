@@ -62,6 +62,9 @@
     <string name="empty_habits_title">Sāksim</string>
     <string name="empty_habits">Pievieno savu pirmo ieradumu</string>
     <string name="future_blocked">Nākotnes dienas nevar atzīmēt.</string>
+    <string name="long_press_to_uncheck">Lai noņemtu atzīmi, turiet nospiestu.</string>
+    <string name="task_moved_to">Izdarīts. Nākamreiz: %s</string>
+    <string name="undo">Atsaukt</string>
     <string name="inbox_title">Paziņojumi</string>
     <string name="inbox_empty">Jaunu paziņojumu nav.</string>
     <string name="week_day_all_done">viss izdarīts</string>

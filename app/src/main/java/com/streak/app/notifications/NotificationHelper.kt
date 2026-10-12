@@ -82,7 +82,8 @@ class NotificationHelper @Inject constructor(
         if (habit.goalType == GoalType.DURATION) {
             builder.addAction(0, context.getString(R.string.start_session), startSession(habit.id))
         } else {
-            builder.addAction(0, context.getString(R.string.notif_action_done), action(NotificationActionReceiver.ACTION_DONE, habit.id))
+            // Dan opomnika gre z dejanjem: potrditev po meji dneva oznaci pravi dan
+            builder.addAction(0, context.getString(R.string.notif_action_done), action(NotificationActionReceiver.ACTION_DONE, habit.id, item.today.toEpochDay()))
         }
         builder.addAction(0, context.getString(R.string.notif_action_snooze, ReminderScheduler.SNOOZE_MINUTES), action(NotificationActionReceiver.ACTION_SNOOZE, habit.id))
         runCatching {
@@ -227,11 +228,12 @@ class NotificationHelper @Inject constructor(
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    private fun action(action: String, habitId: String): PendingIntent = PendingIntent.getBroadcast(
+    private fun action(action: String, habitId: String, epochDay: Long? = null): PendingIntent = PendingIntent.getBroadcast(
         context, (action + habitId).hashCode(),
         Intent(context, NotificationActionReceiver::class.java)
             .setAction(action)
-            .putExtra(NotificationActionReceiver.EXTRA_HABIT_ID, habitId),
+            .putExtra(NotificationActionReceiver.EXTRA_HABIT_ID, habitId)
+            .apply { epochDay?.let { putExtra(NotificationActionReceiver.EXTRA_DAY, it) } },
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 }

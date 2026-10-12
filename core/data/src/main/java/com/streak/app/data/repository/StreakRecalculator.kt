@@ -11,6 +11,7 @@ import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.Vacation
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.streak.DayEvaluator
+import com.streak.app.domain.streak.PeriodGoal
 import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.ComputeStreakUseCase
 import kotlinx.coroutines.flow.first
@@ -42,6 +43,8 @@ class StreakRecalculator @Inject constructor(
         val today = dayClock.today()
         recomputeHabitLocked(habitId, today)
         recomputeAggregatesLocked(date, date, today)
+        // Vpis na pretekli dan lahko izpolni cilj tekocega obdobja in s tem spremeni danasnji povzetek
+        if (date != today) recomputeAggregatesLocked(today, today, today)
     }
 
     // Po spremembi navade (urnik, zacetek, arhiv) - povzetki za celotno obdobje navade
@@ -98,14 +101,22 @@ class StreakRecalculator @Inject constructor(
         val end = minOf(to, today)
         if (from.isAfter(end)) return
         val habits = loadHabits()
-        val completions = completionDao.getBetween(from.toEpochDay(), end.toEpochDay())
-            .map { it.toDomain() }
-            .associateBy { it.habitId to it.date }
         val vacations = vacations()
+        // Za danasnji dan je potreben celoten tekoci mesec/teden (cilj obdobja)
+        val fetchFrom = if (end == today) minOf(from, today.minusDays(PERIOD_LOOKBACK_DAYS)) else from
+        val loaded = completionDao.getBetween(fetchFrom.toEpochDay(), end.toEpochDay()).map { it.toDomain() }
+        val completions = loaded.associateBy { it.habitId to it.date }
+        val goalMetToday = if (end != today) emptySet() else {
+            val firstDay = firstDayOfWeek()
+            val byHabit = loaded.groupBy { it.habitId }
+            habits.filter { h ->
+                PeriodGoal.isMet(h, byHabit[h.id].orEmpty().associateBy { it.date }, vacations, today, firstDay)
+            }.map { it.id }.toSet()
+        }
         val entities = ArrayList<DailyAggregateEntity>()
         var day = from
         while (!day.isAfter(end)) {
-            val (scheduled, done) = aggregateFor(day, habits, completions, vacations, today)
+            val (scheduled, done) = aggregateFor(day, habits, completions, vacations, today, goalMetToday)
             if (scheduled > 0 || done > 0) entities += DailyAggregateEntity(day.toEpochDay(), scheduled, done)
             day = day.plusDays(1)
         }
@@ -119,13 +130,15 @@ class StreakRecalculator @Inject constructor(
         habits: List<Habit>,
         completions: Map<Pair<String, LocalDate>, Completion>,
         vacations: List<Vacation>,
-        today: LocalDate
+        today: LocalDate,
+        goalMetToday: Set<String>
     ): Pair<Int, Int> {
         var scheduled = 0
         var done = 0
         for (habit in habits) {
             if (!wasTrackedOn(habit, day)) continue
-            when (DayEvaluator.stateOn(habit, day, completions[habit.id to day], vacations, today)) {
+            val goalMet = day == today && habit.id in goalMetToday
+            when (DayEvaluator.stateOn(habit, day, completions[habit.id to day], vacations, today, goalMet)) {
                 DayState.DONE -> { scheduled++; done++ }
                 DayState.MISSED, DayState.PENDING, DayState.PARTIAL -> scheduled++
                 else -> Unit
@@ -149,4 +162,9 @@ class StreakRecalculator @Inject constructor(
     private suspend fun vacations(): List<Vacation> = db.vacationDao().getAll().map { it.toDomain() }
 
     private suspend fun firstDayOfWeek() = settingsRepository.settings.first().firstDayOfWeek
+
+    private companion object {
+        // Dovolj za celoten tekoci mesec ali teden
+        const val PERIOD_LOOKBACK_DAYS = 31L
+    }
 }

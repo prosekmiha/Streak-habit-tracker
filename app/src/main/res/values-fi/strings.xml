@@ -61,6 +61,9 @@
     <string name="empty_habits_title">Aloitetaan</string>
     <string name="empty_habits">Lisää ensimmäinen tapasi</string>
     <string name="future_blocked">Tulevia päiviä ei voi merkitä.</string>
+    <string name="long_press_to_uncheck">Poista merkintä painamalla pitkään.</string>
+    <string name="task_moved_to">Tehty. Seuraavan kerran: %s</string>
+    <string name="undo">Kumoa</string>
     <string name="inbox_title">Ilmoitukset</string>
     <string name="inbox_empty">Ei uusia ilmoituksia.</string>
     <string name="week_day_all_done">kaikki tehty</string>

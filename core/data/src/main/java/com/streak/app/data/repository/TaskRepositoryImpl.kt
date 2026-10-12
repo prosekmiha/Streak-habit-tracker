@@ -19,8 +19,12 @@ class TaskRepositoryImpl @Inject constructor(
     override fun observeTasks(): Flow<List<Task>> =
         taskDao.observeAll().map { list -> list.map { it.toDomain() } }
 
+    // Tudi ponavljajoce naloge, ki imajo na ta dan termin (ne le tiste z rokom na ta dan)
     override fun observeTasksForDate(date: LocalDate): Flow<List<Task>> =
-        taskDao.observeForDate(date.toEpochDay()).map { list -> list.map { it.toDomain() } }
+        observeTasks().map { list ->
+            list.filter { it.occursOn(date) }
+                .sortedWith(compareBy<Task, Int?>(nullsFirst()) { it.dueMinuteOfDay }.thenByDescending { it.priority })
+        }
 
     override suspend fun getTask(id: String): Task? = taskDao.get(id)?.toDomain()
 

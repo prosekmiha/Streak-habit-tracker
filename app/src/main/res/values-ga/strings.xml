@@ -64,6 +64,9 @@
     <string name="empty_habits_title">Ar aghaidh linn</string>
     <string name="empty_habits">Cuir do chéad nós leis</string>
     <string name="future_blocked">Ní féidir laethanta amach anseo a mharcáil.</string>
+    <string name="long_press_to_uncheck">Brúigh go fada chun an tic a bhaint.</string>
+    <string name="task_moved_to">Déanta. An chéad uair eile: %s</string>
+    <string name="undo">Cealaigh</string>
     <string name="inbox_title">Fógraí</string>
     <string name="inbox_empty">Níl aon fhógra nua ann.</string>
     <string name="week_day_all_done">gach rud déanta</string>

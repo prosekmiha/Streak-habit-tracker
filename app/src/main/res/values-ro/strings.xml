@@ -62,6 +62,9 @@
     <string name="empty_habits_title">Să începem</string>
     <string name="empty_habits">Adaugă primul obicei</string>
     <string name="future_blocked">Zilele viitoare nu pot fi bifate.</string>
+    <string name="long_press_to_uncheck">Apasă lung pentru a debifa.</string>
+    <string name="task_moved_to">Gata. Data viitoare: %s</string>
+    <string name="undo">Anulează</string>
     <string name="inbox_title">Notificări</string>
     <string name="inbox_empty">Nicio notificare nouă.</string>
     <string name="week_day_all_done">totul făcut</string>

@@ -1,5 +1,5 @@
 # Pravila za R8 (release). Vecina knjiznic prinese svoja pravila
-# (kotlinx.serialization, Room, Hilt, SQLCipher, AndroidX).
+# (kotlinx.serialization, Room, Hilt, AndroidX).
 
 # Filament in gltfio klicejo Java razrede iz domorodne kode po imenu
 -keep class com.google.android.filament.** { *; }

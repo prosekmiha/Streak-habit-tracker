@@ -113,4 +113,37 @@ class ToggleHabitUseCaseTest {
         val habit = testHabit(goalType = GoalType.QUIT, target = 0.0)
         assertEquals(LogResult.FUTURE_BLOCKED, useCase.addRelapse(habit, today.plusDays(1), 1))
     }
+
+    @Test fun `tap toggles a yes-no habit without a note`() = runTest {
+        val habit = testHabit()
+        assertEquals(LogResult.OK, useCase.tap(habit, today))
+        assertEquals(CompletionStatus.DONE, store[habit.id to today]?.status)
+        assertEquals(LogResult.OK, useCase.tap(habit, today))
+        assertNull(store[habit.id to today])
+    }
+
+    @Test fun `tap never deletes a note`() = runTest {
+        val habit = testHabit()
+        useCase.tap(habit, today)
+        store[habit.id to today] = store[habit.id to today]!!.copy(note = "Dober dan")
+        assertEquals(LogResult.NEEDS_LONG_PRESS, useCase.tap(habit, today))
+        assertEquals("Dober dan", store[habit.id to today]?.note)
+    }
+
+    @Test fun `tap on a done quantity removes one unit`() = runTest {
+        val habit = testHabit(goalType = GoalType.QUANTITY, target = 2.0)
+        useCase.tap(habit, today)
+        useCase.tap(habit, today)
+        assertEquals(CompletionStatus.DONE, store[habit.id to today]?.status)
+        useCase.tap(habit, today)
+        assertEquals(CompletionStatus.PARTIAL, store[habit.id to today]?.status)
+        assertEquals(1.0, store[habit.id to today]?.value)
+    }
+
+    @Test fun `tap on a done duration keeps the time`() = runTest {
+        val habit = testHabit(goalType = GoalType.DURATION, target = 600.0)
+        useCase.addProgress(habit, today, 900.0)
+        assertEquals(LogResult.NEEDS_LONG_PRESS, useCase.tap(habit, today))
+        assertEquals(900.0, store[habit.id to today]?.value)
+    }
 }

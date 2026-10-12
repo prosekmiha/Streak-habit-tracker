@@ -61,6 +61,9 @@
     <string name="empty_habits_title">Nu kör vi</string>
     <string name="empty_habits">Lägg till din första vana</string>
     <string name="future_blocked">Framtida dagar kan inte bockas av.</string>
+    <string name="long_press_to_uncheck">Tryck länge för att avmarkera.</string>
+    <string name="task_moved_to">Klart. Nästa gång: %s</string>
+    <string name="undo">Ångra</string>
     <string name="inbox_title">Aviseringar</string>
     <string name="inbox_empty">Inga nya aviseringar.</string>
     <string name="week_day_all_done">allt klart</string>

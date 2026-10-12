@@ -7,6 +7,7 @@ import com.streak.app.domain.model.GoalType
 import com.streak.app.domain.model.MoodEntry
 import com.streak.app.domain.usecase.SetHabitArchivedUseCase
 import com.streak.app.domain.usecase.ToggleHabitUseCase
+import com.streak.app.domain.usecase.TrackKnownDateUseCase
 import com.streak.app.testing.FakeBackupService
 import com.streak.app.testing.FakeDatabaseHealthMonitor
 import com.streak.app.testing.FakeDayClock
@@ -16,6 +17,7 @@ import com.streak.app.testing.FakeReminderScheduler
 import com.streak.app.testing.FakeSessionController
 import com.streak.app.testing.FakeSettingsRepository
 import com.streak.app.testing.MainDispatcherRule
+import com.streak.app.testing.completion
 import com.streak.app.testing.testHabit
 import com.streak.app.testing.withStreak
 import kotlinx.coroutines.flow.first
@@ -52,6 +54,7 @@ class HomeViewModelTest {
         setArchived = SetHabitArchivedUseCase(habits, reminders),
         sessionController = FakeSessionController(),
         backup = backup,
+        trackKnownDate = TrackKnownDateUseCase(settings, clock),
         moodRepository = moods,
         databaseHealth = FakeDatabaseHealthMonitor()
     )
@@ -98,6 +101,35 @@ class HomeViewModelTest {
 
         assertEquals(HomeEvent.OpenSession("d"), vm.eventFlow.first())
         assertNull(habits.getCompletion("d", today))
+    }
+
+    @Test
+    fun `tapping a done quantity habit removes one unit instead of the whole entry`() = runTest {
+        val habit = testHabit("q", goalType = GoalType.QUANTITY, target = 3.0)
+        habits.upsertHabit(habit)
+        habits.saveCompletion(completion(today, CompletionStatus.DONE, habitId = "q", value = 3.0))
+        habits.withStreak.value = listOf(withStreak(habit, today, days = mapOf(today to DayState.DONE)))
+        val vm = observed(viewModel())
+
+        vm.onTap(vm.state.value.item("q")!!)
+
+        val after = habits.getCompletion("q", today)
+        assertEquals(CompletionStatus.PARTIAL, after?.status)
+        assertEquals(2.0, after?.value)
+    }
+
+    @Test
+    fun `tapping a done duration habit opens the session and keeps the time`() = runTest {
+        val habit = testHabit("d", goalType = GoalType.DURATION, target = 600.0)
+        habits.upsertHabit(habit)
+        habits.saveCompletion(completion(today, CompletionStatus.DONE, habitId = "d", value = 900.0))
+        habits.withStreak.value = listOf(withStreak(habit, today, days = mapOf(today to DayState.DONE)))
+        val vm = observed(viewModel())
+
+        vm.onTap(vm.state.value.item("d")!!)
+
+        assertEquals(HomeEvent.OpenSession("d"), vm.eventFlow.first())
+        assertEquals(900.0, habits.getCompletion("d", today)?.value)
     }
 
     @Test

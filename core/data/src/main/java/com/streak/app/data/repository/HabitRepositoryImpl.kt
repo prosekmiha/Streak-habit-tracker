@@ -16,6 +16,7 @@ import com.streak.app.domain.model.Vacation
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.streak.DayEvaluator
+import com.streak.app.domain.streak.PeriodGoal
 import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.ComputeStreakUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -24,10 +25,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
+import java.time.DayOfWeek
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -59,34 +62,36 @@ class HabitRepositoryImpl @Inject constructor(
     override fun observeHabits(): Flow<List<HabitWithStreak>> = sharedHabits ?: habitsFlow()
 
     private fun habitsFlow(): Flow<List<HabitWithStreak>> =
-        dayClock.todayFlow.flatMapLatest { today ->
-            val from = today.minusDays(RECENT_PAST_DAYS)
-            val to = today.plusDays(RECENT_FUTURE_DAYS)
-            combine(
-                habitDao.observeActive(),
-                habitDao.observeAllReminders(),
-                completionDao.observeBetween(from.toEpochDay(), today.toEpochDay()),
-                statsDao.observeStreaks(),
-                vacationDao.observeAll()
-            ) { habits, reminders, completions, streaks, vacationEntities ->
-                val remindersByHabit = reminders.groupBy { it.habitId }
-                val completionsByHabit = completions.map { it.toDomain() }.groupBy { it.habitId }
-                val streakByHabit = streaks.associateBy { it.habitId }
-                val vacations = vacationEntities.map { it.toDomain() }
-                habits.map { entity ->
-                    val habit = entity.toDomain(remindersByHabit[entity.id].orEmpty())
-                    val byDate = completionsByHabit[habit.id].orEmpty().associateBy { it.date }
-                    HabitWithStreak(
-                        habit = habit,
-                        completions = byDate,
-                        days = dayStates(habit, byDate, vacations, from, to, today),
-                        streak = streakByHabit[habit.id]?.toDomain()
-                            ?: HabitStreak.Empty.copy(unit = habit.schedule.streakUnit),
-                        today = today
-                    )
+        combine(dayClock.todayFlow, settingsRepository.settings.map { it.firstDayOfWeek }.distinctUntilChanged(), ::Pair)
+            .flatMapLatest { (today, firstDay) ->
+                // Okno pokrije tudi celoten tekoci teden in mesec (cilj obdobja za danes)
+                val from = today.minusDays(RECENT_PAST_DAYS)
+                val to = today.plusDays(RECENT_FUTURE_DAYS)
+                combine(
+                    habitDao.observeActive(),
+                    habitDao.observeAllReminders(),
+                    completionDao.observeBetween(from.toEpochDay(), today.toEpochDay()),
+                    statsDao.observeStreaks(),
+                    vacationDao.observeAll()
+                ) { habits, reminders, completions, streaks, vacationEntities ->
+                    val remindersByHabit = reminders.groupBy { it.habitId }
+                    val completionsByHabit = completions.map { it.toDomain() }.groupBy { it.habitId }
+                    val streakByHabit = streaks.associateBy { it.habitId }
+                    val vacations = vacationEntities.map { it.toDomain() }
+                    habits.map { entity ->
+                        val habit = entity.toDomain(remindersByHabit[entity.id].orEmpty())
+                        val byDate = completionsByHabit[habit.id].orEmpty().associateBy { it.date }
+                        HabitWithStreak(
+                            habit = habit,
+                            completions = byDate,
+                            days = dayStates(habit, byDate, vacations, from, to, today, firstDay),
+                            streak = streakByHabit[habit.id]?.toDomain()
+                                ?: HabitStreak.Empty.copy(unit = habit.schedule.streakUnit),
+                            today = today
+                        )
+                    }
                 }
-            }
-        }.flowOn(Dispatchers.Default) // 200 navad x 6 tednov stanj dni: ne na glavni niti
+            }.flowOn(Dispatchers.Default) // 200 navad x 6 tednov stanj dni: ne na glavni niti
 
     override fun observeArchivedHabits(): Flow<List<Habit>> =
         combine(habitDao.observeArchived(), habitDao.observeAllReminders()) { habits, reminders ->
@@ -110,7 +115,7 @@ class HabitRepositoryImpl @Inject constructor(
             HabitWithStreak(
                 habit = habit,
                 completions = byDate,
-                days = dayStates(habit, byDate, vacations, minOf(from, today), today.plusDays(RECENT_FUTURE_DAYS), today),
+                days = dayStates(habit, byDate, vacations, minOf(from, today), today.plusDays(RECENT_FUTURE_DAYS), today, firstDay),
                 streak = computeStreak(habit, byDate, vacations, today, firstDay),
                 today = today
             )
@@ -193,12 +198,14 @@ class HabitRepositoryImpl @Inject constructor(
         vacations: List<Vacation>,
         from: LocalDate,
         to: LocalDate,
-        today: LocalDate
+        today: LocalDate,
+        firstDayOfWeek: DayOfWeek
     ): Map<LocalDate, DayState> {
         val result = LinkedHashMap<LocalDate, DayState>()
+        val goalMet = PeriodGoal.isMet(habit, completions, vacations, today, firstDayOfWeek)
         var day = from
         while (!day.isAfter(to)) {
-            result[day] = DayEvaluator.stateOn(habit, day, completions[day], vacations, today)
+            result[day] = DayEvaluator.stateOn(habit, day, completions[day], vacations, today, goalMet)
             day = day.plusDays(1)
         }
         return result

@@ -46,7 +46,10 @@ class ReviewViewModel @Inject constructor(
 
     fun setPeriod(period: ReviewPeriod) {
         val current = _state.value.range ?: return
-        if (current.period != period) show(ReviewRange.of(period, current.start))
+        if (current.period == period) return
+        // Iz tekocega leta na mesec: tekoci mesec (ne januar)
+        val today = _state.value.today
+        show(ReviewRange.of(period, if (current.contains(today)) today else current.start))
     }
 
     fun previous() {

@@ -3,12 +3,14 @@ package com.streak.app.ui.session
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.streak.app.domain.model.CompletionStatus
 import com.streak.app.domain.model.Habit
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.session.ActiveSession
 import com.streak.app.domain.session.AmbientSound
 import com.streak.app.domain.session.SessionController
 import com.streak.app.domain.session.StartResult
+import com.streak.app.domain.time.DayClock
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +31,9 @@ data class SessionState(
     // Seja je bila koncana (tudi iz obvestila): zaslon se zapre
     val ended: Boolean = false,
     // Brez dovoljenja za natancne alarme je opozorilo ob cilju lahko zamaknjeno
-    val exactAlarmMissing: Boolean = false
+    val exactAlarmMissing: Boolean = false,
+    // Navada je danes ze opravljena: seja caka na "Zacni" (dotik po nesreci ne zazene casa)
+    val awaitingStart: Boolean = false
 ) {
     val targetSeconds: Long get() = habit?.targetSeconds() ?: 0
     val goalReached: Boolean get() = targetSeconds > 0 && elapsedSeconds >= targetSeconds
@@ -44,6 +48,7 @@ data class SessionState(
 class SessionViewModel @Inject constructor(
     private val habitRepository: HabitRepository,
     private val controller: SessionController,
+    private val dayClock: DayClock,
     handle: SavedStateHandle
 ) : ViewModel() {
 
@@ -60,13 +65,24 @@ class SessionViewModel @Inject constructor(
             }
             _state.update { it.copy(habit = habit) }
             refreshAlarmPermission()
-            val result = controller.start(habit)
-            if (result is StartResult.Conflict) {
-                _state.update { it.copy(conflict = result.other) }
+            controller.awaitLoaded()
+            val ownRunning = controller.active.value?.habitId == habitId
+            val doneToday = habitRepository.getCompletion(habitId, dayClock.today())?.status == CompletionStatus.DONE
+            if (!ownRunning && doneToday) {
+                _state.update { it.copy(running = false, awaitingStart = true) }
                 return@launch
             }
-            observe()
+            begin(habit)
         }
+    }
+
+    private suspend fun begin(habit: Habit) {
+        val result = controller.start(habit)
+        if (result is StartResult.Conflict) {
+            _state.update { it.copy(conflict = result.other) }
+            return
+        }
+        observe()
     }
 
     private suspend fun observe() {
@@ -104,12 +120,22 @@ class SessionViewModel @Inject constructor(
         if (wasMissing && !missing) viewModelScope.launch { controller.restore() }
     }
 
-    fun togglePause() = viewModelScope.launch { controller.togglePause() }
+    fun togglePause() = viewModelScope.launch {
+        val s = _state.value
+        if (s.awaitingStart) {
+            val habit = s.habit ?: return@launch
+            _state.update { it.copy(awaitingStart = false, running = true) }
+            begin(habit)
+        } else {
+            controller.togglePause()
+        }
+    }
 
     fun setAmbient(sound: AmbientSound) = viewModelScope.launch { controller.setAmbient(sound) }
 
     fun finish(save: Boolean) = viewModelScope.launch {
-        controller.finish(save)
+        // Seja se ni zacela: le zapri (ne koncaj morebitne druge tekoce seje)
+        if (!_state.value.awaitingStart) controller.finish(save)
         _state.update { it.copy(ended = true) }
     }
 

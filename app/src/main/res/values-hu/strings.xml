@@ -61,6 +61,9 @@
     <string name="empty_habits_title">Kezdjük</string>
     <string name="empty_habits">Add hozzá az első szokásodat</string>
     <string name="future_blocked">Jövőbeli napokat nem lehet kipipálni.</string>
+    <string name="long_press_to_uncheck">A pipa törléséhez nyomd hosszan.</string>
+    <string name="task_moved_to">Kész. Legközelebb: %s</string>
+    <string name="undo">Visszavonás</string>
     <string name="inbox_title">Értesítések</string>
     <string name="inbox_empty">Nincsenek új értesítések.</string>
     <string name="week_day_all_done">minden kész</string>

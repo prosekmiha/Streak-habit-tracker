@@ -63,6 +63,9 @@
     <string name="empty_habits_title">Zaczynajmy</string>
     <string name="empty_habits">Dodaj pierwszy nawyk</string>
     <string name="future_blocked">Nie można odhaczać przyszłych dni.</string>
+    <string name="long_press_to_uncheck">Przytrzymaj, aby odznaczyć.</string>
+    <string name="task_moved_to">Gotowe. Następnym razem: %s</string>
+    <string name="undo">Cofnij</string>
     <string name="inbox_title">Powiadomienia</string>
     <string name="inbox_empty">Brak nowych powiadomień.</string>
     <string name="week_day_all_done">wszystko zrobione</string>

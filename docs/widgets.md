@@ -11,9 +11,11 @@
 
 ## Dotik vrstice v widgetu "Današnje navade"
 
-- **da/ne:** opravi oziroma odznači.
-- **količina:** +1 (opravljena se odznači).
-- **trajanje:** odpre sejo v aplikaciji (časovnik teče v aplikaciji).
+- **da/ne:** opravi oziroma odznači (vpisa z zapiskom dotik ne odznači).
+- **količina:** +1, opravljena −1 (dotik nikoli ne izbriše celega vpisa).
+- **trajanje:** odpre sejo v aplikaciji (časovnik teče v aplikaciji; pri že opravljeni navadi čaka na "Začni").
+
+Dotik nikoli ne izbriše več, kot ga naslednji dotik povrne. Vpis z zapiskom, količino ali časom se v celoti odznači le z dolgim pritiskom v aplikaciji (meni dejanj, mreža v podrobnostih, koledar).
 
 Vrstni red sledi domačemu zaslonu:
 1. neopravljene po delu dneva (jutro, popoldne, večer, kadarkoli);

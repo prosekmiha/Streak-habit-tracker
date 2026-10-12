@@ -2,15 +2,11 @@
 
 Streak deluje brez povezave: brez računa, strežnika, oglasov in analitike. Aplikacija nima dovoljenja `INTERNET`, zato podatki tehnično ne morejo zapustiti naprave drugače kot prek dejanj uporabnika (izvoz, deljenje) ali Androidove varnostne kopije.
 
-## Šifriranje baze
+## Baza
 
-- **Šifriranje:** baza (`streak.db`) je šifrirana s **SQLCipher 4** (AES-256).
-- **Ključ:** naključnih 256 bitov, shranjenih v `no_backup/db.key`, oviti z AES-GCM ključem v **Android Keystoru** (`streak_db_wrap`), ki ga ni mogoče izvoziti. Brez te naprave baze ni mogoče odpreti.
-- **Raw key:** ključ se SQLCipherju poda v obliki `x'…'`, zato ob odpiranju ni dodatnega PBKDF2.
-- **Ključ nikoli ni v besedilu SQL stavka.** SQLite ob napaki izpiše stavek v logcat; pretvorba stare baze zato šifrirano bazo odpre prek API-ja in nanjo priključi nešifrirano s praznim ključem.
-- **Pretvorba stare baze:** obstoječa nešifrirana baza iz starejših različic se ob prvem zagonu enkrat pretvori na mestu (`sqlcipher_export`). Ob napaki ostane izvirnik.
-- **Izgubljen ključ:** če ključa ni mogoče odviti (npr. ponastavljen Keystore), se stara baza odmakne (`streak.db.unreadable-*`) in začne se z novo. Aplikacija nato ponudi obnovo iz samodejnega posnetka.
-- **Kopija pred migracijo** (`DatabaseGuard`) se naredi tudi za šifrirano bazo.
+- **Brez lastnega šifriranja:** baza (`streak.db`) je navadna SQLite baza v zasebnem prostoru aplikacije. Ščiti jo Androidov peskovnik aplikacij in šifriranje shrambe naprave.
+- **Starejše šifrirane baze:** različice s SQLCipher so bazo šifrirale. Takšna baza se ob prvem zagonu odmakne (`streak.db.encrypted-*`), začne se s prazno, aplikacija pa ponudi obnovo iz samodejnega posnetka (`LegacyEncryptedDatabase`). Ostanki ključa (`no_backup/db.key`, Keystore `streak_db_wrap`) se izbrišejo.
+- **Kopija pred migracijo** (`DatabaseGuard`) se naredi pred vsako nadgradnjo sheme.
 
 ## Zasebni zaslon
 
@@ -26,7 +22,7 @@ Streak deluje brez povezave: brez računa, strežnika, oglasov in analitike. Apl
 | CSV | Zapisi za preglednice | Brez šifriranja. Polja, ki bi jih preglednica izvedla kot formulo, so zaščitena. |
 | Androidova varnostna kopija | `files/snapshot/latest.json` in nastavitve | Google Drive kopija je na Androidu 9+ šifrirana z zaklepom zaslona naprave. Posnetek je mogoče izklopiti (Podatki → Androidova varnostna kopija). |
 
-- **Česa ni v Androidovi varnostni kopiji:** šifrirane baze, njenega ključa, tekoče seje in dnevnika obvestil. Pravila (`data_extraction_rules.xml`, `backup_rules.xml`) vključujejo le navedeni datoteki.
+- **Česa ni v Androidovi varnostni kopiji:** baze, tekoče seje in dnevnika obvestil. Pravila (`data_extraction_rules.xml`, `backup_rules.xml`) vključujejo le navedeni datoteki.
 - **Uvoz** preveri obliko, verzijo in sklice. Neznana polja prezre, zapise brez navade izpusti, iteracije PBKDF2 pa so omejene, da tuja datoteka ne more "zamrzniti" naprave. Zamenjava podatkov poteka v eni transakciji (vse ali nič).
 - **Prazna baza nikoli ne prepiše posnetka.** Po namestitvi na nov telefon se tako kopija ne izgubi, aplikacija pa obnovo ponudi sama.
 
@@ -38,7 +34,7 @@ Streak deluje brez povezave: brez računa, strežnika, oglasov in analitike. Apl
 ## Gradnja
 
 - **R8:** release uporablja R8 (`isMinifyEnabled`, `isShrinkResources`). Pravila za Filament (JNI) in obliko varnostne kopije so v `app/proguard-rules.pro`.
-- **Preverjeno na emulatorju z R8 buildom:** zagon in odklep šifrirane baze, 3D maskota in izvoz JSON z nespremenjenimi imeni polj.
+- **Preverjeno na emulatorju z R8 buildom:** zagon, 3D maskota in izvoz JSON z nespremenjenimi imeni polj.
 - **Dovoljenja:**
   - `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`, `VIBRATE`;
   - `FOREGROUND_SERVICE` in `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, samo med ambientnim zvokom.

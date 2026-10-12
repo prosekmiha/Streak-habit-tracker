@@ -32,6 +32,15 @@ data class Task(
         val days = recurringDays
         return days.isEmpty() || date.dayOfWeek in days
     }
+
+    // Prvi termin na dan "from" ali kasneje; null, ce ga ni (brez roka, enkratna pred "from")
+    fun nextOccurrence(from: LocalDate): LocalDate? {
+        val due = dueDate ?: return null
+        if (!isRecurring) return due.takeIf { !it.isBefore(from) }
+        val start = maxOf(due, from)
+        // Tedensko pravilo se ponovi v najvec 7 dneh
+        return (0L until 7L).map { start.plusDays(it) }.firstOrNull { occursOn(it) }
+    }
 }
 
 // Preprost RRULE: FREQ=DAILY ali FREQ=WEEKLY;BYDAY=MO,WE

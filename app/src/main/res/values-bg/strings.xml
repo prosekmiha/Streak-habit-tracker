@@ -61,6 +61,9 @@
     <string name="empty_habits_title">Да започваме</string>
     <string name="empty_habits">Добави първия си навик</string>
     <string name="future_blocked">Бъдещи дни не могат да се отбелязват.</string>
+    <string name="long_press_to_uncheck">Задръжте, за да премахнете отметката.</string>
+    <string name="task_moved_to">Готово. Следващия път: %s</string>
+    <string name="undo">Отмяна</string>
     <string name="inbox_title">Известия</string>
     <string name="inbox_empty">Няма нови известия.</string>
     <string name="week_day_all_done">всичко е готово</string>

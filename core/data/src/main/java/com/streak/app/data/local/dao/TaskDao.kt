@@ -13,9 +13,6 @@ interface TaskDao {
     @Query("SELECT * FROM tasks ORDER BY isDone ASC, dueEpochDay ASC, dueMinuteOfDay ASC, createdAt DESC")
     fun observeAll(): Flow<List<TaskEntity>>
 
-    @Query("SELECT * FROM tasks WHERE dueEpochDay = :epochDay ORDER BY dueMinuteOfDay ASC, priority DESC")
-    fun observeForDate(epochDay: Long): Flow<List<TaskEntity>>
-
     @Query("SELECT * FROM tasks WHERE id = :id")
     suspend fun get(id: String): TaskEntity?
 

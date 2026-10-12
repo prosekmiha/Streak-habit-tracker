@@ -19,4 +19,17 @@ class ClockSanityTest {
 
     @Test fun `any backward jump is reported`() =
         assertEquals(ClockStatus.JumpedBackward(1), ClockSanity.check(day.plusDays(1), day))
+
+    @Test fun `known date advances only forward and without a suspicious jump`() {
+        assertEquals(day, ClockSanity.advance(null, day))
+        assertEquals(day, ClockSanity.advance(day.minusDays(1), day))
+        assertEquals(null, ClockSanity.advance(day, day))
+        assertEquals(null, ClockSanity.advance(day.plusDays(1), day))
+        assertEquals(null, ClockSanity.advance(day.minusDays(30), day))
+    }
+
+    @Test fun `after a reboot any forward jump is accepted`() {
+        assertEquals(day, ClockSanity.advance(day.minusDays(30), day, afterReboot = true))
+        assertEquals(null, ClockSanity.advance(day.plusDays(1), day, afterReboot = true))
+    }
 }

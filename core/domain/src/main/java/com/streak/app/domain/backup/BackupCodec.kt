@@ -127,7 +127,8 @@ class BackupCodec(private val crypto: BackupCrypto = BackupCrypto()) {
         val ids = habits.map { it.id }.toSet()
         val completions = file.completions.map { it.toDomain() }
         val sessions = file.sessions.map { it.toDomain() }
-        val validCompletions = completions.filter { it.habitId in ids }.distinctBy { it.habitId to it.date }
+        // Dvojniki (po dnevu ali po ID-ju) bi uvoz prekinili s krsitvijo kljuca
+        val validCompletions = completions.filter { it.habitId in ids }.distinctBy { it.habitId to it.date }.distinctBy { it.id }
         val validSessions = sessions.filter { it.habitId in ids }.distinctBy { it.id }
         val moods = file.moods.mapNotNull { runCatching { it.toDomain() }.getOrNull() }.distinctBy { it.date }
         val contents = BackupContents(
@@ -278,6 +279,7 @@ object BackupMerge {
         val completions = (local.completions + incoming.completions)
             .groupBy { it.habitId to it.date }
             .map { (_, list) -> list.maxBy { it.loggedAt } }
+            .distinctBy { it.id }
         val sessionIds = local.sessions.map { it.id }.toSet()
         val vacationRanges = local.vacations.map { it.startDate to it.endDate }.toSet()
         val taskIds = local.tasks.map { it.id }.toSet()

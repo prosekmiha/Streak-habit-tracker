@@ -2,7 +2,7 @@ package com.streak.app.ui.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +50,7 @@ import com.streak.app.domain.model.GoalType
 import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.ScheduleType
 import com.streak.app.domain.model.TimeOfDay
+import com.streak.app.domain.usecase.LogResult
 import com.streak.app.ui.addhabit.timeOfDayLabel
 import com.streak.app.ui.components.IconMap
 import com.streak.app.ui.components.KpiTile
@@ -72,7 +73,10 @@ fun HabitDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: H
     val locale = LocalConfiguration.current.locales[0]
     val snackbar = remember { SnackbarHostState() }
     val futureMsg = stringResource(R.string.future_blocked)
-    LaunchedEffect(Unit) { viewModel.blocked.collect { snackbar.showSnackbar(futureMsg) } }
+    val longPressMsg = stringResource(R.string.long_press_to_uncheck)
+    LaunchedEffect(Unit) {
+        viewModel.blocked.collect { snackbar.showSnackbar(if (it == LogResult.NEEDS_LONG_PRESS) longPressMsg else futureMsg) }
+    }
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(
@@ -128,7 +132,7 @@ fun HabitDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: H
             }
             state.grid.chunked(7).forEach { week ->
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 6.dp)) {
-                    week.forEach { d -> DayCell(d, Modifier.weight(1f), onClick = { viewModel.toggleDay(d.date) }) }
+                    week.forEach { d -> DayCell(d, Modifier.weight(1f), onClick = { viewModel.toggleDay(d.date) }, onLongClick = { viewModel.forceToggleDay(d.date) }) }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(top = 10.dp)) {
@@ -182,7 +186,7 @@ fun HabitDetailScreen(onBack: () -> Unit, onEdit: (String) -> Unit, viewModel: H
 }
 
 @Composable
-private fun DayCell(d: DetailDay, modifier: Modifier, onClick: () -> Unit) {
+private fun DayCell(d: DetailDay, modifier: Modifier, onClick: () -> Unit, onLongClick: () -> Unit) {
     val palette = StreakTheme.palette
     val locale = LocalConfiguration.current.locales[0]
     val bg = when (d.state) {
@@ -199,7 +203,7 @@ private fun DayCell(d: DetailDay, modifier: Modifier, onClick: () -> Unit) {
             .clip(RoundedCornerShape(9.dp))
             .background(bg)
             .then(if (d.state == DayState.FUTURE) Modifier.border(1.5.dp, palette.border, RoundedCornerShape(9.dp)) else Modifier)
-            .clickable(enabled = d.state != DayState.FUTURE, role = Role.Button, onClick = onClick)
+            .combinedClickable(enabled = d.state != DayState.FUTURE, role = Role.Button, onClick = onClick, onLongClick = onLongClick)
             .semantics { contentDescription = desc }
     )
 }

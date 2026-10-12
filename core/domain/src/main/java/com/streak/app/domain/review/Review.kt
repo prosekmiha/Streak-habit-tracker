@@ -7,6 +7,8 @@ import com.streak.app.domain.model.CompletionStatus
 import com.streak.app.domain.model.DailyAggregate
 import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.MoodEntry
+import com.streak.app.domain.model.DayState
+import com.streak.app.domain.streak.DayEvaluator
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Year
@@ -71,7 +73,7 @@ data class ReviewInput(
     val activity: List<DayActivity>,
     val sessions: List<DaySessions>,
     val moods: List<MoodEntry>,
-    // Logicni dan arhiviranja (po njem se navada v pregledu ne steje)
+    // Logicni dan arhiviranja (od njega naprej se navada v pregledu ne steje, kot v povzetkih)
     val archivedOn: Map<String, LocalDate>,
     val today: LocalDate
 )
@@ -91,7 +93,10 @@ object ReviewCalculator {
 
         val quitIds = input.habits.filter { it.isQuit }.map { it.id }.toSet()
         val done = completions.filter { it.status == CompletionStatus.DONE && it.habitId !in quitIds }
-        val cleanDays = input.habits.filter { it.isQuit }.sumOf { h -> cleanDays(h, completions, range.start, minOf(last, input.archivedOn[h.id] ?: last)) }
+        val cleanDays = input.habits.filter { it.isQuit }.sumOf { h ->
+            val end = input.archivedOn[h.id]?.minusDays(1)?.let { minOf(last, it) } ?: last
+            cleanDays(h, completions, range.start, end, input.today)
+        }
 
         val top = done.groupBy { it.habitId }
             .mapValues { (_, list) -> list.map { it.date }.distinct().size }
@@ -152,13 +157,14 @@ object ReviewCalculator {
         }
     }
 
-    // Cisti dnevi navade za opuscanje v obdobju: aktivni dnevi brez zdrsa
-    private fun cleanDays(habit: Habit, completions: List<Completion>, start: LocalDate, end: LocalDate): Int {
-        val relapses = completions.filter { it.habitId == habit.id && it.status == CompletionStatus.RELAPSE }.map { it.date }.toSet()
+    // Cisti dnevi navade za opuscanje v obdobju: enako kot pri streaku (zdrs prekine,
+    // preskok in zamrznitev sta nevtralna)
+    private fun cleanDays(habit: Habit, completions: List<Completion>, start: LocalDate, end: LocalDate, today: LocalDate): Int {
+        val byDate = completions.filter { it.habitId == habit.id }.associateBy { it.date }
         var count = 0
         var day = maxOf(start, habit.startDate)
         while (!day.isAfter(end)) {
-            if (habit.isActiveOn(day) && day !in relapses) count++
+            if (DayEvaluator.stateOn(habit, day, byDate[day], emptyList(), today) == DayState.DONE) count++
             day = day.plusDays(1)
         }
         return count

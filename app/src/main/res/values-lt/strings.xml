@@ -63,6 +63,9 @@
     <string name="empty_habits_title">Pradėkime</string>
     <string name="empty_habits">Pridėk savo pirmąjį įprotį</string>
     <string name="future_blocked">Būsimų dienų pažymėti negalima.</string>
+    <string name="long_press_to_uncheck">Norėdami atžymėti, palaikykite nuspaudę.</string>
+    <string name="task_moved_to">Atlikta. Kitą kartą: %s</string>
+    <string name="undo">Anuliuoti</string>
     <string name="inbox_title">Pranešimai</string>
     <string name="inbox_empty">Naujų pranešimų nėra.</string>
     <string name="week_day_all_done">viskas atlikta</string>

@@ -2,8 +2,8 @@
 <!--
   Android 12+: v Googlovo varnostno kopijo in pri prenosu na novo napravo gre le
   samodejni posnetek podatkov (snapshot/), nastavitve in videne znacke (da se po obnovi
-  ne praznujejo znova). Sifrirana baza, njen kljuc, tekoca seja in dnevnik obvestil ostanejo na napravi
-  (kljuc v Keystoru je vezan na napravo, zato baze drugje ne bi bilo mogoce odpreti).
+  ne praznujejo znova). Baza, tekoca seja in dnevnik obvestil ostanejo na napravi
+  (za obnovo zadosca posnetek; kopija baze bi se lahko ujela med pisanjem).
 -->
 <data-extraction-rules>
     <cloud-backup>

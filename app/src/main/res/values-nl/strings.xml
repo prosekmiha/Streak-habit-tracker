@@ -61,6 +61,9 @@
     <string name="empty_habits_title">Laten we beginnen</string>
     <string name="empty_habits">Voeg je eerste gewoonte toe</string>
     <string name="future_blocked">Toekomstige dagen kun je niet afvinken.</string>
+    <string name="long_press_to_uncheck">Houd ingedrukt om het vinkje te verwijderen.</string>
+    <string name="task_moved_to">Klaar. Volgende keer: %s</string>
+    <string name="undo">Ongedaan maken</string>
     <string name="inbox_title">Meldingen</string>
     <string name="inbox_empty">Geen nieuwe meldingen.</string>
     <string name="week_day_all_done">alles gedaan</string>

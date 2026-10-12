@@ -26,12 +26,12 @@ class WidgetActions @Inject constructor(
     private val dayClock: DayClock,
     private val updater: WidgetUpdater
 ) {
-    // Enako kot dotik kartice: opravi/odznaci ali +1 pri kolicini
+    // Enako kot dotik kartice (ToggleHabitUseCase.tap): opravi/odznaci da/ne, +1 pri kolicini
+    // (-1, ko je opravljena); zapiska ali casa dotik ne izbrise
     suspend fun tap(habitId: String) {
         val item = habitRepository.observeHabits().first().firstOrNull { it.habit.id == habitId } ?: return
         when (WidgetSummary.habit(item).tap) {
-            WidgetTap.TOGGLE -> logHabit(item.habit, dayClock.today())
-            WidgetTap.ADD_ONE -> logHabit.addProgress(item.habit, dayClock.today(), 1.0)
+            WidgetTap.TOGGLE, WidgetTap.ADD_ONE, WidgetTap.REMOVE_ONE -> logHabit.tap(item.habit, dayClock.today())
             WidgetTap.OPEN_SESSION, WidgetTap.OPEN_APP -> return
         }
         updater.updateAll()
