@@ -47,14 +47,14 @@ Neosvojene značke kažejo napredek (npr. "2 / 7"). Osvojeno značko je mogoče 
 
 ## Praznovanja in nabiralnik
 
-`GameEvents` spremlja izračunano stanje in ga primerja s tem, kar je uporabnik že videl (`GameStore`, DataStore `gamification`):
+`GameEvents` spremlja izračunano stanje in ga primerja s tem, kar je uporabnik že videl (`GameMemoryRepository` → `data/prefs/GameDataStore`, DataStore `gamification`):
 - **Nova značka ali nivo:**
   - zapis v nabiralnik (zvonec na domačem zaslonu, pika ob neprebranih);
   - celozaslonsko praznovanje z maskoto. Značke verig samo v nabiralniku, ker mejnik verige že praznuje domači zaslon.
 - **Opravljen izziv dneva:** zapis v nabiralnik in kratko sporočilo na dnu zaslona.
 - **Brez ponavljanja:** ena značka se praznuje enkrat. Če uporabnik odznači navado in jo znova označi, se praznovanje ne ponovi.
 - **Uvoz, obnova in brisanje:** potekajo v tihem načinu (`GameEvents.quietly`). Novo stanje se le zapomni, zato po obnovi ni plazu praznovanj za že osvojene značke.
-- **Androidova varnostna kopija:** `GameStore` je vključen vanjo (`data_extraction_rules.xml`), tako da na novem telefonu praznovanja ostanejo enkratna.
+- **Androidova varnostna kopija:** `GameDataStore` je vključen vanjo (`data_extraction_rules.xml`), tako da na novem telefonu praznovanja ostanejo enkratna.
 
 ## Deljenje
 

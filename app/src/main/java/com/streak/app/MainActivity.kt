@@ -2,26 +2,25 @@ package com.streak.app
 
 import android.content.Context
 import android.content.Intent
-import com.streak.app.locale.AppLocale
-import com.streak.app.dev.DevSeeder
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import androidx.activity.ComponentActivity
-import android.os.Build
 import android.view.WindowManager
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import com.streak.app.dev.DevSeeder
 import com.streak.app.domain.model.AnimationLevel
 import com.streak.app.domain.model.AppSettings
 import com.streak.app.domain.model.ThemeMode
 import com.streak.app.domain.repository.SettingsRepository
+import com.streak.app.locale.AppLocale
 import com.streak.app.ui.navigation.Routes
 import com.streak.app.ui.navigation.StreakApp
 import com.streak.app.ui.onboarding.OnboardingScreen
@@ -30,7 +29,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 

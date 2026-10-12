@@ -1,5 +1,6 @@
 package com.streak.app.ui.settings
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,8 +28,6 @@ import androidx.compose.material.icons.rounded.NightsStay
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Translate
-import androidx.activity.compose.LocalActivity
-import com.streak.app.locale.AppLocale
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.MaterialTheme
@@ -59,6 +58,7 @@ import com.streak.app.R
 import com.streak.app.domain.model.AnimationLevel
 import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.ThemeMode
+import com.streak.app.locale.AppLocale
 import com.streak.app.ui.components.ButtonVariant
 import com.streak.app.ui.components.DialogAction
 import com.streak.app.ui.components.IconMap

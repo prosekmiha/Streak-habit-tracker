@@ -1,20 +1,17 @@
 package com.streak.app.ui.data
 
-import android.content.Context
 import android.net.Uri
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.streak.app.backup.BackupManager
-import com.streak.app.backup.ImportMode
+import com.streak.app.backup.BackupFiles
 import com.streak.app.domain.backup.BackupContents
+import com.streak.app.domain.backup.BackupService
 import com.streak.app.domain.backup.BackupSummary
+import com.streak.app.domain.backup.ImportMode
 import com.streak.app.domain.backup.ParseResult
 import com.streak.app.domain.model.AppSettings
 import com.streak.app.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,8 +19,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.File
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -55,8 +50,8 @@ data class DataUiState(
 
 @HiltViewModel
 class DataViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val backup: BackupManager,
+    private val backup: BackupService,
+    private val files: BackupFiles,
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
@@ -77,15 +72,10 @@ class DataViewModel @Inject constructor(
     }
 
     private suspend fun stage(export: PendingExport) {
-        val ready = if (export.target == ExportTarget.SHARE) export.copy(shareUri = writeShareFile(export)) else export
+        val ready = if (export.target == ExportTarget.SHARE) {
+            export.copy(shareUri = files.writeShareFile(export.fileName, export.text))
+        } else export
         local.update { it.copy(pending = ready) }
-    }
-
-    // Deljenje: zacasna datoteka v cache/exports (prejsnje se pobrisejo)
-    private suspend fun writeShareFile(export: PendingExport): Uri = withContext(Dispatchers.IO) {
-        val dir = File(context.cacheDir, "exports").apply { deleteRecursively(); mkdirs() }
-        val file = File(dir, export.fileName).apply { writeText(export.text) }
-        FileProvider.getUriForFile(context, "${context.packageName}.files", file)
     }
 
     // Uporabnik je izbral mesto v SAF (null = preklical)
@@ -94,11 +84,7 @@ class DataViewModel @Inject constructor(
         local.update { it.copy(pending = null) }
         if (uri == null) return
         viewModelScope.launch {
-            val ok = withContext(Dispatchers.IO) {
-                runCatching {
-                    context.contentResolver.openOutputStream(uri, "wt")!!.use { it.write(export.text.toByteArray()) }
-                }.isSuccess
-            }
+            val ok = files.write(uri, export.text)
             val message = when {
                 !ok -> DataMessage.WRITE_FAILED
                 export.mime == "text/csv" -> DataMessage.CSV_SAVED
@@ -118,14 +104,7 @@ class DataViewModel @Inject constructor(
         uri ?: return
         local.update { it.copy(import = ImportStep.Working) }
         viewModelScope.launch {
-            val text = withContext(Dispatchers.IO) {
-                runCatching {
-                    context.contentResolver.openInputStream(uri)!!.use { input ->
-                        val bytes = input.readNBytesCompat(MAX_IMPORT_BYTES + 1)
-                        if (bytes.size > MAX_IMPORT_BYTES) null else bytes.decodeToString()
-                    }
-                }.getOrNull()
-            }
+            val text = files.read(uri, MAX_IMPORT_BYTES)
             if (text == null) {
                 local.update { it.copy(import = ImportStep.Failed(ImportError.READ_FAILED)) }
                 return@launch
@@ -197,16 +176,4 @@ class DataViewModel @Inject constructor(
         // Zascita pred nakljucno izbiro ogromne datoteke
         const val MAX_IMPORT_BYTES = 64 * 1024 * 1024
     }
-}
-
-// InputStream.readNBytes je sele od API 33
-private fun java.io.InputStream.readNBytesCompat(max: Int): ByteArray {
-    val out = java.io.ByteArrayOutputStream()
-    val buf = ByteArray(64 * 1024)
-    while (out.size() < max) {
-        val n = read(buf, 0, minOf(buf.size, max - out.size()))
-        if (n < 0) break
-        out.write(buf, 0, n)
-    }
-    return out.toByteArray()
 }

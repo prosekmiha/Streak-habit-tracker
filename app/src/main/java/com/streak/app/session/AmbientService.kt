@@ -13,6 +13,7 @@ import androidx.core.app.ServiceCompat
 import com.streak.app.R
 import com.streak.app.domain.session.ActiveSession
 import com.streak.app.domain.session.AmbientSound
+import com.streak.app.domain.session.SessionController
 import com.streak.app.notifications.NotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope

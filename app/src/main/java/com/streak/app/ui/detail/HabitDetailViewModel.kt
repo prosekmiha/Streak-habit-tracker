@@ -4,8 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.streak.app.domain.model.Completion
-import com.streak.app.domain.model.HabitSession
 import com.streak.app.domain.model.DayState
+import com.streak.app.domain.model.HabitSession
 import com.streak.app.domain.model.HabitWithStreak
 import com.streak.app.domain.model.StreakUnit
 import com.streak.app.domain.repository.HabitRepository

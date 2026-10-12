@@ -10,7 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.streak.app.R
-import com.streak.app.game.GameCelebration
+import com.streak.app.domain.gamification.GameCelebration
 import com.streak.app.ui.home.CelebrationDialog
 import com.streak.app.ui.theme.Bubblegum
 import com.streak.app.ui.theme.InkOnPastel

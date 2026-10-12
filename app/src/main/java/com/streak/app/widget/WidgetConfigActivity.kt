@@ -3,7 +3,6 @@ package com.streak.app.widget
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import com.streak.app.locale.AppLocale
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -36,6 +35,7 @@ import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.ThemeMode
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
+import com.streak.app.locale.AppLocale
 import com.streak.app.ui.components.IconMap
 import com.streak.app.ui.components.ScreenTopBar
 import com.streak.app.ui.components.SettingsGroup

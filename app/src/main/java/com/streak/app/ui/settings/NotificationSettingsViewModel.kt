@@ -1,15 +1,12 @@
 package com.streak.app.ui.settings
 
-import android.content.Context
-import android.os.PowerManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.streak.app.domain.model.AppSettings
+import com.streak.app.domain.notify.PermissionStatus
+import com.streak.app.domain.notify.ReminderScheduler
 import com.streak.app.domain.repository.SettingsRepository
-import com.streak.app.notifications.AlarmScheduler
-import com.streak.app.notifications.NotificationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -33,10 +30,9 @@ data class NotificationSettingsState(
 
 @HiltViewModel
 class NotificationSettingsViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val settingsRepository: SettingsRepository,
-    private val helper: NotificationHelper,
-    private val scheduler: AlarmScheduler
+    private val permissions: PermissionStatus,
+    private val scheduler: ReminderScheduler
 ) : ViewModel() {
 
     private val system = MutableStateFlow(readSystem())
@@ -54,9 +50,9 @@ class NotificationSettingsViewModel @Inject constructor(
     }
 
     private fun readSystem() = SystemStatus(
-        notificationsEnabled = helper.enabled(),
-        exactAlarms = scheduler.canScheduleExact(),
-        batteryUnrestricted = context.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)
+        notificationsEnabled = permissions.notificationsEnabled(),
+        exactAlarms = permissions.exactAlarmsAllowed(),
+        batteryUnrestricted = permissions.batteryUnrestricted()
     )
 
     fun setBriefing(enabled: Boolean) = update { it.copy(briefingEnabled = enabled) }

@@ -10,6 +10,8 @@
 local.properties
 /.kotlin
 /app/build
+/core/*/build
+/benchmark/build
 /tools/**/__pycache__
 /tools/mascot/out
 /tools/fonts/out

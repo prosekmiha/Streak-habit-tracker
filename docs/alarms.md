@@ -25,7 +25,7 @@ Opomniki so združeni v skupino.
 
 - **Naslednja pojavitev ure** se izračuna v trenutnem časovnem pasu. Če ura zaradi premika na poletni čas ne obstaja, se premakne naprej (02:30 → 03:30). Ob ponovitvi ure se uporabi prva pojavitev, zato se opomnik ne sproži dvakrat.
 - **Tihe ure** lahko prečkajo polnoč (22:00–07:00). Opomniki med tihimi urami pridejo brez zvoka, povzetek in večerni opomnik pa se ne pošljeta.
-- **Dnevna omejitev** (brez, 3, 5 ali 10) velja za opomnike, povzetek in večerni opomnik. Števec (`NotificationLog`) se ponastavi z logičnim dnem.
+- **Dnevna omejitev** (brez, 3, 5 ali 10) velja za opomnike, povzetek in večerni opomnik. Števec (`NotificationLog` → `NotificationLogDataStore`) se ponastavi z logičnim dnem.
 - **"Dan" je logični dan.** Opomnik ob 01:00 pri nastavitvi "dan se konča ob 04:00" spada v prejšnji dan.
 
 ## Zasebnost
@@ -33,7 +33,7 @@ Opomniki so združeni v skupino.
 - Na zaklenjenem zaslonu je vedno prikazana javna različica brez imen navad (`VISIBILITY_PRIVATE` + `publicVersion`).
 - Z nastavitvijo **"Skrij imena navad"** so imena skrita tudi v odklenjenem stanju: opomnik prikaže "Čas za navado", večerni opomnik pa le število.
 
-## Razporejanje (`AlarmScheduler`)
+## Razporejanje (`ReminderScheduler` → `AlarmScheduler`)
 
 - **Enkratni alarmi:** vsak alarm je enkraten in ob sprožitvi razporedi naslednjega. `RTC_WAKEUP` se uporablja za opomnike, povzetek in večerni opomnik, natančen alarm pa tudi za mejo logičnega dne.
 - **Natančnost:** če je dovoljenje `SCHEDULE_EXACT_ALARM` dano, se uporabi `setExactAndAllowWhileIdle`. Brez dovoljenja se uporabi `setAndAllowWhileIdle`, ki deluje tudi v načinu Doze, vendar ga sistem lahko zamakne za nekaj minut.

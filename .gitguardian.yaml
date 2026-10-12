@@ -1,0 +1,9 @@
+# GitGuardian / ggshield: paths with no real secrets that trigger "Generic Password"
+#  - UI strings such as "data_password=Password" (translations and generated strings.xml)
+#  - unit tests with made-up passwords/PINs for encryption and hashing tests
+version: 2
+secret:
+  ignored_paths:
+    - "tools/i18n/*.txt"
+    - "app/src/main/res/values*/strings.xml"
+    - "app/src/test/**"

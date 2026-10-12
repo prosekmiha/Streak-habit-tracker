@@ -51,11 +51,11 @@ import androidx.compose.ui.window.DialogProperties
 import com.streak.app.R
 import com.streak.app.domain.model.AnimationLevel
 import com.streak.app.domain.model.StreakUnit
+import com.streak.app.ui.achievements.ShareCard
+import com.streak.app.ui.achievements.ShareCardSpec
 import com.streak.app.ui.components.ButtonVariant
 import com.streak.app.ui.components.StreakButton
 import com.streak.app.ui.components.TextAction
-import com.streak.app.ui.achievements.ShareCard
-import com.streak.app.ui.achievements.ShareCardSpec
 import com.streak.app.ui.mascot.MascotMood
 import com.streak.app.ui.mascot.MascotView
 import com.streak.app.ui.theme.Blurple

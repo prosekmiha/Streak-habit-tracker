@@ -8,6 +8,8 @@ import android.os.Build
 import com.streak.app.domain.model.AppSettings
 import com.streak.app.domain.model.Habit
 import com.streak.app.domain.notify.NotificationRules
+import com.streak.app.domain.notify.ReminderScheduler
+import com.streak.app.domain.notify.ReminderScheduler.Companion.MAX_REMINDERS
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.time.DayClock
@@ -19,8 +21,7 @@ import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Razporeja vse alarme: opomnike navad (vec na navado), odlog, jutranji povzetek,
-// vecerni opomnik in menjavo logicnega dne. Alarmi so enkratni; ob sprozitvi se
+// Opomniki prek AlarmManagerja (vec na navado). Alarmi so enkratni; ob sprozitvi se
 // razporedi naslednji. Natancni so, ce uporabnik to dovoli (Android 12+).
 @Singleton
 class AlarmScheduler @Inject constructor(
@@ -28,22 +29,20 @@ class AlarmScheduler @Inject constructor(
     private val dayClock: DayClock,
     private val settingsRepository: SettingsRepository,
     private val habitRepository: HabitRepository
-) {
+) : ReminderScheduler {
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
 
-    fun canScheduleExact(): Boolean =
+    override fun canScheduleExact(): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
 
-    // Po zagonu naprave, posodobitvi, spremembi ure/pasu ali dovoljenja
-    suspend fun rescheduleAll() {
+    override suspend fun rescheduleAll() {
         val settings = settingsRepository.settings.first()
         scheduleDailyReset(settings)
         scheduleDaily(settings)
         habitRepository.getHabits().forEach { schedule(it) }
     }
 
-    // Naslednja pojavitev vsakega vklopljenega opomnika navade
-    fun schedule(habit: Habit) {
+    override fun schedule(habit: Habit) {
         cancel(habit.id, includeSnooze = false)
         if (habit.isArchived) return
         habit.reminders.take(MAX_REMINDERS).forEachIndexed { index, reminder ->
@@ -51,27 +50,22 @@ class AlarmScheduler @Inject constructor(
         }
     }
 
-    fun cancel(habit: Habit) = cancel(habit.id)
-
-    fun cancel(habitId: String, includeSnooze: Boolean = true) {
+    override fun cancel(habitId: String, includeSnooze: Boolean) {
         for (index in 0 until MAX_REMINDERS) alarmManager.cancel(reminderIntent(habitId, index))
         if (includeSnooze) alarmManager.cancel(reminderIntent(habitId, SNOOZE_SLOT))
     }
 
-    // "Cez 15 min" iz obvestila
-    fun snooze(habitId: String, minutes: Long = SNOOZE_MINUTES) {
+    override fun snooze(habitId: String, minutes: Long) {
         setAlarm(System.currentTimeMillis() + minutes * 60_000, reminderIntent(habitId, SNOOZE_SLOT))
     }
 
-    // Natancen alarm ob meji logicnega dne ("dan se konca ob")
-    suspend fun scheduleDailyReset(settings: AppSettings? = null) {
+    override suspend fun scheduleDailyReset(settings: AppSettings?) {
         val endsAt = (settings ?: settingsRepository.settings.first()).dayEndsAt
         val next = LogicalDay.nextBoundary(dayClock.now(), dayClock.zone(), endsAt)
         setAlarm(next.toEpochMilli(), dailyResetIntent())
     }
 
-    // Jutranji povzetek in vecerni opomnik ob nastavljenih urah
-    suspend fun scheduleDaily(settings: AppSettings? = null) {
+    override suspend fun scheduleDaily(settings: AppSettings?) {
         val s = settings ?: settingsRepository.settings.first()
         val briefing = dailyIntent(DailyNotificationReceiver.ACTION_BRIEFING)
         val nudge = dailyIntent(DailyNotificationReceiver.ACTION_NUDGE)
@@ -113,13 +107,11 @@ class AlarmScheduler @Inject constructor(
         )
     }
 
-    companion object {
-        const val MAX_REMINDERS = 8
-        const val SNOOZE_MINUTES = 15L
-        private const val SNOOZE_SLOT = MAX_REMINDERS
-        private const val SLOTS = 16 // > MAX_REMINDERS + odlog
-        private const val REQUEST_DAILY_RESET = 0x5EED
-        private const val REQUEST_BRIEFING = 0x5EEE
-        private const val REQUEST_NUDGE = 0x5EEF
+    private companion object {
+        const val SNOOZE_SLOT = MAX_REMINDERS
+        const val SLOTS = 16 // > MAX_REMINDERS + odlog
+        const val REQUEST_DAILY_RESET = 0x5EED
+        const val REQUEST_BRIEFING = 0x5EEE
+        const val REQUEST_NUDGE = 0x5EEF
     }
 }

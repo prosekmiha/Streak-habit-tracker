@@ -6,9 +6,12 @@ import com.streak.app.domain.model.AnimationLevel
 import com.streak.app.domain.model.AppSettings
 import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.ThemeMode
+import com.streak.app.domain.notify.ReminderScheduler
+import com.streak.app.domain.repository.GameRepository
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
-import com.streak.app.notifications.AlarmScheduler
+import com.streak.app.domain.usecase.DeleteHabitUseCase
+import com.streak.app.domain.usecase.SetHabitArchivedUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,7 +22,6 @@ import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalTime
 import javax.inject.Inject
-import com.streak.app.game.GameRepository
 
 data class SettingsUiState(
     val settings: AppSettings = AppSettings(),
@@ -35,7 +37,9 @@ data class SettingsUiState(
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val habitRepository: HabitRepository,
-    private val alarmScheduler: AlarmScheduler,
+    private val alarmScheduler: ReminderScheduler,
+    private val setHabitArchived: SetHabitArchivedUseCase,
+    private val deleteHabit: DeleteHabitUseCase,
     gameRepository: GameRepository
 ) : ViewModel() {
 
@@ -76,17 +80,11 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun unarchive(habit: Habit) {
-        viewModelScope.launch {
-            habitRepository.setArchived(habit.id, false)
-            habitRepository.getHabit(habit.id)?.let { alarmScheduler.schedule(it) }
-        }
+        viewModelScope.launch { setHabitArchived(habit.id, archived = false) }
     }
 
     fun deleteHabit(habit: Habit) {
-        viewModelScope.launch {
-            alarmScheduler.cancel(habit)
-            habitRepository.deleteHabit(habit.id)
-        }
+        viewModelScope.launch { deleteHabit(habit.id) }
     }
 
     fun recalculateAll() {

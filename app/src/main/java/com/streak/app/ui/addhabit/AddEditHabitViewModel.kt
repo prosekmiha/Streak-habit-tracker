@@ -10,12 +10,16 @@ import com.streak.app.domain.model.HabitSchedule
 import com.streak.app.domain.model.Reminder
 import com.streak.app.domain.model.ScheduleType
 import com.streak.app.domain.model.TimeOfDay
+import com.streak.app.domain.notify.ReminderScheduler
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.time.DayClock
-import com.streak.app.notifications.AlarmScheduler
+import com.streak.app.domain.usecase.DeleteHabitUseCase
+import com.streak.app.domain.usecase.SaveHabitUseCase
+import com.streak.app.domain.usecase.SetHabitArchivedUseCase
 import com.streak.app.ui.components.IconMap
 import com.streak.app.ui.components.formatAmount
+import com.streak.app.ui.onboarding.HabitTemplateCatalog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -66,10 +70,12 @@ data class HabitForm(
 
 @HiltViewModel
 class AddEditHabitViewModel @Inject constructor(
-    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
     private val habitRepository: HabitRepository,
     private val settingsRepository: SettingsRepository,
-    private val alarmScheduler: AlarmScheduler,
+    private val saveHabit: SaveHabitUseCase,
+    private val setHabitArchived: SetHabitArchivedUseCase,
+    private val deleteHabit: DeleteHabitUseCase,
+    private val templates: HabitTemplateCatalog,
     private val dayClock: DayClock,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -115,7 +121,7 @@ class AddEditHabitViewModel @Inject constructor(
     }
 
     fun addReminder(time: LocalTime) = _form.update {
-        if (time in it.reminders || it.reminders.size >= AlarmScheduler.MAX_REMINDERS) it
+        if (time in it.reminders || it.reminders.size >= ReminderScheduler.MAX_REMINDERS) it
         else it.copy(reminders = (it.reminders + time).sorted())
     }
 
@@ -157,9 +163,7 @@ class AddEditHabitViewModel @Inject constructor(
                 startDate = f.startDate,
                 endDate = f.endDate
             )
-            original?.let { alarmScheduler.cancel(it) }
-            habitRepository.upsertHabit(habit)
-            alarmScheduler.schedule(habit)
+            saveHabit(habit)
             onDone()
         }
     }
@@ -167,9 +171,7 @@ class AddEditHabitViewModel @Inject constructor(
     fun setArchived(archived: Boolean, onDone: () -> Unit) {
         val habit = original ?: return
         viewModelScope.launch {
-            if (archived) alarmScheduler.cancel(habit)
-            habitRepository.setArchived(habit.id, archived)
-            if (!archived) habitRepository.getHabit(habit.id)?.let { alarmScheduler.schedule(it) }
+            setHabitArchived(habit.id, archived)
             onDone()
         }
     }
@@ -177,25 +179,25 @@ class AddEditHabitViewModel @Inject constructor(
     fun delete(onDone: () -> Unit) {
         val habit = original ?: return
         viewModelScope.launch {
-            alarmScheduler.cancel(habit)
-            habitRepository.deleteHabit(habit.id)
+            deleteHabit(habit.id)
             onDone()
         }
     }
 
     // Obrazec iz predloge (hitra izbira v listu "+")
     private fun templateForm(id: String?, today: LocalDate, firstDay: DayOfWeek): HabitForm? {
-        val t = com.streak.app.ui.onboarding.HabitTemplates.all.firstOrNull { it.id == id } ?: return null
+        val localized = templates.find(id) ?: return null
+        val t = localized.template
         return HabitForm(
             loaded = true,
-            title = context.getString(t.title),
-            description = context.getString(t.description),
+            title = localized.title,
+            description = localized.description,
             scheduleType = t.schedule.type,
             weekdays = t.schedule.weekdays,
             timesPerPeriod = t.schedule.timesPerPeriod,
             goalType = t.goalType,
             targetText = if (t.goalType == GoalType.QUANTITY) formatAmount(t.target) else "",
-            unit = t.unit?.let { context.getString(it) }.orEmpty(),
+            unit = localized.unit.orEmpty(),
             durationMinutes = if (t.goalType == GoalType.DURATION) (t.target / 60).toInt() else 10,
             icon = t.icon,
             colorHex = t.colorHex,

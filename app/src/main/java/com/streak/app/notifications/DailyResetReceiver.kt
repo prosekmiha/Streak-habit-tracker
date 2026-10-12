@@ -6,6 +6,7 @@ import android.content.Intent
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.streak.app.domain.notify.ReminderScheduler
 import com.streak.app.work.DailyResetWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +19,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class DailyResetReceiver : BroadcastReceiver() {
 
-    @Inject lateinit var alarmScheduler: AlarmScheduler
+    @Inject lateinit var alarmScheduler: ReminderScheduler
 
     override fun onReceive(context: Context, intent: Intent) {
         val request = OneTimeWorkRequestBuilder<DailyResetWorker>().build()

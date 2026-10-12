@@ -2,11 +2,12 @@ package com.streak.app.notifications
 
 import android.content.Context
 import com.streak.app.R
-import com.streak.app.data.prefs.NotificationLog
 import com.streak.app.domain.model.AppSettings
 import com.streak.app.domain.model.CompletionStatus
 import com.streak.app.domain.model.Habit
+import com.streak.app.domain.notify.NotificationLog
 import com.streak.app.domain.notify.NotificationRules
+import com.streak.app.domain.notify.ReminderScheduler
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.time.DayClock
@@ -27,7 +28,7 @@ class ReminderDispatcher @Inject constructor(
     private val dayClock: DayClock,
     private val logHabit: ToggleHabitUseCase,
     private val helper: NotificationHelper,
-    private val scheduler: AlarmScheduler,
+    private val scheduler: ReminderScheduler,
     private val log: NotificationLog
 ) {
     suspend fun onReminder(habitId: String, snoozed: Boolean) {
