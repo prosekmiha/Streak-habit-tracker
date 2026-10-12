@@ -74,14 +74,26 @@ fun StatsScreen(onOpenHabit: (String) -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
         ScreenTitle(stringResource(R.string.nav_stats), Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp))
         SegmentedControl(
-            options = listOf(0, 1),
+            options = listOf(0, 1, 2),
             selected = tab,
-            label = { stringResource(if (it == 0) R.string.stats_tab_overview else R.string.stats_tab_habits) },
+            label = {
+                stringResource(
+                    when (it) {
+                        0 -> R.string.stats_tab_overview
+                        1 -> R.string.stats_tab_habits
+                        else -> R.string.stats_tab_plan
+                    }
+                )
+            },
             onSelect = { tab = it },
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 14.dp)
         )
         Box(Modifier.weight(1f)) {
-            if (tab == 0) CalendarTab() else HabitStatsTab(onOpenHabit)
+            when (tab) {
+                0 -> CalendarTab()
+                1 -> HabitStatsTab(onOpenHabit)
+                else -> WeekPlanTab(onOpenHabit)
+            }
         }
     }
 }

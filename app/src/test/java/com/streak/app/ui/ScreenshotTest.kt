@@ -26,8 +26,12 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import com.streak.app.R
 import com.streak.app.domain.gamification.Badge
 import com.streak.app.domain.model.AnimationLevel
+import com.streak.app.domain.model.CompletionStatus
 import com.streak.app.domain.model.DayState
 import com.streak.app.domain.model.GoalType
+import com.streak.app.domain.model.ScheduleType
+import com.streak.app.domain.plan.WeekPlanner
+import com.streak.app.testing.completion
 import com.streak.app.testing.testHabit
 import com.streak.app.ui.achievements.BadgeCircle
 import com.streak.app.ui.components.ButtonVariant
@@ -39,6 +43,8 @@ import com.streak.app.ui.components.WeekDayUi
 import com.streak.app.ui.components.WeekStrip
 import com.streak.app.ui.mascot.MascotMood
 import com.streak.app.ui.mascot.poseDrawable
+import com.streak.app.ui.stats.WeekPlanContent
+import com.streak.app.ui.stats.WeekPlanUiState
 import com.streak.app.ui.theme.StreakTheme
 import org.junit.Rule
 import org.junit.Test
@@ -46,6 +52,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 // Posnetki kljucnih gradnikov (Roborazzi): svetla/temna tema, 200 % pisava, jeziki
@@ -91,6 +98,15 @@ class ScreenshotTest {
         shoot("home_bg", dark = true) { Home() }
     }
 
+    @Test fun weekPlanLight() = shoot("week_plan_light") { WeekPlan() }
+    @Test fun weekPlanDark() = shoot("week_plan_dark", dark = true) { WeekPlan() }
+    @Test fun weekPlanLargeFont() = shoot("week_plan_font200", fontScale = 2f) { WeekPlan() }
+
+    @Test fun weekPlanSlovenian() {
+        RuntimeEnvironment.setQualifiers("+sl")
+        shoot("week_plan_sl") { WeekPlan() }
+    }
+
     @Test fun buttonsAndBadges() = shoot("components") {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ButtonVariant.entries.forEach { StreakButton(it.name, {}, variant = it) }
@@ -115,6 +131,32 @@ class ScreenshotTest {
                 }
             }
         }
+    }
+
+    // Tedenski plan: vse skupine urnikov in vsa stanja dni (danes je sreda)
+    @Composable
+    private fun WeekPlan() {
+        val monday = LocalDate.of(2026, 10, 5)
+        val wednesday = monday.plusDays(2)
+        val habits = listOf(
+            testHabit("a").copy(title = stringResource(R.string.tpl_water), icon = "Water", colorHex = "#A9C8F5"),
+            testHabit("b", type = ScheduleType.WEEKDAYS, weekdays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY))
+                .copy(title = stringResource(R.string.tpl_reading), icon = "Book", colorHex = "#F7CD63"),
+            testHabit("c", type = ScheduleType.TIMES_PER_WEEK, times = 3).copy(title = stringResource(R.string.tpl_meditation), icon = "Meditation", colorHex = "#A6E3D8"),
+            testHabit("d", type = ScheduleType.TIMES_PER_MONTH, times = 4).copy(title = stringResource(R.string.tpl_household), icon = "Iron", colorHex = "#B8EB6C")
+        )
+        val logs = listOf(
+            completion(monday, habitId = "a"),
+            completion(monday.plusDays(1), CompletionStatus.SKIPPED, habitId = "a"),
+            completion(monday, habitId = "c"),
+            completion(monday.plusDays(2), habitId = "c"),
+            completion(LocalDate.of(2026, 10, 2), habitId = "d")
+        )
+        val plan = WeekPlanner.build(habits, monday, logs, emptyList(), wednesday)
+        WeekPlanContent(
+            WeekPlanUiState(loaded = true, today = wednesday, weekStart = monday, isCurrentWeek = true, plan = plan),
+            onPrevWeek = {}, onNextWeek = {}, onThisWeek = {}, onOpenHabit = {}
+        )
     }
 
     // Domaci zaslon iz pravih gradnikov (tedenski trak in mreza kartic v vseh stanjih)
