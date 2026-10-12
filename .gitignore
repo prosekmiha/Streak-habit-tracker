@@ -13,3 +13,31 @@ local.properties
 /tools/**/__pycache__
 /tools/mascot/out
 /tools/fonts/out
+
+# Podpisovanje in skrivnosti (nikoli na GitHub)
+*.jks
+*.keystore
+*.p12
+*.pem
+keystore.properties
+signing.properties
+.env
+.env.*
+google-services.json
+
+# Gradnje in diagnostika
+*.apk
+*.aab
+*.idsig
+*.hprof
+*.log
+/release/
+/*/release/
+
+# Orodja in urejevalniki
+.vscode/
+.venv/
+venv/
+__pycache__/
+*.blend1
+Thumbs.db
