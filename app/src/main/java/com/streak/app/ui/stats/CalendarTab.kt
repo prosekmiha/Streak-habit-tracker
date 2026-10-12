@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.streak.app.R
+import com.streak.app.ui.components.ScreenReadyTrace
 import com.streak.app.domain.model.DayState
 import com.streak.app.ui.components.BadgeKind
 import com.streak.app.ui.components.IconMap
@@ -67,6 +68,7 @@ import kotlin.math.roundToInt
 @Composable
 fun CalendarTab(viewModel: CalendarViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    ScreenReadyTrace("Stats.ready", state.loaded)
     val locale = LocalConfiguration.current.locales[0]
     val palette = StreakTheme.palette
 

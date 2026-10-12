@@ -50,6 +50,7 @@ import com.streak.app.domain.model.StreakUnit
 import com.streak.app.ui.components.ButtonVariant
 import com.streak.app.ui.components.IconMap
 import com.streak.app.ui.components.KpiTile
+import com.streak.app.ui.components.ScreenReadyTrace
 import com.streak.app.ui.components.ScreenTitle
 import com.streak.app.ui.components.SegmentedControl
 import com.streak.app.ui.components.StreakButton
@@ -88,6 +89,7 @@ fun StatsScreen(onOpenHabit: (String) -> Unit) {
 @Composable
 private fun HabitStatsTab(onOpenHabit: (String) -> Unit, viewModel: StatsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    ScreenReadyTrace("StatsHabits.ready", state.loaded)
     val selected = state.selected
     val locale = LocalConfiguration.current.locales[0]
     val palette = StreakTheme.palette

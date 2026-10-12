@@ -39,6 +39,7 @@ data class DailyTotals(val scheduled: Int = 0, val done: Int = 0) {
 data class HabitDay(val habit: Habit, val state: DayState)
 
 data class CalendarUiState(
+    val loaded: Boolean = false,
     val month: YearMonth = YearMonth.now(),
     val today: LocalDate = LocalDate.now(),
     val firstDayOfWeek: DayOfWeek = DayOfWeek.MONDAY,
@@ -113,6 +114,7 @@ class CalendarViewModel @Inject constructor(
         weekly
     ) { (m, today, firstDay), completion, selected, (habits, tasks, all), (thisWeek, lastWeek) ->
         CalendarUiState(
+            loaded = true,
             month = m, today = today, firstDayOfWeek = firstDay, thisWeek = thisWeek, lastWeek = lastWeek,
             completionByDate = completion, selectedDate = selected, habitsForDate = habits,
             bestStreak = all.maxOfOrNull { it.streak.bestStreak } ?: 0,

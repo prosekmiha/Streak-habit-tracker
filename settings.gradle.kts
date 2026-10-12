@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Streak"
 include(":app")
+include(":benchmark")

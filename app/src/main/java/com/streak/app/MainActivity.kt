@@ -3,6 +3,7 @@ package com.streak.app
 import android.content.Context
 import android.content.Intent
 import com.streak.app.locale.AppLocale
+import com.streak.app.dev.DevSeeder
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -36,6 +38,7 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     @Inject lateinit var settingsRepository: SettingsRepository
+    @Inject lateinit var devSeeder: dagger.Lazy<DevSeeder>
 
     // null, dokler se nastavitve ne nalozijo (splash ostane, da ne utripne onboarding)
     private val settings = MutableStateFlow<AppSettings?>(null)
@@ -48,6 +51,11 @@ class MainActivity : ComponentActivity() {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Meritve hitrosti: napolni bazo s testnimi podatki (le debug/benchmark, docs/quality.md)
+        if (BuildConfig.SEED_ENABLED && savedInstanceState == null && intent?.getBooleanExtra(EXTRA_SEED, false) == true) {
+            seedAndShowResult()
+            return
+        }
         splash.setKeepOnScreenCondition { settings.value == null }
         lifecycleScope.launch { settingsRepository.settings.collect { settings.value = it } }
         if (savedInstanceState == null) handleIntent(intent)
@@ -75,6 +83,23 @@ class MainActivity : ComponentActivity() {
                     OnboardingScreen()
                 }
             }
+        }
+    }
+
+    private fun seedAndShowResult() {
+        val status = MutableStateFlow("SEEDING")
+        lifecycleScope.launch {
+            val habits = intent.getIntExtra(EXTRA_SEED_HABITS, 200)
+            val years = intent.getIntExtra(EXTRA_SEED_YEARS, 5)
+            // Datoteka v zunanji mapi aplikacije: meritve (adb shell) jo preverjajo za konec polnjenja
+            val marker = java.io.File(getExternalFilesDir(null), "seed_status")
+            marker.delete()
+            status.value = runCatching { devSeeder.get().seed(habits, years) }.fold({ "SEED_DONE" }, { "SEED_FAILED: ${it.message}" })
+            runCatching { marker.writeText(status.value) }
+        }
+        setContent {
+            val text by status.collectAsStateWithLifecycle()
+            androidx.compose.material3.Text(text, modifier = androidx.compose.ui.Modifier.statusBarsPadding())
         }
     }
 
@@ -109,5 +134,8 @@ class MainActivity : ComponentActivity() {
         const val ACTION_NEW_HABIT = "com.streak.app.action.NEW_HABIT"
         const val ACTION_OPEN_HABIT = "com.streak.app.action.OPEN_HABIT"
         const val EXTRA_HABIT_ID = "habit_id"
+        const val EXTRA_SEED = "dev_seed"
+        const val EXTRA_SEED_HABITS = "dev_seed_habits"
+        const val EXTRA_SEED_YEARS = "dev_seed_years"
     }
 }

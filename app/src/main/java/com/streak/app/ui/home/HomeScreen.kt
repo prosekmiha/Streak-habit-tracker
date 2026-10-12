@@ -58,6 +58,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.streak.app.R
+import androidx.activity.compose.ReportDrawnWhen
+import com.streak.app.ui.components.ScreenReadyTrace
 import com.streak.app.ui.achievements.titleRes
 import com.streak.app.ui.achievements.GameCelebrationOverlay
 import com.streak.app.ui.theme.Lavender
@@ -104,6 +106,9 @@ fun HomeScreen(
     val level by viewModel.level.collectAsStateWithLifecycle()
     val resources = LocalResources.current
     val state by viewModel.state.collectAsStateWithLifecycle()
+    ScreenReadyTrace("Home.ready", state.loaded)
+    // Zagon je "v celoti izrisan", ko so navade nalozene (TTFD v meritvah zagona)
+    ReportDrawnWhen { state.loaded }
     val pendingClock by viewModel.hasPendingClockAction.collectAsStateWithLifecycle()
     val activeSession by viewModel.activeSession.collectAsStateWithLifecycle()
     val restoreOffer by viewModel.restoreOffer.collectAsStateWithLifecycle()

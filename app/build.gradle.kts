@@ -20,10 +20,13 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
+        // Generator testnih podatkov (DevSeeder) je izklopljen v release
+        buildConfigField("boolean", "SEED_ENABLED", "false")
     }
 
     buildTypes {
         debug {
+            buildConfigField("boolean", "SEED_ENABLED", "true")
             // Psevdojeziki (en-XA dolgi nizi, ar-XB zrcaljenje) za preverjanje postavitve
             isPseudoLocalesEnabled = true
         }
@@ -35,6 +38,16 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        // Meritve hitrosti: kot release (R8), a profilabilna, z generatorjem podatkov in
+        // lastnim paketom (ne posega v podatke namestitve debug)
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            applicationIdSuffix = ".benchmark"
+            buildConfigField("boolean", "SEED_ENABLED", "true")
+            proguardFiles("benchmark-rules.pro")
         }
     }
     compileOptions {
@@ -74,6 +87,8 @@ ksp {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
+    // Namesti Baseline Profile (hitrejsi zagon)
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.filament.android)
     implementation(libs.filament.gltfio)
     // Sifriranje baze (kljuc v Android Keystoru)

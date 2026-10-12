@@ -112,7 +112,7 @@ Vsak milestone se konča z zelenim buildom, testi in commitom ter je samostojno 
 | **M7** ✅ | 3D maskota: Blender generator, poze, SceneView renderer, state machine, sprožilci, fallbacki | velik |
 | **M8** ✅ | Gamifikacija (XP, nivoji, značke, izzivi, deljenje) + razširjena statistika | srednji |
 | **M9** ✅ | 24 EU jezikov, plurals, per-app language, pseudolokalizacija | srednji |
-| **M10** | Dostopnost, screenshot testi, Macrobenchmark + Baseline Profile | srednji |
+| **M10** ✅ | Dostopnost, screenshot testi, Macrobenchmark + Baseline Profile | srednji |
 | v2 | Health Connect, Wear OS, App Actions, koledar, CSV uvoz iz drugih aplikacij, lock-screen widgeti, 3D značke in outfiti | — |
 
 **Rollback strategija:** vsak milestone je ločen niz commitov. Ker aplikacija ni objavljena, se staged rollout in Play Console koraki začnejo šele pred prvo izdajo (opisani bodo v `docs/roadmap.md`).

@@ -27,7 +27,8 @@ data class StatsUiState(
     val habits: List<HabitWithStreak> = emptyList(),
     // Izbrana navada s celotno zgodovino
     val selected: HabitWithStreak? = null,
-    val firstDayOfWeek: DayOfWeek = DayOfWeek.MONDAY
+    val firstDayOfWeek: DayOfWeek = DayOfWeek.MONDAY,
+    val loaded: Boolean = false
 ) {
     val today: LocalDate get() = selected?.today ?: LocalDate.now()
 
@@ -88,7 +89,7 @@ class StatsViewModel @Inject constructor(
         selectedDetail,
         settingsRepository.settings.map { it.firstDayOfWeek }.distinctUntilChanged()
     ) { list, detail, firstDay ->
-        StatsUiState(habits = list, selected = detail, firstDayOfWeek = firstDay)
+        StatsUiState(habits = list, selected = detail, firstDayOfWeek = firstDay, loaded = true)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), StatsUiState())
 
     fun select(id: String) { selectedId.value = id }

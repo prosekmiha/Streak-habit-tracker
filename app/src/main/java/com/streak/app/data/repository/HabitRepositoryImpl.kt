@@ -4,6 +4,7 @@ import com.streak.app.data.local.StreakDatabase
 import com.streak.app.data.mapper.reminderEntities
 import com.streak.app.data.mapper.toDomain
 import com.streak.app.data.mapper.toEntity
+import com.streak.app.di.ApplicationScope
 import com.streak.app.domain.model.Completion
 import com.streak.app.domain.model.DailyAggregate
 import com.streak.app.domain.model.DayState
@@ -17,11 +18,16 @@ import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.streak.DayEvaluator
 import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.ComputeStreakUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,7 +39,9 @@ class HabitRepositoryImpl @Inject constructor(
     private val recalculator: StreakRecalculator,
     private val computeStreak: ComputeStreakUseCase,
     private val dayClock: DayClock,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    // Brez obsega (testi) se seznam ne deli in vsak zbiralec bere sam
+    @ApplicationScope private val shareScope: CoroutineScope? = null
 ) : HabitRepository {
 
     private val habitDao get() = db.habitDao()
@@ -41,7 +49,16 @@ class HabitRepositoryImpl @Inject constructor(
     private val statsDao get() = db.statsDao()
     private val vacationDao get() = db.vacationDao()
 
-    override fun observeHabits(): Flow<List<HabitWithStreak>> =
+    // Domov, statistika, naloge in gradniki berejo isti seznam. Deljen tok ostane ziv minuto po
+    // zadnjem zbiralcu, zato vrnitev na zaslon ne bere baze znova; po ustavitvi se zadnja
+    // vrednost zavrze, da se nikoli ne pokaze zastarela.
+    private val sharedHabits by lazy {
+        shareScope?.let { habitsFlow().shareIn(it, SharingStarted.WhileSubscribed(SHARE_STOP_MS, 0), replay = 1) }
+    }
+
+    override fun observeHabits(): Flow<List<HabitWithStreak>> = sharedHabits ?: habitsFlow()
+
+    private fun habitsFlow(): Flow<List<HabitWithStreak>> =
         dayClock.todayFlow.flatMapLatest { today ->
             val from = today.minusDays(RECENT_PAST_DAYS)
             val to = today.plusDays(RECENT_FUTURE_DAYS)
@@ -69,7 +86,7 @@ class HabitRepositoryImpl @Inject constructor(
                     )
                 }
             }
-        }
+        }.flowOn(Dispatchers.Default) // 200 navad x 6 tednov stanj dni: ne na glavni niti
 
     override fun observeArchivedHabits(): Flow<List<Habit>> =
         combine(habitDao.observeArchived(), habitDao.observeAllReminders()) { habits, reminders ->
@@ -191,5 +208,6 @@ class HabitRepositoryImpl @Inject constructor(
         // Okno za domaci zaslon: tedenski trak, pike zadnjih dni, mesecni pregled
         const val RECENT_PAST_DAYS = 35L
         const val RECENT_FUTURE_DAYS = 6L
+        const val SHARE_STOP_MS = 60_000L
     }
 }
