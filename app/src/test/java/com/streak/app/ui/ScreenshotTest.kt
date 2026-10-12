@@ -37,6 +37,13 @@ import com.streak.app.ui.achievements.BadgeCircle
 import com.streak.app.ui.components.ButtonVariant
 import com.streak.app.ui.components.HabitCardUi
 import com.streak.app.ui.components.HabitGridCard
+import com.streak.app.ui.mood.MoodCard
+import com.streak.app.ui.mood.MoodForm
+import com.streak.app.ui.mood.MoodSheetContent
+import com.streak.app.ui.review.ReviewContent
+import com.streak.app.ui.review.ReviewUiState
+import com.streak.app.ui.stats.MoodStatsContent
+import com.streak.app.ui.stats.MoodStatsUiState
 import com.streak.app.ui.components.StreakButton
 import com.streak.app.ui.components.WeekDayStatus
 import com.streak.app.ui.components.WeekDayUi
@@ -105,6 +112,36 @@ class ScreenshotTest {
     @Test fun weekPlanSlovenian() {
         RuntimeEnvironment.setQualifiers("+sl")
         shoot("week_plan_sl") { WeekPlan() }
+    }
+
+    @Test fun quitCardsLight() = shoot("quit_cards_light") { QuitCards() }
+    @Test fun quitCardsDark() = shoot("quit_cards_dark", dark = true) { QuitCards() }
+    @Test fun quitCardsLargeFont() = shoot("quit_cards_font200", fontScale = 2f) { QuitCards() }
+
+    @Test fun quitCardsSlovenian() {
+        RuntimeEnvironment.setQualifiers("+sl")
+        shoot("quit_cards_sl") { QuitCards() }
+    }
+
+    @Test fun moodLight() = shoot("mood_light") { Mood() }
+    @Test fun moodDark() = shoot("mood_dark", dark = true) { Mood() }
+    @Test fun moodLargeFont() = shoot("mood_font200", fontScale = 2f) { Mood() }
+
+    @Test fun moodSlovenian() {
+        RuntimeEnvironment.setQualifiers("+sl")
+        shoot("mood_sl") { Mood() }
+    }
+
+    @Test fun moodStatsLight() = shoot("mood_stats_light") { MoodStats() }
+    @Test fun moodStatsDark() = shoot("mood_stats_dark", dark = true) { MoodStats() }
+
+    @Test fun reviewLight() = shoot("review_light") { ReviewSample() }
+    @Test fun reviewDark() = shoot("review_dark", dark = true) { ReviewSample() }
+    @Test fun reviewLargeFont() = shoot("review_font200", fontScale = 2f) { ReviewSample() }
+
+    @Test fun reviewSlovenian() {
+        RuntimeEnvironment.setQualifiers("+sl")
+        shoot("review_sl") { ReviewSample() }
     }
 
     @Test fun buttonsAndBadges() = shoot("components") {
@@ -184,5 +221,63 @@ class ScreenshotTest {
                 row.forEach { HabitGridCard(it, onTap = {}, onLongPress = {}, modifier = Modifier.weight(1f)) }
             }
         }
+    }
+
+    // Navade za opuscanje: cist dan in dan z zdrsom
+    @Composable
+    private fun QuitCards() {
+        val smoking = testHabit("q").copy(title = stringResource(R.string.tpl_no_smoking), icon = "SmokeFree", colorHex = "#A6E3D8", goalType = GoalType.QUIT, targetValue = 0.0)
+        val sugar = testHabit("s").copy(title = stringResource(R.string.tpl_no_sugar), icon = "Restaurant", colorHex = "#FFB38A", goalType = GoalType.QUIT, targetValue = 0.0)
+        Row(Modifier.fillMaxWidth().padding(20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            HabitGridCard(HabitCardUi(smoking, DayState.DONE, 0.0, 23, 23), onTap = {}, onLongPress = {}, modifier = Modifier.weight(1f))
+            HabitGridCard(HabitCardUi(sugar, DayState.MISSED, 2.0, 0, 9), onTap = {}, onLongPress = {}, modifier = Modifier.weight(1f))
+        }
+    }
+
+    // Kartica na domacem zaslonu in vsebina lista za vpis
+    @Composable
+    private fun Mood() {
+        Column(Modifier.padding(20.dp)) {
+            MoodCard(onPick = {}, onLater = {})
+            Column(Modifier.padding(top = 20.dp)) {
+                MoodSheetContent(
+                    form = MoodForm(date = today, mood = 4, energy = 2, note = "", exists = true),
+                    onMood = {}, onEnergy = {}, onNote = {}, onSave = {}, onDelete = {}
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun MoodStats() {
+        val month = java.time.YearMonth.from(today)
+        val moods = (1..today.dayOfMonth).filter { it % 4 != 0 }.associate { month.atDay(it) to (it % 5) + 1 }
+        MoodStatsContent(
+            MoodStatsUiState(
+                month = month,
+                today = today,
+                moodByDate = moods,
+                stats = com.streak.app.domain.mood.MoodStats(42, 3.6, 4.2, 2.9, "a", 4.4),
+                topHabitTitle = stringResource(R.string.tpl_exercise),
+                loaded = true
+            ),
+            onPrev = {}, onNext = {}, onSelectDate = {}
+        )
+    }
+
+    @Composable
+    private fun ReviewSample() {
+        val range = com.streak.app.domain.review.ReviewRange.month(java.time.YearMonth.from(today))
+        val habit = testHabit("r").copy(title = stringResource(R.string.tpl_reading), colorHex = "#F7CD63")
+        val review = com.streak.app.domain.review.Review(
+            range = range, doneCount = 128, cleanDays = 11, activeDays = 11, perfectDays = 7, longestPerfectRun = 4,
+            topHabit = habit, topHabitDays = 10, bestWeekday = java.time.DayOfWeek.TUESDAY,
+            chronotype = com.streak.app.domain.review.Chronotype.EARLY_BIRD,
+            sessionCount = 9, sessionSeconds = 4 * 3600 + 25 * 60, moodAverage = 3.8, moodEntries = 9
+        )
+        ReviewContent(
+            ReviewUiState(range = range, review = review, today = today),
+            onBack = {}, onPeriod = {}, onPrev = {}, onNext = {}, onShare = {}
+        )
     }
 }

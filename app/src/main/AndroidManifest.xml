@@ -54,6 +54,28 @@
             android:foregroundServiceType="mediaPlayback" />
 
         <!-- Dejanja obvestila seje in alarm za dosezen cilj -->
+        <!-- Ploscici v hitrih nastavitvah -->
+        <service
+            android:name=".tiles.HabitTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_stat_habit"
+            android:label="@string/tile_habit_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".tiles.SessionTileService"
+            android:exported="true"
+            android:icon="@drawable/widget_ic_play"
+            android:label="@string/tile_session_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".session.SessionReceiver"
             android:exported="false" />
@@ -61,6 +83,11 @@
         <!-- Opomnik navade in odlog -->
         <receiver
             android:name=".notifications.ReminderReceiver"
+            android:exported="false" />
+
+        <!-- Opomnik naloge -->
+        <receiver
+            android:name=".notifications.TaskReminderReceiver"
             android:exported="false" />
 
         <!-- Dejanji opomnika: Opravljeno, Cez 15 min -->

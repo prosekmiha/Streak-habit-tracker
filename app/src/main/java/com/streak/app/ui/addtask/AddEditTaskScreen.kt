@@ -160,6 +160,8 @@ fun AddEditTaskScreen(onClose: () -> Unit, viewModel: AddEditTaskViewModel = hil
                 }
             }
 
+            TaskRemindersSection(form, viewModel)
+
             if (viewModel.isEdit) {
                 TextAction(stringResource(R.string.delete), { viewModel.delete(onClose) }, Modifier.padding(top = 20.dp), color = palette.danger)
             }

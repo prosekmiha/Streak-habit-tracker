@@ -22,6 +22,10 @@ class TaskRepositoryImpl @Inject constructor(
     override fun observeTasksForDate(date: LocalDate): Flow<List<Task>> =
         taskDao.observeForDate(date.toEpochDay()).map { list -> list.map { it.toDomain() } }
 
+    override suspend fun getTask(id: String): Task? = taskDao.get(id)?.toDomain()
+
+    override suspend fun getTasks(): List<Task> = taskDao.getAll().map { it.toDomain() }
+
     override suspend fun upsertTask(task: Task) = taskDao.upsert(task.toEntity())
 
     override suspend fun deleteTask(id: String) = taskDao.delete(id)

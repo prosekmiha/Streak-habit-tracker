@@ -33,7 +33,12 @@ data class AppSettings(
     // Samodejni posnetek podatkov za Androidovo varnostno kopijo (Google)
     val cloudSnapshotEnabled: Boolean = true,
     // Brez posnetkov zaslona in skrita vsebina v pregledu odprtih aplikacij
-    val privacyScreen: Boolean = false
+    val privacyScreen: Boolean = false,
+    // "Kasneje" pri kartici za razpolozenje skrije kartico do konca tega dne
+    val moodPromptDismissedDay: LocalDate? = null,
+    // Navadi za ploscici v hitrih nastavitvah (null = ni izbrana)
+    val tileHabitId: String? = null,
+    val tileSessionHabitId: String? = null
 ) {
     companion object {
         val MAX_DAY_ENDS_AT: LocalTime = LocalTime.of(6, 0)

@@ -8,9 +8,11 @@ import com.streak.app.domain.backup.BackupService
 import com.streak.app.domain.health.DatabaseHealthMonitor
 import com.streak.app.domain.notify.PermissionStatus
 import com.streak.app.domain.notify.ReminderScheduler
+import com.streak.app.domain.notify.TaskReminderScheduler
 import com.streak.app.domain.session.SessionController
 import com.streak.app.notifications.AlarmScheduler
 import com.streak.app.notifications.AndroidPermissionStatus
+import com.streak.app.notifications.TaskAlarmScheduler
 import com.streak.app.session.AndroidSessionController
 import com.streak.app.ui.onboarding.HabitTemplateCatalog
 import com.streak.app.ui.onboarding.ResourceHabitTemplateCatalog
@@ -27,6 +29,9 @@ abstract class PlatformModule {
 
     @Binds @Singleton
     abstract fun bindReminderScheduler(impl: AlarmScheduler): ReminderScheduler
+
+    @Binds @Singleton
+    abstract fun bindTaskReminderScheduler(impl: TaskAlarmScheduler): TaskReminderScheduler
 
     @Binds @Singleton
     abstract fun bindSessionController(impl: AndroidSessionController): SessionController

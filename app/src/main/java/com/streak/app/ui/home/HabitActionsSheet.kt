@@ -77,6 +77,7 @@ fun HabitActionsSheet(
     onToggle: () -> Unit,
     onSetStatus: (CompletionStatus?) -> Unit,
     onAddProgress: (Double) -> Unit,
+    onAddRelapse: (Int) -> Unit,
     onSaveNote: (String) -> Unit,
     onStartSession: () -> Unit,
     onDetails: () -> Unit,
@@ -89,7 +90,9 @@ fun HabitActionsSheet(
     val pastel = parseHexColor(habit.colorHex)
     var noteOpen by remember(habit.id, date) { mutableStateOf(false) }
     var note by remember(habit.id, date) { mutableStateOf(item.note.orEmpty()) }
-    val hasRecord = item.state in setOf(DayState.DONE, DayState.PARTIAL, DayState.SKIPPED, DayState.FROZEN)
+    // Pri opuscanju ima zapis le dan z zdrsom
+    val hasRecord = if (habit.isQuit) item.state == DayState.MISSED
+    else item.state in setOf(DayState.DONE, DayState.PARTIAL, DayState.SKIPPED, DayState.FROZEN)
 
     StreakSheet(onDismiss = onDismiss) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -147,6 +150,18 @@ fun HabitActionsSheet(
                     StreakButton(stringResource(R.string.start_session), onStartSession, Modifier.padding(top = 10.dp), ButtonVariant.Dark, icon = Icons.Rounded.PlayArrow, height = 48.dp)
                 }
             }
+            GoalType.QUIT -> {
+                val relapses = if (item.state == DayState.MISSED) item.value.toInt().coerceAtLeast(1) else 0
+                Stepper(
+                    value = stringResource(R.string.quit_relapse_count, relapses),
+                    caption = stringResource(if (relapses == 0) R.string.quit_clean_caption else R.string.quit_relapse_caption),
+                    onMinus = { onAddRelapse(-1) },
+                    onPlus = { onAddRelapse(1) },
+                    container = soft,
+                    ink = InkOnPastel,
+                    modifier = Modifier.padding(top = 18.dp)
+                )
+            }
             GoalType.YES_NO -> StreakButton(
                 stringResource(if (item.isDone) R.string.action_mark_not_done else R.string.action_mark_done),
                 { onToggle(); onDismiss() },
@@ -157,12 +172,13 @@ fun HabitActionsSheet(
 
         // Hitra dejanja
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 20.dp)) {
-            QuickAction(
+            // Preskok in zamrznitev pri opuscanju nimata pomena (cist dan ne potrebuje zascite)
+            if (!habit.isQuit) QuickAction(
                 Icons.Rounded.SkipNext, Sky,
                 stringResource(if (item.state == DayState.SKIPPED) R.string.action_unskip_short else R.string.action_skip_short),
                 Modifier.weight(1f)
             ) { onSetStatus(if (item.state == DayState.SKIPPED) null else CompletionStatus.SKIPPED); onDismiss() }
-            QuickAction(
+            if (!habit.isQuit) QuickAction(
                 Icons.Rounded.AcUnit, Lavender,
                 stringResource(if (item.state == DayState.FROZEN) R.string.action_unfreeze else R.string.action_freeze_short),
                 Modifier.weight(1f)

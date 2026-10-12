@@ -53,6 +53,7 @@ import com.streak.app.ui.components.KpiTile
 import com.streak.app.ui.components.ScreenReadyTrace
 import com.streak.app.ui.components.ScreenTitle
 import com.streak.app.ui.components.SegmentedControl
+import com.streak.app.ui.components.TextAction
 import com.streak.app.ui.components.StreakButton
 import com.streak.app.ui.components.parseHexColor
 import com.streak.app.ui.home.streakText
@@ -69,19 +70,22 @@ import java.time.format.FormatStyle
 import java.time.format.TextStyle
 
 @Composable
-fun StatsScreen(onOpenHabit: (String) -> Unit) {
+fun StatsScreen(onOpenHabit: (String) -> Unit, onOpenReview: () -> Unit) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
-        ScreenTitle(stringResource(R.string.nav_stats), Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp))
+        ScreenTitle(stringResource(R.string.nav_stats), Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp)) {
+            TextAction(stringResource(R.string.review_open), onOpenReview)
+        }
         SegmentedControl(
-            options = listOf(0, 1, 2),
+            options = listOf(0, 1, 2, 3),
             selected = tab,
             label = {
                 stringResource(
                     when (it) {
                         0 -> R.string.stats_tab_overview
                         1 -> R.string.stats_tab_habits
-                        else -> R.string.stats_tab_plan
+                        2 -> R.string.stats_tab_plan
+                        else -> R.string.stats_tab_mood
                     }
                 )
             },
@@ -92,7 +96,8 @@ fun StatsScreen(onOpenHabit: (String) -> Unit) {
             when (tab) {
                 0 -> CalendarTab()
                 1 -> HabitStatsTab(onOpenHabit)
-                else -> WeekPlanTab(onOpenHabit)
+                2 -> WeekPlanTab(onOpenHabit)
+                else -> MoodTab()
             }
         }
     }

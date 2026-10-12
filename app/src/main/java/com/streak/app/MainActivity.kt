@@ -118,6 +118,7 @@ class MainActivity : ComponentActivity() {
             ACTION_OPEN_SESSION, ACTION_START_SESSION -> habitId?.let(Routes::session)
             ACTION_NEW_HABIT -> Routes.addHabit()
             ACTION_OPEN_HABIT -> habitId?.let(Routes::habitDetail)
+            ACTION_LOG_MOOD -> Routes.MOOD
             else -> null
         } ?: pendingRoute.value
     }
@@ -130,6 +131,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val ACTION_OPEN_SESSION = "com.streak.app.action.OPEN_SESSION"
+        const val ACTION_LOG_MOOD = "com.streak.app.action.LOG_MOOD"
         const val ACTION_START_SESSION = "com.streak.app.action.START_SESSION"
         const val ACTION_NEW_HABIT = "com.streak.app.action.NEW_HABIT"
         const val ACTION_OPEN_HABIT = "com.streak.app.action.OPEN_HABIT"

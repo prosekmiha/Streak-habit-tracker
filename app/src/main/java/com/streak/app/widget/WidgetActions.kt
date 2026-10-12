@@ -32,7 +32,7 @@ class WidgetActions @Inject constructor(
         when (WidgetSummary.habit(item).tap) {
             WidgetTap.TOGGLE -> logHabit(item.habit, dayClock.today())
             WidgetTap.ADD_ONE -> logHabit.addProgress(item.habit, dayClock.today(), 1.0)
-            WidgetTap.OPEN_SESSION -> return
+            WidgetTap.OPEN_SESSION, WidgetTap.OPEN_APP -> return
         }
         updater.updateAll()
     }

@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import com.streak.app.data.local.entity.CompletionEntity
 import com.streak.app.data.local.entity.HabitEntity
 import com.streak.app.data.local.entity.HabitReminderEntity
+import com.streak.app.data.local.entity.MoodEntity
 import com.streak.app.data.local.entity.SessionEntity
 import com.streak.app.data.local.entity.TaskEntity
 import com.streak.app.data.local.entity.VacationEntity
@@ -21,6 +22,7 @@ interface BackupDao {
     @Query("SELECT * FROM sessions") suspend fun sessions(): List<SessionEntity>
     @Query("SELECT * FROM vacations") suspend fun vacations(): List<VacationEntity>
     @Query("SELECT * FROM tasks") suspend fun tasks(): List<TaskEntity>
+    @Query("SELECT * FROM mood_entries") suspend fun moods(): List<MoodEntity>
 
     @Query("SELECT COUNT(*) FROM habits") suspend fun habitCount(): Int
 
@@ -30,6 +32,7 @@ interface BackupDao {
     @Query("DELETE FROM sessions") suspend fun clearSessions()
     @Query("DELETE FROM vacations") suspend fun clearVacations()
     @Query("DELETE FROM tasks") suspend fun clearTasks()
+    @Query("DELETE FROM mood_entries") suspend fun clearMoods()
     @Query("DELETE FROM streak_cache") suspend fun clearStreakCache()
     @Query("DELETE FROM daily_aggregates") suspend fun clearAggregates()
 
@@ -39,6 +42,7 @@ interface BackupDao {
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insertSessions(items: List<SessionEntity>)
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insertVacations(items: List<VacationEntity>)
     @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insertTasks(items: List<TaskEntity>)
+    @Insert(onConflict = OnConflictStrategy.ABORT) suspend fun insertMoods(items: List<MoodEntity>)
 
     @Transaction
     suspend fun clearAll() {
@@ -51,6 +55,7 @@ interface BackupDao {
         clearHabits()
         clearVacations()
         clearTasks()
+        clearMoods()
     }
 
     // Vse ali nic: ob napaki (npr. podvojen kljuc) ostanejo stari podatki
@@ -61,7 +66,8 @@ interface BackupDao {
         completions: List<CompletionEntity>,
         sessions: List<SessionEntity>,
         vacations: List<VacationEntity>,
-        tasks: List<TaskEntity>
+        tasks: List<TaskEntity>,
+        moods: List<MoodEntity>
     ) {
         clearAll()
         insertHabits(habits)
@@ -70,5 +76,6 @@ interface BackupDao {
         insertSessions(sessions)
         insertVacations(vacations)
         insertTasks(tasks)
+        insertMoods(moods)
     }
 }

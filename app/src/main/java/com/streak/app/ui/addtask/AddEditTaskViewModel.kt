@@ -5,7 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.streak.app.domain.model.Priority
 import com.streak.app.domain.model.Task
+import com.streak.app.domain.model.TaskRecurrence
+import com.streak.app.domain.model.TaskReminder
+import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.repository.TaskRepository
+import com.streak.app.domain.usecase.DeleteTaskUseCase
+import com.streak.app.domain.usecase.SaveTaskUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalTime
 import java.util.UUID
 import javax.inject.Inject
 
@@ -27,7 +33,11 @@ data class TaskForm(
     val hasTime: Boolean = false,
     val priority: Priority = Priority.NORMAL,
     val isRecurring: Boolean = false,
-    val recurringDays: Set<DayOfWeek> = emptySet()
+    val recurringDays: Set<DayOfWeek> = emptySet(),
+    val reminders: List<TaskReminder> = emptyList(),
+    // Predlogi "zjutraj" in "zvecer" iz nastavitev obvestil
+    val morningTime: LocalTime = LocalTime.of(8, 0),
+    val eveningTime: LocalTime = LocalTime.of(20, 0)
 ) {
     val isValid: Boolean get() = title.isNotBlank() && !(isRecurring && repeat == TaskRepeat.WEEKLY && recurringDays.isEmpty())
     val repeat: TaskRepeat
@@ -43,6 +53,9 @@ enum class TaskRepeat { NONE, DAILY, WEEKLY }
 @HiltViewModel
 class AddEditTaskViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
+    private val settingsRepository: SettingsRepository,
+    private val saveTask: SaveTaskUseCase,
+    private val deleteTask: DeleteTaskUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -56,20 +69,23 @@ class AddEditTaskViewModel @Inject constructor(
     val form: StateFlow<TaskForm> = _form.asStateFlow()
 
     init {
-        if (taskId != null) {
-            viewModelScope.launch {
-                taskRepository.observeTasks().first().firstOrNull { it.id == taskId }?.let { t ->
-                    original = t
-                    _form.value = TaskForm(
-                        id = t.id, title = t.title, dueDate = t.dueDate,
-                        dueHour = (t.dueMinuteOfDay ?: 540) / 60,
-                        dueMinute = (t.dueMinuteOfDay ?: 540) % 60,
-                        hasTime = t.dueMinuteOfDay != null,
-                        priority = t.priority,
-                        isRecurring = t.isRecurring,
-                        recurringDays = parseRule(t.recurrenceRule)
-                    )
-                }
+        viewModelScope.launch {
+            val settings = settingsRepository.settings.first()
+            val task = taskId?.let { taskRepository.getTask(it) }
+            original = task
+            // Nova naloga: obrazec je ze v uporabi, dopolni le predloge ur
+            _form.update { it.copy(morningTime = settings.briefingTime, eveningTime = settings.nudgeTime) }
+            task?.let { t ->
+                _form.value = _form.value.copy(
+                    id = t.id, title = t.title, dueDate = t.dueDate,
+                    dueHour = (t.dueMinuteOfDay ?: 540) / 60,
+                    dueMinute = (t.dueMinuteOfDay ?: 540) % 60,
+                    hasTime = t.dueMinuteOfDay != null,
+                    priority = t.priority,
+                    isRecurring = t.isRecurring,
+                    recurringDays = t.recurringDays,
+                    reminders = t.reminders
+                )
             }
         }
     }
@@ -90,10 +106,17 @@ class AddEditTaskViewModel @Inject constructor(
     fun delete(onDone: () -> Unit) {
         val id = _form.value.id ?: return
         viewModelScope.launch {
-            taskRepository.deleteTask(id)
+            deleteTask(id)
             onDone()
         }
     }
+
+    fun addReminder(reminder: TaskReminder) = _form.update {
+        if (reminder in it.reminders || it.reminders.size >= TaskReminder.MAX) it
+        else it.copy(reminders = it.reminders + reminder)
+    }
+
+    fun removeReminder(reminder: TaskReminder) = _form.update { it.copy(reminders = it.reminders - reminder) }
 
     fun toggleDay(day: DayOfWeek) = _form.update {
         val set = it.recurringDays.toMutableSet()
@@ -113,36 +136,12 @@ class AddEditTaskViewModel @Inject constructor(
                 priority = f.priority,
                 isDone = original?.isDone ?: false,
                 isRecurring = f.isRecurring,
-                recurrenceRule = if (f.isRecurring) buildRule(f.recurringDays) else null,
-                createdAt = original?.createdAt ?: System.currentTimeMillis()
+                recurrenceRule = if (f.isRecurring) TaskRecurrence.build(f.recurringDays) else null,
+                createdAt = original?.createdAt ?: System.currentTimeMillis(),
+                reminders = f.reminders
             )
-            taskRepository.upsertTask(task)
+            saveTask(task)
             onDone()
         }
-    }
-
-    // Zgradi preprost RRULE iz izbranih dni (npr. FREQ=WEEKLY;BYDAY=MO,WE)
-    private fun buildRule(days: Set<DayOfWeek>): String {
-        if (days.isEmpty()) return "FREQ=DAILY"
-        val byday = days.sortedBy { it.value }.joinToString(",") { dayCode(it) }
-        return "FREQ=WEEKLY;BYDAY=$byday"
-    }
-
-    private fun parseRule(rule: String?): Set<DayOfWeek> {
-        if (rule == null) return emptySet()
-        val byday = rule.substringAfter("BYDAY=", "").substringBefore(";")
-        if (byday.isBlank()) return emptySet()
-        return byday.split(",").mapNotNull { codeToDay(it) }.toSet()
-    }
-
-    private fun dayCode(d: DayOfWeek) = when (d) {
-        DayOfWeek.MONDAY -> "MO"; DayOfWeek.TUESDAY -> "TU"; DayOfWeek.WEDNESDAY -> "WE"
-        DayOfWeek.THURSDAY -> "TH"; DayOfWeek.FRIDAY -> "FR"; DayOfWeek.SATURDAY -> "SA"; DayOfWeek.SUNDAY -> "SU"
-    }
-
-    private fun codeToDay(c: String) = when (c) {
-        "MO" -> DayOfWeek.MONDAY; "TU" -> DayOfWeek.TUESDAY; "WE" -> DayOfWeek.WEDNESDAY
-        "TH" -> DayOfWeek.THURSDAY; "FR" -> DayOfWeek.FRIDAY; "SA" -> DayOfWeek.SATURDAY; "SU" -> DayOfWeek.SUNDAY
-        else -> null
     }
 }

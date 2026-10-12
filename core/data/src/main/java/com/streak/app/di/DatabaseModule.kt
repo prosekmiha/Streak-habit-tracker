@@ -9,6 +9,7 @@ import com.streak.app.data.local.DatabaseKeyStore
 import com.streak.app.data.local.StreakDatabase
 import com.streak.app.data.local.dao.BackupDao
 import com.streak.app.data.local.dao.GameDao
+import com.streak.app.data.local.dao.MoodDao
 import com.streak.app.data.local.dao.StatsDao
 import com.streak.app.data.local.dao.TaskDao
 import dagger.Module
@@ -61,4 +62,5 @@ object DatabaseModule {
     @Provides fun provideBackupDao(db: StreakDatabase): BackupDao = db.backupDao()
     @Provides fun provideGameDao(db: StreakDatabase): GameDao = db.gameDao()
     @Provides fun provideStatsDao(db: StreakDatabase): StatsDao = db.statsDao()
+    @Provides fun provideMoodDao(db: StreakDatabase): MoodDao = db.moodDao()
 }

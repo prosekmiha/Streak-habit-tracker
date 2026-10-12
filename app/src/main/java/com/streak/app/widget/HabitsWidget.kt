@@ -145,7 +145,7 @@ private fun HabitRow(item: WidgetHabit, clockOk: Boolean, colors: WidgetColors) 
     val context = LocalContext.current
     val habit = item.habit
     val action: Action = when {
-        !clockOk -> actionStartActivity(WidgetIntents.openApp(context))
+        !clockOk || item.tap == WidgetTap.OPEN_APP -> actionStartActivity(WidgetIntents.openApp(context))
         item.tap == WidgetTap.OPEN_SESSION -> actionStartActivity(WidgetIntents.openSession(context, habit.id))
         else -> actionRunCallback<TapHabitAction>(actionParametersOf(WidgetParams.HabitId to habit.id))
     }
@@ -181,7 +181,7 @@ private fun Indicator(item: WidgetHabit, colors: WidgetColors) {
     when {
         item.isDone -> Image(ImageProvider(R.drawable.widget_check_done), contentDescription = null, modifier = GlanceModifier.size(30.dp))
         item.isSettled -> Text("–", style = TextStyle(color = colors.inkSoft, fontSize = 18.sp, fontWeight = FontWeight.Bold))
-        item.tap == WidgetTap.TOGGLE -> Image(
+        item.tap == WidgetTap.TOGGLE || item.tap == WidgetTap.OPEN_APP -> Image(
             ImageProvider(R.drawable.widget_circle_outline), contentDescription = null,
             colorFilter = ColorFilter.tint(colors.inkSoft), modifier = GlanceModifier.size(30.dp)
         )
@@ -202,6 +202,8 @@ private fun subtitle(context: Context, item: WidgetHabit): String? {
         item.state == DayState.SKIPPED -> context.getString(R.string.day_skipped)
         item.state == DayState.FROZEN -> context.getString(R.string.day_frozen)
         item.state == DayState.VACATION -> context.getString(R.string.day_vacation)
+        habit.isQuit -> if (item.state == DayState.MISSED) context.getString(R.string.quit_relapses_today, item.value.toInt().coerceAtLeast(1))
+        else context.getString(R.string.quit_clean_days, item.currentStreak)
         habit.goalType == GoalType.QUANTITY ->
             context.getString(R.string.habit_progress_quantity, formatAmount(item.value), formatAmount(habit.targetValue), habit.unit.orEmpty()).trim()
         habit.goalType == GoalType.DURATION ->
@@ -213,6 +215,7 @@ private fun subtitle(context: Context, item: WidgetHabit): String? {
 private fun rowDescription(context: Context, item: WidgetHabit, subtitle: String?): String {
     val name = listOfNotNull(item.habit.title, subtitle).joinToString(", ")
     return when {
+        item.tap == WidgetTap.OPEN_APP -> name
         item.isDone -> context.getString(R.string.widget_a11y_undo, name)
         item.tap == WidgetTap.ADD_ONE -> context.getString(R.string.widget_a11y_add_one, name)
         item.tap == WidgetTap.OPEN_SESSION -> context.getString(R.string.widget_a11y_session, name)

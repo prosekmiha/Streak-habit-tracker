@@ -112,6 +112,7 @@ class DevSeeder @Inject constructor(
             goalType = goal,
             targetValue = when (goal) {
                 GoalType.YES_NO -> 1.0
+                GoalType.QUIT -> 0.0
                 GoalType.QUANTITY -> 8.0
                 GoalType.DURATION -> 600.0
             },

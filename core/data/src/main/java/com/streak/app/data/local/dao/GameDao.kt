@@ -53,4 +53,14 @@ interface GameDao {
         """
     )
     fun observeDaySessions(): Flow<List<DaySessionsRow>>
+
+    // Cisti dnevi navad za opuscanje (iz predpomnilnika streakov)
+    @Query(
+        """
+        SELECT COALESCE(SUM(s.totalDone), 0) FROM streak_cache s
+        JOIN habits h ON h.id = s.habitId
+        WHERE h.goalType = 'QUIT'
+        """
+    )
+    fun observeCleanDays(): Flow<Int>
 }

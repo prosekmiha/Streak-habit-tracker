@@ -12,9 +12,13 @@ import com.streak.app.MainActivity
 import com.streak.app.R
 import com.streak.app.domain.model.GoalType
 import com.streak.app.domain.model.HabitWithStreak
+import com.streak.app.domain.model.Task
 import com.streak.app.domain.notify.ReminderScheduler
 import com.streak.app.ui.components.formatAmount
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,13 +34,16 @@ class NotificationHelper @Inject constructor(
         const val CHANNEL_BRIEFING = "briefing"
         const val CHANNEL_SESSION = "session"
         const val CHANNEL_SESSION_ALERTS = "session_alerts"
+        const val CHANNEL_TASKS = "tasks"
 
         private const val GROUP_REMINDERS = "com.streak.app.REMINDERS"
         private const val TAG_HABIT = "habit:"
+        private const val TAG_TASK = "task:"
         private const val ID_REMINDER = 1
         private const val ID_BRIEFING = 9000
         private const val ID_NUDGE = 9001
         private const val ID_GROUP_SUMMARY = 9002
+        private const val ID_MOOD = 9003
     }
 
     private val nm get() = NotificationManagerCompat.from(context)
@@ -52,7 +59,8 @@ class NotificationHelper @Inject constructor(
             // Tekoca seja: tiho, brez znacke
             NotificationChannel(CHANNEL_SESSION, context.getString(R.string.notif_channel_session), NotificationManager.IMPORTANCE_LOW)
                 .apply { setShowBadge(false) },
-            NotificationChannel(CHANNEL_SESSION_ALERTS, context.getString(R.string.notif_channel_session_alerts), NotificationManager.IMPORTANCE_HIGH)
+            NotificationChannel(CHANNEL_SESSION_ALERTS, context.getString(R.string.notif_channel_session_alerts), NotificationManager.IMPORTANCE_HIGH),
+            NotificationChannel(CHANNEL_TASKS, context.getString(R.string.notif_channel_tasks), NotificationManager.IMPORTANCE_HIGH)
         )
         manager.createNotificationChannels(channels)
     }
@@ -90,6 +98,38 @@ class NotificationHelper @Inject constructor(
         if (active.none { it.tag?.startsWith(TAG_HABIT) == true }) nm.cancel(ID_GROUP_SUMMARY)
     }
 
+    // Opomnik naloge z dejanjem "Opravljeno"; besedilo pove rok termina
+    fun showTaskReminder(task: Task, occurrence: LocalDate, today: LocalDate, hideNames: Boolean, silent: Boolean) {
+        if (!nm.areNotificationsEnabled()) return
+        val title = if (hideNames) context.getString(R.string.notif_task_title) else task.title
+        val text = if (hideNames) context.getString(R.string.notif_reminder_hidden_text) else taskDueText(task, occurrence, today)
+        val n = base(CHANNEL_TASKS, title, text)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setSilent(silent)
+            .setContentIntent(openApp(task.id.hashCode()))
+            .addAction(0, context.getString(R.string.notif_action_done), taskAction(NotificationActionReceiver.ACTION_TASK_DONE, task.id))
+            .build()
+        runCatching { nm.notify(TAG_TASK + task.id, ID_REMINDER, n) }
+    }
+
+    fun cancelTaskReminder(taskId: String) = nm.cancel(TAG_TASK + taskId, ID_REMINDER)
+
+    private fun taskDueText(task: Task, occurrence: LocalDate, today: LocalDate): String {
+        val locale = context.resources.configuration.locales[0]
+        val time = task.dueTime?.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale))
+        return when {
+            occurrence == today && time != null -> context.getString(R.string.notif_task_due_today_at, time)
+            occurrence == today -> context.getString(R.string.notif_task_due_today)
+            occurrence == today.plusDays(1) && time != null -> context.getString(R.string.notif_task_due_tomorrow_at, time)
+            occurrence == today.plusDays(1) -> context.getString(R.string.notif_task_due_tomorrow)
+            else -> {
+                val date = occurrence.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
+                context.getString(R.string.notif_task_due_on, if (time != null) "$date $time" else date)
+            }
+        }
+    }
+
     fun showBriefing(text: String) {
         if (!nm.areNotificationsEnabled()) return
         val n = base(CHANNEL_BRIEFING, context.getString(R.string.notif_briefing_title), text)
@@ -110,6 +150,19 @@ class NotificationHelper @Inject constructor(
     }
 
     fun cancelNudge() = nm.cancel(ID_NUDGE)
+
+    // Vecer, vse opravljeno: povabilo k vpisu razpolozenja (odpre list v aplikaciji)
+    fun showMoodPrompt() {
+        if (!nm.areNotificationsEnabled()) return
+        val intent = Intent(context, MainActivity::class.java)
+            .setAction(MainActivity.ACTION_LOG_MOOD)
+            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val pending = PendingIntent.getActivity(context, ID_MOOD, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val n = base(CHANNEL_NUDGE, context.getString(R.string.notif_mood_title), context.getString(R.string.notif_mood_text))
+            .setContentIntent(pending)
+            .build()
+        runCatching { nm.notify(ID_MOOD, n) }
+    }
 
     fun isNudgeShown(): Boolean =
         context.getSystemService(NotificationManager::class.java).activeNotifications.any { it.id == ID_NUDGE && it.tag == null }
@@ -147,7 +200,7 @@ class NotificationHelper @Inject constructor(
                 habit.unit.orEmpty()
             ).trim()
             GoalType.DURATION -> context.getString(R.string.notif_reminder_duration, (habit.targetValue / 60).toInt())
-            GoalType.YES_NO -> habit.description.ifBlank { context.getString(R.string.notif_reminder_default) }
+            GoalType.YES_NO, GoalType.QUIT -> habit.description.ifBlank { context.getString(R.string.notif_reminder_default) }
         }
     }
 
@@ -163,6 +216,14 @@ class NotificationHelper @Inject constructor(
             .setAction(MainActivity.ACTION_START_SESSION)
             .putExtra(MainActivity.EXTRA_HABIT_ID, habitId)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    private fun taskAction(action: String, taskId: String): PendingIntent = PendingIntent.getBroadcast(
+        context, (action + taskId).hashCode(),
+        Intent(context, NotificationActionReceiver::class.java)
+            .setAction(action)
+            .putExtra(NotificationActionReceiver.EXTRA_TASK_ID, taskId),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 

@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -24,6 +25,9 @@ import com.streak.app.ui.addtask.AddEditTaskScreen
 import com.streak.app.ui.data.DataScreen
 import com.streak.app.ui.detail.HabitDetailScreen
 import com.streak.app.ui.home.HomeScreen
+import com.streak.app.ui.mood.MoodRequest
+import com.streak.app.ui.mood.MoodSheet
+import com.streak.app.ui.review.ReviewScreen
 import com.streak.app.ui.session.SessionScreen
 import com.streak.app.ui.settings.NotificationSettingsScreen
 import com.streak.app.ui.settings.SettingsScreen
@@ -37,10 +41,16 @@ fun StreakApp(userName: String, pendingRoute: String? = null, onRouteHandled: ()
     val currentRoute = backStack?.destination?.route ?: Routes.HOME
     val showBars = currentRoute in Routes.TopLevel
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
+    var moodRequest by remember { mutableStateOf<MoodRequest?>(null) }
 
     // Obvestilo seje ali bliznjica: odpri cilj (ce ni ze odprt)
     LaunchedEffect(pendingRoute) {
         val route = pendingRoute ?: return@LaunchedEffect
+        if (route == Routes.MOOD) {
+            moodRequest = MoodRequest()
+            onRouteHandled()
+            return@LaunchedEffect
+        }
         val entry = navController.currentBackStackEntry
         val alreadyOpen = entry?.destination?.route == Routes.SESSION &&
             route == Routes.session(entry.arguments?.getString("habitId").orEmpty())
@@ -75,7 +85,8 @@ fun StreakApp(userName: String, pendingRoute: String? = null, onRouteHandled: ()
                     onOpenSession = { id -> navController.navigate(Routes.session(id)) },
                     onOpenStats = { navController.navigateTopLevel(Routes.STATS) },
                     onOpenData = { navController.navigate(Routes.DATA) },
-                    onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) }
+                    onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) },
+                    onLogMood = { level -> moodRequest = MoodRequest(preset = level) }
                 )
             }
             composable(Routes.TASKS) {
@@ -85,7 +96,10 @@ fun StreakApp(userName: String, pendingRoute: String? = null, onRouteHandled: ()
                 )
             }
             composable(Routes.STATS) {
-                StatsScreen(onOpenHabit = { id -> navController.navigate(Routes.habitDetail(id)) })
+                StatsScreen(
+                    onOpenHabit = { id -> navController.navigate(Routes.habitDetail(id)) },
+                    onOpenReview = { navController.navigate(Routes.REVIEW) }
+                )
             }
             composable(Routes.PROFILE) {
                 SettingsScreen(
@@ -97,6 +111,9 @@ fun StreakApp(userName: String, pendingRoute: String? = null, onRouteHandled: ()
             }
             composable(Routes.ACHIEVEMENTS) {
                 AchievementsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.REVIEW) {
+                ReviewScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.DATA) {
                 DataScreen(onBack = { navController.popBackStack() })
@@ -141,8 +158,13 @@ fun StreakApp(userName: String, pendingRoute: String? = null, onRouteHandled: ()
             onDismiss = { showAddSheet = false },
             onNewHabit = { showAddSheet = false; navController.navigate(Routes.addHabit()) },
             onNewTask = { showAddSheet = false; navController.navigate(Routes.ADD_TASK) },
-            onTemplate = { id -> showAddSheet = false; navController.navigate(Routes.addHabit(id)) }
+            onTemplate = { id -> showAddSheet = false; navController.navigate(Routes.addHabit(id)) },
+            onLogMood = { showAddSheet = false; moodRequest = MoodRequest() }
         )
+    }
+
+    moodRequest?.let { request ->
+        MoodSheet(request = request, onDismiss = { moodRequest = null })
     }
 }
 

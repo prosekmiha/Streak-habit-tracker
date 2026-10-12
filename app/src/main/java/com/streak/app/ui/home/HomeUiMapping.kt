@@ -70,6 +70,12 @@ internal object HomeUiMapping {
     fun topDailyStreak(habits: List<HabitWithStreak>): Int =
         habits.filter { it.habit.schedule.streakUnit == StreakUnit.DAY }.maxOfOrNull { it.streak.currentStreak } ?: 0
 
+    // Kartica za razpolozenje: le dokler ni vpisa in ni skrita, zvecer ali ko je vse opravljeno
+    fun showMoodPrompt(logged: Boolean, dismissedToday: Boolean, allDone: Boolean, now: LocalTime): Boolean =
+        !logged && !dismissedToday && (allDone || !now.isBefore(MOOD_PROMPT_FROM))
+
+    val MOOD_PROMPT_FROM: LocalTime = LocalTime.of(18, 0)
+
     fun greetingFor(time: LocalTime): Greeting = when (time.hour) {
         in 5..11 -> Greeting.MORNING
         in 12..17 -> Greeting.DAY

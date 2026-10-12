@@ -80,6 +80,14 @@ Preverjeno na emulatorju (API 36): sprememba časovnega pasu na naslednji dan je
 - Gumbi so veliki vsaj 44 dp, vrstice 48 dp.
 - Widget napredka bralniku zaslona prebere "Opravljeno 1 od 4. Še 3 navade".
 
+## Ploščici v hitrih nastavitvah
+
+- **Navada** (`HabitTileService`): izbrana navada da/ne se preklopi, količina dobi +1 (ista logika kot widget, `WidgetActions.tap`). Izbrati je mogoče le navade da/ne in količinske; brez izbire dotik odpre aplikacijo.
+- **Seja** (`SessionTileService`): med tekočo sejo dotik sejo ustavi ali nadaljuje, sicer odpre zaslon seje izbrane časovne navade (začetek je v aplikaciji zaradi izbire zvoka in spora z drugo sejo).
+- Izbira je v Profil → Ploščice v hitrih nastavitvah (`AppSettings.tileHabitId`/`tileSessionHabitId`). Na Androidu 13+ je tam gumb za sistemsko dodajanje ploščice.
+- Zasebnost: ploščica je vidna tudi na zaklenjenem zaslonu, zato z nastavitvijo "Skrij imena v obvestilih" pokaže splošen naslov. Na zaklenjeni napravi z zaklepom dejanje najprej zahteva odklep (`unlockAndRun`).
+- Osveževanje: `TileUpdater.requestAll()` se kliče ob vsaki osvežitvi widgetov in ob spremembi seje.
+
 ## Ni v tem krogu
 
 Veliki widget (teden), widget s časovnikom, citat dneva in widgeti za zaklenjen zaslon (glej fazni načrt v `docs/audit.md`).

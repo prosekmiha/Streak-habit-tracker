@@ -4,6 +4,7 @@ import com.streak.app.domain.model.AppSettings
 import com.streak.app.domain.model.CompletionStatus
 import com.streak.app.domain.model.GoalType
 import com.streak.app.domain.model.HabitSession
+import com.streak.app.domain.model.MoodEntry
 import com.streak.app.domain.model.Priority
 import com.streak.app.domain.model.Reminder
 import com.streak.app.domain.model.Task
@@ -119,6 +120,42 @@ class BackupCodecTest {
         assertEquals(CompletionStatus.DONE, merged.completions.first { it.date == d1 }.status)
         assertEquals(2, merged.completions.size)
         assertEquals(1, merged.tasks.size)
+    }
+
+    @Test
+    fun `moods and quit habits round trip`() {
+        val quit = testHabit("q", goalType = GoalType.QUIT, target = 0.0).copy(title = "Brez kajenja")
+        val withMoods = sample.copy(
+            habits = sample.habits + quit,
+            completions = sample.completions + completion(d1, CompletionStatus.RELAPSE, habitId = "q", value = 2.0),
+            moods = listOf(MoodEntry(d1, 4, 2, "miren dan", now), MoodEntry(d2, 1, loggedAt = now))
+        )
+        val ok = codec.parse(codec.encode(withMoods, now, "1.0")) as ParseResult.Ok
+        assertEquals(withMoods.moods, ok.contents.moods)
+        assertEquals(2, ok.summary.moods)
+        assertEquals(GoalType.QUIT, ok.contents.habits.first { it.id == "q" }.goalType)
+        assertEquals(CompletionStatus.RELAPSE, ok.contents.completions.first { it.habitId == "q" }.status)
+    }
+
+    @Test
+    fun `invalid mood entries are skipped, older files without moods still parse`() {
+        val text = codec.encode(sample.copy(moods = listOf(MoodEntry(d1, 3, loggedAt = now))), now, "1.0")
+            .replace("\"mood\":3", "\"mood\":9")
+        val ok = codec.parse(text) as ParseResult.Ok
+        assertTrue(ok.contents.moods.isEmpty())
+        assertEquals(1, ok.summary.skipped)
+
+        val old = codec.encode(sample, now, "1.0").replace(",\"moods\":[]", "").replace("\"schemaVersion\":3", "\"schemaVersion\":2")
+        assertTrue((codec.parse(old) as ParseResult.Ok).contents.moods.isEmpty())
+    }
+
+    @Test
+    fun `merge keeps the newer mood of the same day`() {
+        val local = BackupContents(moods = listOf(MoodEntry(d1, 2, loggedAt = now)))
+        val incoming = BackupContents(moods = listOf(MoodEntry(d1, 5, loggedAt = now.minusSeconds(60)), MoodEntry(d2, 3, loggedAt = now)))
+        val merged = BackupMerge.merge(local, incoming)
+        assertEquals(2, merged.moods.first { it.date == d1 }.mood)
+        assertEquals(2, merged.moods.size)
     }
 
     @Test

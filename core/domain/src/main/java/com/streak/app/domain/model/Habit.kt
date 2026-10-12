@@ -61,7 +61,10 @@ data class Habit(
     fun meetsGoal(value: Double): Boolean = when (goalType) {
         GoalType.YES_NO -> value > 0.0
         GoalType.QUANTITY, GoalType.DURATION -> value >= targetValue
+        GoalType.QUIT -> value <= 0.0
     }
+
+    val isQuit: Boolean get() = goalType == GoalType.QUIT
 
     // Ciljno trajanje casovne navade v sekundah (0 pri ostalih)
     fun targetSeconds(): Long = if (goalType == GoalType.DURATION) targetValue.toLong().coerceAtLeast(0) else 0

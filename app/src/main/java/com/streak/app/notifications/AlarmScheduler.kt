@@ -10,6 +10,7 @@ import com.streak.app.domain.model.Habit
 import com.streak.app.domain.notify.NotificationRules
 import com.streak.app.domain.notify.ReminderScheduler
 import com.streak.app.domain.notify.ReminderScheduler.Companion.MAX_REMINDERS
+import com.streak.app.domain.notify.TaskReminderScheduler
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.time.DayClock
@@ -28,18 +29,19 @@ class AlarmScheduler @Inject constructor(
     @ApplicationContext private val context: Context,
     private val dayClock: DayClock,
     private val settingsRepository: SettingsRepository,
-    private val habitRepository: HabitRepository
+    private val habitRepository: HabitRepository,
+    private val taskScheduler: TaskReminderScheduler
 ) : ReminderScheduler {
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
 
-    override fun canScheduleExact(): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
+    override fun canScheduleExact(): Boolean = alarmManager.canScheduleExact()
 
     override suspend fun rescheduleAll() {
         val settings = settingsRepository.settings.first()
         scheduleDailyReset(settings)
         scheduleDaily(settings)
         habitRepository.getHabits().forEach { schedule(it) }
+        taskScheduler.rescheduleAll()
     }
 
     override fun schedule(habit: Habit) {
@@ -76,14 +78,7 @@ class AlarmScheduler @Inject constructor(
     private fun next(time: LocalTime): Long =
         NotificationRules.nextOccurrence(ZonedDateTime.now(dayClock.zone()), time).toInstant().toEpochMilli()
 
-    private fun setAlarm(triggerAt: Long, pi: PendingIntent) {
-        if (canScheduleExact()) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
-        } else {
-            // Brez dovoljenja: sistem lahko alarm zamakne (v Doze do nekaj minut)
-            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
-        }
-    }
+    private fun setAlarm(triggerAt: Long, pi: PendingIntent) = alarmManager.setReminder(triggerAt, pi)
 
     private fun dailyResetIntent(): PendingIntent = PendingIntent.getBroadcast(
         context, REQUEST_DAILY_RESET, Intent(context, DailyResetReceiver::class.java),
@@ -113,5 +108,17 @@ class AlarmScheduler @Inject constructor(
         const val REQUEST_DAILY_RESET = 0x5EED
         const val REQUEST_BRIEFING = 0x5EEE
         const val REQUEST_NUDGE = 0x5EEF
+    }
+}
+
+internal fun AlarmManager.canScheduleExact(): Boolean =
+    Build.VERSION.SDK_INT < Build.VERSION_CODES.S || canScheduleExactAlarms()
+
+// Natancen alarm, ce je dovoljen; sicer ga sistem lahko zamakne (v Doze do nekaj minut)
+internal fun AlarmManager.setReminder(triggerAt: Long, pi: PendingIntent) {
+    if (canScheduleExact()) {
+        setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+    } else {
+        setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
     }
 }

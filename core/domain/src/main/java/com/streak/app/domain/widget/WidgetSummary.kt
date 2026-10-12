@@ -11,7 +11,8 @@ import com.streak.app.domain.model.TimeOfDay
 enum class WidgetTap {
     TOGGLE,      // da/ne: opravi ali odznaci
     ADD_ONE,     // kolicina: +1
-    OPEN_SESSION // trajanje: seja tece v aplikaciji
+    OPEN_SESSION, // trajanje: seja tece v aplikaciji
+    OPEN_APP      // opuscanje: zdrs se vpise le v aplikaciji (ne po nesreci z widgeta)
 }
 
 // Razpolozenje maskote na widgetu napredka
@@ -35,6 +36,7 @@ data class WidgetHabit(
 
     val tap: WidgetTap
         get() = when {
+            habit.isQuit -> WidgetTap.OPEN_APP
             isDone -> WidgetTap.TOGGLE
             habit.goalType == GoalType.QUANTITY -> WidgetTap.ADD_ONE
             habit.goalType == GoalType.DURATION -> WidgetTap.OPEN_SESSION

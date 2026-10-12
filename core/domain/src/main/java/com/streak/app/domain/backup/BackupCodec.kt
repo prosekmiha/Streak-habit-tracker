@@ -9,10 +9,12 @@ import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.HabitCategory
 import com.streak.app.domain.model.HabitSchedule
 import com.streak.app.domain.model.HabitSession
+import com.streak.app.domain.model.MoodEntry
 import com.streak.app.domain.model.Priority
 import com.streak.app.domain.model.Reminder
 import com.streak.app.domain.model.ScheduleType
 import com.streak.app.domain.model.Task
+import com.streak.app.domain.model.TaskReminder
 import com.streak.app.domain.model.ThemeMode
 import com.streak.app.domain.model.TimeOfDay
 import com.streak.app.domain.model.Vacation
@@ -33,6 +35,7 @@ data class BackupContents(
     val sessions: List<HabitSession> = emptyList(),
     val vacations: List<Vacation> = emptyList(),
     val tasks: List<Task> = emptyList(),
+    val moods: List<MoodEntry> = emptyList(),
     val settings: BSettings? = null
 )
 
@@ -45,8 +48,9 @@ data class BackupSummary(
     val tasks: Int,
     val firstDate: LocalDate?,
     val lastDate: LocalDate?,
-    // Zapisi, ki kazejo na neobstojeco navado (ne uvozijo se)
-    val skipped: Int
+    // Zapisi, ki kazejo na neobstojeco navado ali so neveljavni (ne uvozijo se)
+    val skipped: Int,
+    val moods: Int = 0
 )
 
 sealed interface ParseResult {
@@ -76,6 +80,7 @@ class BackupCodec(private val crypto: BackupCrypto = BackupCrypto()) {
             sessions = contents.sessions.map { it.toBackup() },
             vacations = contents.vacations.map { BVacation(it.startDate.toString(), it.endDate.toString()) },
             tasks = contents.tasks.map { it.toBackup() },
+            moods = contents.moods.map { it.toBackup() },
             settings = contents.settings
         )
         val plain = json.encodeToString(BackupFile.serializer(), file)
@@ -124,12 +129,14 @@ class BackupCodec(private val crypto: BackupCrypto = BackupCrypto()) {
         val sessions = file.sessions.map { it.toDomain() }
         val validCompletions = completions.filter { it.habitId in ids }.distinctBy { it.habitId to it.date }
         val validSessions = sessions.filter { it.habitId in ids }.distinctBy { it.id }
+        val moods = file.moods.mapNotNull { runCatching { it.toDomain() }.getOrNull() }.distinctBy { it.date }
         val contents = BackupContents(
             habits = habits,
             completions = validCompletions,
             sessions = validSessions,
             vacations = file.vacations.map { Vacation(startDate = LocalDate.parse(it.startDate), endDate = LocalDate.parse(it.endDate)) },
             tasks = file.tasks.map { it.toDomain() }.distinctBy { it.id },
+            moods = moods,
             settings = file.settings
         )
         val dates = validCompletions.map { it.date }
@@ -141,7 +148,9 @@ class BackupCodec(private val crypto: BackupCrypto = BackupCrypto()) {
             tasks = contents.tasks.size,
             firstDate = dates.minOrNull(),
             lastDate = dates.maxOrNull(),
-            skipped = (completions.size - validCompletions.size) + (sessions.size - validSessions.size)
+            skipped = (completions.size - validCompletions.size) + (sessions.size - validSessions.size) +
+                (file.moods.size - moods.size),
+            moods = moods.size
         )
         return ParseResult.Ok(contents, summary)
     }
@@ -197,15 +206,37 @@ class BackupCodec(private val crypto: BackupCrypto = BackupCrypto()) {
         endedAt = Instant.ofEpochMilli(endedAt), durationSeconds = durationSeconds.coerceAtLeast(0)
     )
 
+    private fun MoodEntry.toBackup() = BMood(date.toString(), mood, energy, note, loggedAt.toEpochMilli())
+
+    private fun BMood.toDomain() = MoodEntry(
+        date = LocalDate.parse(date), mood = mood, energy = energy, note = note, loggedAt = Instant.ofEpochMilli(loggedAt)
+    )
+
     private fun Task.toBackup() = BTask(
-        id, title, dueDate?.toString(), dueMinuteOfDay, priority.name, isDone, isRecurring, recurrenceRule, createdAt
+        id, title, dueDate?.toString(), dueMinuteOfDay, priority.name, isDone, isRecurring, recurrenceRule, createdAt,
+        reminders.map { it.toBackup() }
     )
 
     private fun BTask.toDomain() = Task(
         id = id, title = title, dueDate = dueDate?.let(LocalDate::parse), dueMinuteOfDay = dueMinuteOfDay,
         priority = enumValueOf<Priority>(priority), isDone = isDone, isRecurring = isRecurring,
-        recurrenceRule = recurrenceRule, createdAt = createdAt
+        recurrenceRule = recurrenceRule, createdAt = createdAt,
+        // Neznane vrste (novejsa razlicica) se preskocijo
+        reminders = reminders.mapNotNull { runCatching { it.toDomain() }.getOrNull() }.take(TaskReminder.MAX)
     )
+
+    private fun TaskReminder.toBackup() = when (this) {
+        is TaskReminder.BeforeDue -> BTaskReminder("BEFORE", minutes = minutes)
+        is TaskReminder.DayAt -> BTaskReminder("DAY_AT", days = daysBefore, time = time.toString())
+        is TaskReminder.Repeat -> BTaskReminder("REPEAT", minutes = everyMinutes, time = from.toString(), until = until.toString())
+    }
+
+    private fun BTaskReminder.toDomain(): TaskReminder? = when (kind) {
+        "BEFORE" -> TaskReminder.BeforeDue(minutes.coerceAtLeast(0))
+        "DAY_AT" -> TaskReminder.DayAt(days.coerceAtLeast(0), LocalTime.parse(time))
+        "REPEAT" -> TaskReminder.Repeat(minutes.coerceAtLeast(TaskReminder.MIN_INTERVAL), LocalTime.parse(time), LocalTime.parse(until))
+        else -> null
+    }
 
     companion object {
         // Nastavitve brez varnostnih podatkov (koda za zaklep ni del AppSettings)
@@ -250,12 +281,14 @@ object BackupMerge {
         val sessionIds = local.sessions.map { it.id }.toSet()
         val vacationRanges = local.vacations.map { it.startDate to it.endDate }.toSet()
         val taskIds = local.tasks.map { it.id }.toSet()
+        val moods = (local.moods + incoming.moods).groupBy { it.date }.map { (_, list) -> list.maxBy { it.loggedAt } }
         return BackupContents(
             habits = habits,
             completions = completions,
             sessions = local.sessions + incoming.sessions.filter { it.id !in sessionIds },
             vacations = local.vacations + incoming.vacations.filter { (it.startDate to it.endDate) !in vacationRanges },
             tasks = local.tasks + incoming.tasks.filter { it.id !in taskIds },
+            moods = moods,
             settings = local.settings
         )
     }

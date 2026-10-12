@@ -4,12 +4,14 @@ import com.streak.app.domain.backup.SnapshotInfo
 import com.streak.app.domain.model.CompletionStatus
 import com.streak.app.domain.model.DayState
 import com.streak.app.domain.model.GoalType
+import com.streak.app.domain.model.MoodEntry
 import com.streak.app.domain.usecase.SetHabitArchivedUseCase
 import com.streak.app.domain.usecase.ToggleHabitUseCase
 import com.streak.app.testing.FakeBackupService
 import com.streak.app.testing.FakeDatabaseHealthMonitor
 import com.streak.app.testing.FakeDayClock
 import com.streak.app.testing.FakeHabitRepository
+import com.streak.app.testing.FakeMoodRepository
 import com.streak.app.testing.FakeReminderScheduler
 import com.streak.app.testing.FakeSessionController
 import com.streak.app.testing.FakeSettingsRepository
@@ -22,6 +24,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -38,15 +41,18 @@ class HomeViewModelTest {
     private val habits = FakeHabitRepository()
     private val reminders = FakeReminderScheduler()
     private val backup = FakeBackupService()
+    private val moods = FakeMoodRepository()
+    private val settings = FakeSettingsRepository()
 
     private fun viewModel() = HomeViewModel(
         habitRepository = habits,
-        settingsRepository = FakeSettingsRepository(),
+        settingsRepository = settings,
         dayClock = clock,
         logHabit = ToggleHabitUseCase(habits, clock),
         setArchived = SetHabitArchivedUseCase(habits, reminders),
         sessionController = FakeSessionController(),
         backup = backup,
+        moodRepository = moods,
         databaseHealth = FakeDatabaseHealthMonitor()
     )
 
@@ -116,5 +122,21 @@ class HomeViewModelTest {
 
         assertNull(vm.restoreOffer.value)
         assertEquals(1, backup.restored)
+    }
+
+    @Test
+    fun `mood card shows when all is done and hides after logging or later`() = runTest {
+        habits.withStreak.value = listOf(withStreak(testHabit("a"), today, days = mapOf(today to DayState.DONE)))
+        val vm = observed(viewModel())
+        assertTrue(vm.state.value.moodPrompt)
+
+        moods.save(MoodEntry(today, 4, loggedAt = clock.instant))
+        assertFalse(vm.state.value.moodPrompt)
+
+        moods.delete(today)
+        assertTrue(vm.state.value.moodPrompt)
+        vm.dismissMoodPrompt()
+        assertFalse(vm.state.value.moodPrompt)
+        assertEquals(today, settings.settings.first().moodPromptDismissedDay)
     }
 }

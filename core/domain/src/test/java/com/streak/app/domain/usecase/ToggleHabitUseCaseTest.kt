@@ -91,4 +91,26 @@ class ToggleHabitUseCaseTest {
         assertEquals(CompletionStatus.SKIPPED, c.status)
         assertEquals("dobro", c.note)
     }
+
+    @Test fun `quit - tap does nothing, slips are counted and undone`() = runTest {
+        val habit = testHabit(goalType = GoalType.QUIT, target = 0.0)
+        assertEquals(LogResult.OK, useCase(habit, today))
+        assertNull(store[habit.id to today])
+
+        useCase.addRelapse(habit, today, 1)
+        useCase.addRelapse(habit, today, 1)
+        val c = store[habit.id to today]!!
+        assertEquals(CompletionStatus.RELAPSE, c.status)
+        assertEquals(2.0, c.value, 0.0)
+
+        useCase.addRelapse(habit, today, -1)
+        assertEquals(1.0, store[habit.id to today]!!.value, 0.0)
+        useCase.addRelapse(habit, today, -1)
+        assertNull(store[habit.id to today])
+    }
+
+    @Test fun `quit - slip cannot be logged for the future`() = runTest {
+        val habit = testHabit(goalType = GoalType.QUIT, target = 0.0)
+        assertEquals(LogResult.FUTURE_BLOCKED, useCase.addRelapse(habit, today.plusDays(1), 1))
+    }
 }

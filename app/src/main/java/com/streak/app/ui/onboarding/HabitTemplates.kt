@@ -45,7 +45,11 @@ object HabitTemplates {
             schedule = HabitSchedule(ScheduleType.TIMES_PER_WEEK, timesPerPeriod = 3)),
         HabitTemplate("coding", R.string.tpl_coding, R.string.tpl_coding_desc, "Code", "#A9C8F5", HabitCategory.LEARNING),
         HabitTemplate("sleep", R.string.tpl_sleep, R.string.tpl_sleep_desc, "Sleep", "#C8BDF7", HabitCategory.HEALTH,
-            timeOfDay = TimeOfDay.EVENING)
+            timeOfDay = TimeOfDay.EVENING),
+        HabitTemplate("no_smoking", R.string.tpl_no_smoking, R.string.tpl_no_smoking_desc, "SmokeFree", "#A6E3D8", HabitCategory.HEALTH,
+            GoalType.QUIT, 0.0),
+        HabitTemplate("no_sugar", R.string.tpl_no_sugar, R.string.tpl_no_sugar_desc, "Restaurant", "#FFB38A", HabitCategory.HEALTH,
+            GoalType.QUIT, 0.0)
     )
 }
 

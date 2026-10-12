@@ -4,7 +4,8 @@ package com.streak.app.domain.model
 enum class GoalType {
     YES_NO,   // opravljeno / ni opravljeno
     QUANTITY, // kolicina z enoto (npr. 8 kozarcev, 20 strani)
-    DURATION  // trajanje v sekundah (casovna seja)
+    DURATION, // trajanje v sekundah (casovna seja)
+    QUIT      // opuscanje razvade: dan brez zdrsa je opravljen
 }
 
 // Kako pogosto se navada izvaja
@@ -25,7 +26,8 @@ enum class CompletionStatus {
     DONE,    // cilj dosezen
     PARTIAL, // delni napredek (kolicina/trajanje pod ciljem)
     SKIPPED, // namerno preskoceno - ne prekine verige
-    FROZEN   // porabljena zamrznitev - ne prekine verige
+    FROZEN,  // porabljena zamrznitev - ne prekine verige
+    RELAPSE  // zdrs pri navadi za opuscanje (value = stevilo zdrsov) - prekine verigo
 }
 
 // Izpeljano stanje navade za dolocen dan (za UI in izracun streaka)

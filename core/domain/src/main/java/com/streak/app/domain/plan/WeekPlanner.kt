@@ -84,9 +84,11 @@ object WeekPlanner {
             CompletionStatus.DONE -> return PlanCell.DONE
             CompletionStatus.PARTIAL -> return PlanCell.PARTIAL
             CompletionStatus.SKIPPED, CompletionStatus.FROZEN -> return PlanCell.SKIPPED
+            CompletionStatus.RELAPSE -> return PlanCell.MISSED
             null -> Unit
         }
         if (!habit.isActiveOn(date)) return PlanCell.INACTIVE
+        if (habit.isQuit) return if (date.isAfter(today)) PlanCell.PLANNED else PlanCell.DONE
         if (habit.isPeriodic()) return PlanCell.FLEXIBLE
         if (!DayEvaluator.isScheduled(habit, date)) return PlanCell.OFF
         if (vacations.any { it.contains(date) }) return PlanCell.SKIPPED

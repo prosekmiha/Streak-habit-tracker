@@ -13,6 +13,7 @@ import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.StreakUnit
 import com.streak.app.domain.model.TimeOfDay
 import com.streak.app.domain.repository.HabitRepository
+import com.streak.app.domain.repository.MoodRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.session.SessionController
 import com.streak.app.domain.time.ClockSanity
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -68,7 +70,9 @@ data class HomeUiState(
     val topStreak: Int = 0,
     val celebration: Celebration? = null,
     // Cas za varnostno kopijo (30 dni)
-    val backupDue: Boolean = false
+    val backupDue: Boolean = false,
+    // Kartica "Kako je bil dan?" (zvecer ali ko je vse opravljeno, dokler ni vpisa)
+    val moodPrompt: Boolean = false
 ) {
     val isToday: Boolean get() = selectedDate == today
     val allDone: Boolean get() = dueCount > 0 && doneCount >= dueCount
@@ -95,6 +99,7 @@ class HomeViewModel @Inject constructor(
     private val setArchived: SetHabitArchivedUseCase,
     private val sessionController: SessionController,
     private val backup: BackupService,
+    moodRepository: MoodRepository,
     databaseHealth: DatabaseHealthMonitor
 ) : ViewModel() {
 
@@ -127,16 +132,24 @@ class HomeViewModel @Inject constructor(
     private val _restoreOffer = MutableStateFlow<SnapshotInfo?>(null)
     val restoreOffer: StateFlow<SnapshotInfo?> = _restoreOffer.asStateFlow()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val moodLoggedToday: Flow<Boolean> = dayClock.todayFlow
+        .flatMapLatest { moodRepository.observe(it) }
+        .map { it != null }
+        .distinctUntilChanged()
+
     val state: StateFlow<HomeUiState> = combine(
         habitRepository.observeHabits(),
         settingsRepository.settings,
         dayClock.todayFlow,
         combine(selectedDate, celebration) { d, c -> d to c },
-        databaseHealth.health
-    ) { habits, settings, today, (selected, celebrating), health ->
+        combine(databaseHealth.health, moodLoggedToday) { h, m -> h to m }
+    ) { habits, settings, today, (selected, celebrating), (health, moodLogged) ->
         milestones.check(habits)?.let { celebration.value = it }
         val date = HomeUiMapping.clampDate(selected, today)
         val cards = habits.mapNotNull { HomeUiMapping.card(it, date) }
+        val dueCount = cards.count { it.state.isDue() }
+        val doneCount = cards.count { it.isDone }
         HomeUiState(
             loaded = true,
             userName = settings.userName,
@@ -145,8 +158,8 @@ class HomeViewModel @Inject constructor(
             selectedDate = date,
             weekDays = HomeUiMapping.weekDays(habits, today),
             sections = HomeUiMapping.sections(cards),
-            dueCount = cards.count { it.state.isDue() },
-            doneCount = cards.count { it.isDone },
+            dueCount = dueCount,
+            doneCount = doneCount,
             hasHabits = habits.isNotEmpty(),
             clockStatus = ClockSanity.check(settings.lastKnownDate, today),
             dbHealth = health,
@@ -158,6 +171,12 @@ class HomeViewModel @Inject constructor(
                 lastBackup = settings.lastBackupAt,
                 snoozedUntil = settings.backupReminderSnoozedUntil,
                 oldestHabitCreatedAt = habits.minOfOrNull { it.habit.createdAt }?.let(Instant::ofEpochMilli)
+            ),
+            moodPrompt = HomeUiMapping.showMoodPrompt(
+                logged = moodLogged,
+                dismissedToday = settings.moodPromptDismissedDay == today,
+                allDone = dueCount > 0 && doneCount >= dueCount,
+                now = LocalTime.now()
             )
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HomeUiState())
@@ -173,6 +192,13 @@ class HomeViewModel @Inject constructor(
             }
         }
         viewModelScope.launch { _restoreOffer.value = backup.pendingSnapshot() }
+    }
+
+    fun dismissMoodPrompt() {
+        viewModelScope.launch {
+            val today = dayClock.today()
+            settingsRepository.update { it.copy(moodPromptDismissedDay = today) }
+        }
     }
 
     fun selectDate(date: LocalDate) {
@@ -218,6 +244,10 @@ class HomeViewModel @Inject constructor(
 
     fun addProgress(habit: Habit, delta: Double) = guarded {
         report(logHabit.addProgress(habit, state.value.selectedDate, delta))
+    }
+
+    fun addRelapse(habit: Habit, delta: Int) = guarded {
+        report(logHabit.addRelapse(habit, state.value.selectedDate, delta))
     }
 
     fun saveNote(habit: Habit, note: String) {
