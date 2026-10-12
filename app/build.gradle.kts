@@ -80,19 +80,16 @@ kotlin {
     compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
 }
 
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
-
 dependencies {
+    implementation(project(":core:domain"))
+    implementation(project(":core:data"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     // Namesti Baseline Profile (hitrejsi zagon)
     implementation(libs.androidx.profileinstaller)
     implementation(libs.filament.android)
     implementation(libs.filament.gltfio)
-    // Sifriranje baze (kljuc v Android Keystoru)
-    implementation(libs.sqlcipher.android)
     // Widgeti na domacem zaslonu
     implementation(libs.glance.appwidget)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -112,13 +109,10 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    ksp(libs.kotlin.metadata.jvm)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
-
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.work.runtime.ktx)
@@ -127,6 +121,7 @@ dependencies {
 
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
+    testImplementation(testFixtures(project(":core:domain")))
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
@@ -134,7 +129,6 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.test.ext.junit)
-    testImplementation(libs.room.testing)
     // Posnetki zaslona (Roborazzi) in testi dostopnosti pod Robolectricom
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.ui.test.junit4)

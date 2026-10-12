@@ -32,9 +32,9 @@ import androidx.compose.ui.unit.dp
 import com.streak.app.R
 import com.streak.app.domain.gamification.Badge
 import com.streak.app.domain.gamification.Challenge
-import com.streak.app.game.GameMemory
-import com.streak.app.game.InboxEvent
-import com.streak.app.game.InboxType
+import com.streak.app.domain.gamification.GameMemory
+import com.streak.app.domain.gamification.InboxEvent
+import com.streak.app.domain.gamification.InboxType
 import com.streak.app.ui.achievements.color
 import com.streak.app.ui.achievements.icon
 import com.streak.app.ui.achievements.titleRes

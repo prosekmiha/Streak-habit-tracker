@@ -58,8 +58,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.streak.app.R
-import com.streak.app.backup.ImportMode
 import com.streak.app.domain.backup.BackupSummary
+import com.streak.app.domain.backup.ImportMode
 import com.streak.app.ui.components.ButtonVariant
 import com.streak.app.ui.components.DialogAction
 import com.streak.app.ui.components.ScreenTopBar
@@ -337,8 +337,10 @@ private fun SummaryText(summary: BackupSummary) {
         Text(pluralStringResource(R.plurals.data_count_completions, summary.completions, summary.completions), style = MaterialTheme.typography.bodyLarge, color = palette.ink)
         if (summary.sessions > 0) Text(pluralStringResource(R.plurals.detail_session_count, summary.sessions, summary.sessions), style = MaterialTheme.typography.bodyLarge, color = palette.ink)
         if (summary.tasks > 0) Text(pluralStringResource(R.plurals.data_count_tasks, summary.tasks, summary.tasks), style = MaterialTheme.typography.bodyLarge, color = palette.ink)
-        if (summary.firstDate != null && summary.lastDate != null) {
-            Text(stringResource(R.string.data_preview_range, summary.firstDate.format(dateFormat), summary.lastDate.format(dateFormat)), style = MaterialTheme.typography.bodyMedium, color = palette.inkSoft)
+        val first = summary.firstDate
+        val last = summary.lastDate
+        if (first != null && last != null) {
+            Text(stringResource(R.string.data_preview_range, first.format(dateFormat), last.format(dateFormat)), style = MaterialTheme.typography.bodyMedium, color = palette.inkSoft)
         }
     }
 }

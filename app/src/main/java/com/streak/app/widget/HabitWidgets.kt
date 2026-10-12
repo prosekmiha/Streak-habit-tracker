@@ -217,9 +217,10 @@ private fun QuantityContent(state: HabitWidgetState.Ready) {
             Spacer(GlanceModifier.defaultWeight())
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(amount, maxLines = 1, style = TextStyle(color = WidgetColors.OnPastel, fontSize = 24.sp, fontWeight = FontWeight.Bold))
-                if (!habit.unit.isNullOrBlank()) {
+                val unit = habit.unit
+                if (!unit.isNullOrBlank()) {
                     Spacer(GlanceModifier.width(4.dp))
-                    Text(habit.unit, maxLines = 1, style = TextStyle(color = WidgetColors.OnPastelSoft, fontSize = 12.sp))
+                    Text(unit, maxLines = 1, style = TextStyle(color = WidgetColors.OnPastelSoft, fontSize = 12.sp))
                 }
             }
             Spacer(GlanceModifier.height(6.dp))

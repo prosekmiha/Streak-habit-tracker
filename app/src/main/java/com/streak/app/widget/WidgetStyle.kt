@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceModifier
 import androidx.glance.ImageProvider
@@ -14,7 +15,6 @@ import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
 import androidx.glance.unit.ColorProvider
-import androidx.core.net.toUri
 import com.streak.app.MainActivity
 import com.streak.app.R
 import com.streak.app.ui.theme.Blurple

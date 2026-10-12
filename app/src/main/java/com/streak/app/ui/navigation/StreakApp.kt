@@ -18,13 +18,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.streak.app.ui.achievements.AchievementsScreen
 import com.streak.app.ui.addhabit.AddEditHabitScreen
 import com.streak.app.ui.addtask.AddEditTaskScreen
+import com.streak.app.ui.data.DataScreen
 import com.streak.app.ui.detail.HabitDetailScreen
 import com.streak.app.ui.home.HomeScreen
 import com.streak.app.ui.session.SessionScreen
-import com.streak.app.ui.achievements.AchievementsScreen
-import com.streak.app.ui.data.DataScreen
 import com.streak.app.ui.settings.NotificationSettingsScreen
 import com.streak.app.ui.settings.SettingsScreen
 import com.streak.app.ui.stats.StatsScreen

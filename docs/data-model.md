@@ -1,6 +1,6 @@
 # Podatkovni model (Room v2)
 
-Shema je izvožena v `app/schemas/com.streak.app.data.local.StreakDatabase/2.json`.
+Shema je izvožena v `core/data/schemas/com.streak.app.data.local.StreakDatabase/2.json`.
 
 ## Tabele
 

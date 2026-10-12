@@ -2,8 +2,6 @@ package com.streak.app.ui.achievements
 
 import android.content.res.Resources
 import androidx.annotation.StringRes
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -18,8 +16,10 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.WbTwilight
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalResources
 import com.streak.app.R
 import com.streak.app.domain.gamification.Badge
 import com.streak.app.domain.gamification.BadgeKind

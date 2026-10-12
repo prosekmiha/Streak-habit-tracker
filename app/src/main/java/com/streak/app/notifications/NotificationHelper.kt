@@ -12,6 +12,7 @@ import com.streak.app.MainActivity
 import com.streak.app.R
 import com.streak.app.domain.model.GoalType
 import com.streak.app.domain.model.HabitWithStreak
+import com.streak.app.domain.notify.ReminderScheduler
 import com.streak.app.ui.components.formatAmount
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -75,7 +76,7 @@ class NotificationHelper @Inject constructor(
         } else {
             builder.addAction(0, context.getString(R.string.notif_action_done), action(NotificationActionReceiver.ACTION_DONE, habit.id))
         }
-        builder.addAction(0, context.getString(R.string.notif_action_snooze, AlarmScheduler.SNOOZE_MINUTES), action(NotificationActionReceiver.ACTION_SNOOZE, habit.id))
+        builder.addAction(0, context.getString(R.string.notif_action_snooze, ReminderScheduler.SNOOZE_MINUTES), action(NotificationActionReceiver.ACTION_SNOOZE, habit.id))
         runCatching {
             nm.notify(TAG_HABIT + habit.id, ID_REMINDER, builder.build())
             nm.notify(ID_GROUP_SUMMARY, groupSummary())

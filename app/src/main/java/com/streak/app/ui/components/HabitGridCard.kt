@@ -167,7 +167,3 @@ private fun stateLabel(item: HabitCardUi): String = when (item.state) {
     DayState.MISSED -> stringResource(R.string.day_missed)
     else -> stringResource(R.string.state_not_done)
 } + if (item.currentStreak > 0) ", " + pluralStringResource(R.plurals.streak_days_a11y, item.currentStreak, item.currentStreak) else ""
-
-// 8.0 -> "8", 2.5 -> "2,5" (po jeziku naprave)
-fun formatAmount(value: Double): String =
-    if (value % 1.0 == 0.0) value.toLong().toString() else "%.1f".format(value)

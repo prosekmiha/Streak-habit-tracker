@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.streak.app.data.local.StreakDatabase
 import com.streak.app.data.local.dao.BackupDao
 import com.streak.app.data.mapper.toEntity
+import com.streak.app.domain.gamification.GameEvents
 import com.streak.app.domain.model.Completion
 import com.streak.app.domain.model.CompletionStatus
 import com.streak.app.domain.model.GoalType
@@ -15,7 +16,6 @@ import com.streak.app.domain.model.TimeOfDay
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.time.DayClock
-import com.streak.app.game.GameEvents
 import com.streak.app.ui.components.IconMap
 import com.streak.app.ui.theme.HabitColors
 import kotlinx.coroutines.Dispatchers

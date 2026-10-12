@@ -7,9 +7,8 @@ import com.streak.app.domain.model.Habit
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.session.ActiveSession
 import com.streak.app.domain.session.AmbientSound
-import com.streak.app.session.SessionController
-import com.streak.app.session.StartResult
-import com.streak.app.session.targetSeconds
+import com.streak.app.domain.session.SessionController
+import com.streak.app.domain.session.StartResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow

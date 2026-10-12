@@ -13,12 +13,6 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
-# Nabiralnik igrifikacije je shranjen kot JSON (enako kot varnostna kopija)
--keepclassmembers class com.streak.app.game.InboxEvent {
-    *** Companion;
-    kotlinx.serialization.KSerializer serializer(...);
-}
-
 # Sledi skladov v porocilih o napakah ostanejo berljive z mapping.txt
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile

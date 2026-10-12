@@ -2,6 +2,7 @@ package com.streak.app.ui.stats
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +19,6 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -42,13 +42,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.streak.app.R
-import com.streak.app.ui.components.ScreenReadyTrace
 import com.streak.app.domain.model.DayState
 import com.streak.app.ui.components.BadgeKind
 import com.streak.app.ui.components.IconMap
 import com.streak.app.ui.components.KpiTile
 import com.streak.app.ui.components.MonthGrid
 import com.streak.app.ui.components.RoundIconButton
+import com.streak.app.ui.components.ScreenReadyTrace
 import com.streak.app.ui.components.StatusBadge
 import com.streak.app.ui.components.StreakSheet
 import com.streak.app.ui.components.parseHexColor

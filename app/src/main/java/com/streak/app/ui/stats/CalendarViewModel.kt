@@ -4,13 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.streak.app.domain.model.DayState
 import com.streak.app.domain.model.Habit
+import com.streak.app.domain.model.StreakUnit
 import com.streak.app.domain.model.Task
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.repository.TaskRepository
-import com.streak.app.domain.model.StreakUnit
-import com.streak.app.domain.streak.Periods
 import com.streak.app.domain.streak.DayEvaluator
+import com.streak.app.domain.streak.Periods
 import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.ToggleHabitUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel

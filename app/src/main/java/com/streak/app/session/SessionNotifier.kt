@@ -13,6 +13,7 @@ import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.session.ActiveSession
 import com.streak.app.domain.session.TimePoint
 import com.streak.app.notifications.NotificationHelper
+import com.streak.app.ui.components.formatClock
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
@@ -121,9 +122,5 @@ class SessionNotifier @Inject constructor(
         const val NOTIFICATION_ID = 7300
         const val GOAL_NOTIFICATION_ID = 7302
         private const val OPEN_REQUEST = 7303
-
-        fun formatClock(seconds: Long): String =
-            if (seconds >= 3600) "%d:%02d:%02d".format(seconds / 3600, seconds / 60 % 60, seconds % 60)
-            else "%02d:%02d".format(seconds / 60, seconds % 60)
     }
 }

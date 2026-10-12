@@ -10,15 +10,18 @@ import com.streak.app.data.mapper.toEntity
 import com.streak.app.domain.backup.BackupCodec
 import com.streak.app.domain.backup.BackupContents
 import com.streak.app.domain.backup.BackupMerge
+import com.streak.app.domain.backup.BackupService
 import com.streak.app.domain.backup.CompletionsCsv
+import com.streak.app.domain.backup.ImportMode
 import com.streak.app.domain.backup.ParseResult
+import com.streak.app.domain.backup.SnapshotInfo
+import com.streak.app.domain.gamification.GameEvents
 import com.streak.app.domain.model.AppSettings
+import com.streak.app.domain.notify.ReminderScheduler
+import com.streak.app.domain.repository.GameMemoryRepository
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
-import com.streak.app.game.GameEvents
-import com.streak.app.game.GameStore
-import com.streak.app.notifications.AlarmScheduler
-import com.streak.app.session.SessionController
+import com.streak.app.domain.session.SessionController
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -30,28 +33,23 @@ import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
-enum class ImportMode { MERGE, REPLACE }
-
-// Podatki samodejnega posnetka (za obnovo po novi namestitvi)
-data class SnapshotInfo(val createdAt: Instant?, val habits: Int)
-
-// Izvoz, uvoz, brisanje vseh podatkov in samodejni posnetek za Androidovo varnostno kopijo
+// Varnostna kopija v datotekah aplikacije; posnetek je vkljucen v Androidovo varnostno kopijo
 @Singleton
 class BackupManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val dao: BackupDao,
     private val settingsRepository: SettingsRepository,
     private val habitRepository: HabitRepository,
-    private val alarmScheduler: AlarmScheduler,
+    private val alarmScheduler: ReminderScheduler,
     private val sessionController: SessionController,
     private val gameEvents: GameEvents,
-    private val gameStore: GameStore
-) {
+    private val gameStore: GameMemoryRepository
+) : BackupService {
     private val codec = BackupCodec()
     private val mutex = Mutex()
     private val snapshotFile get() = File(context.filesDir, "$SNAPSHOT_DIR/$SNAPSHOT_NAME")
 
-    suspend fun readContents(): BackupContents = withContext(Dispatchers.IO) {
+    override suspend fun readContents(): BackupContents = withContext(Dispatchers.IO) {
         val reminders = dao.reminders().groupBy { it.habitId }
         BackupContents(
             habits = dao.habits().map { it.toDomain(reminders[it.id].orEmpty()) },
@@ -63,8 +61,7 @@ class BackupManager @Inject constructor(
         )
     }
 
-    // JSON varnostna kopija (z geslom sifrirana); oznaci cas zadnje varnostne kopije
-    suspend fun exportJson(password: CharArray?): String {
+    override suspend fun exportJson(password: CharArray?): String {
         val text = withContext(Dispatchers.Default) {
             codec.encode(readContents(), Instant.now(), BuildConfig.VERSION_NAME, password)
         }
@@ -72,19 +69,18 @@ class BackupManager @Inject constructor(
         return text
     }
 
-    suspend fun exportCsv(): String {
+    override suspend fun exportCsv(): String {
         val contents = readContents()
         return withContext(Dispatchers.Default) { CompletionsCsv.build(contents.habits, contents.completions) }
     }
 
-    fun isEncrypted(text: String) = codec.isEncrypted(text)
+    override fun isEncrypted(text: String) = codec.isEncrypted(text)
 
     // Dekodiranje (PBKDF2 z geslom traja nekaj sekund, zato na Default)
-    suspend fun parse(text: String, password: CharArray? = null): ParseResult =
+    override suspend fun parse(text: String, password: CharArray?): ParseResult =
         withContext(Dispatchers.Default) { codec.parse(text, password) }
 
-    // Uvoz: zamenjava ali spoj, nato preracun streakov in alarmov
-    suspend fun import(incoming: BackupContents, mode: ImportMode) = gameEvents.quietly { importLocked(incoming, mode) }
+    override suspend fun import(incoming: BackupContents, mode: ImportMode) = gameEvents.quietly { importLocked(incoming, mode) }
 
     private suspend fun importLocked(incoming: BackupContents, mode: ImportMode) = mutex.withLock {
         val local = readContents()
@@ -102,25 +98,26 @@ class BackupManager @Inject constructor(
     }
 
     // Obnova iz samodejnega posnetka (npr. po novi namestitvi)
-    suspend fun restoreSnapshot(): Boolean {
+    override suspend fun restoreSnapshot(): Boolean {
         val text = withContext(Dispatchers.IO) { snapshotFile.takeIf { it.exists() }?.readText() } ?: return false
         val parsed = parse(text) as? ParseResult.Ok ?: return false
         import(parsed.contents, ImportMode.REPLACE)
         return true
     }
 
-    // Ponujena obnova: baza je prazna, posnetek pa obstaja (Androidova varnostna kopija)
-    suspend fun pendingSnapshot(): SnapshotInfo? = withContext(Dispatchers.IO) {
+    override suspend fun pendingSnapshot(): SnapshotInfo? = withContext(Dispatchers.IO) {
         if (dao.habitCount() > 0 || !snapshotFile.exists()) return@withContext null
         (codec.parse(snapshotFile.readText()) as? ParseResult.Ok)
             ?.takeIf { it.summary.habits > 0 }
             ?.let { SnapshotInfo(it.summary.createdAt, it.summary.habits) }
     }
 
-    suspend fun discardSnapshot() = withContext(Dispatchers.IO) { snapshotFile.delete() }
+    override suspend fun discardSnapshot() {
+        withContext(Dispatchers.IO) { snapshotFile.delete() }
+    }
 
     // Posnetek se nikoli ne prepise s prazno bazo (sicer bi po novi namestitvi izgubili kopijo)
-    suspend fun writeSnapshot() = mutex.withLock {
+    override suspend fun writeSnapshot() = mutex.withLock {
         withContext(Dispatchers.IO) {
             if (!settingsRepository.settings.first().cloudSnapshotEnabled) {
                 snapshotFile.delete()
@@ -138,8 +135,7 @@ class BackupManager @Inject constructor(
         }
     }
 
-    // Izbrise vse: podatke, nastavitve, posnetek, tekoco sejo, obvestila in alarme
-    suspend fun wipeAll() = gameEvents.quietly { wipeLocked() }
+    override suspend fun wipeAll() = gameEvents.quietly { wipeLocked() }
 
     private suspend fun wipeLocked() = mutex.withLock {
         sessionController.finish(save = false)

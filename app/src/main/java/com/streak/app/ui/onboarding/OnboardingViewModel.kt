@@ -1,15 +1,11 @@
 package com.streak.app.ui.onboarding
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.streak.app.domain.model.Habit
-import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
 import com.streak.app.domain.time.DayClock
-import com.streak.app.notifications.AlarmScheduler
+import com.streak.app.domain.usecase.SaveHabitUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,10 +25,9 @@ data class OnboardingState(
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val settingsRepository: SettingsRepository,
-    private val habitRepository: HabitRepository,
-    private val alarmScheduler: AlarmScheduler,
+    private val saveHabit: SaveHabitUseCase,
+    private val templates: HabitTemplateCatalog,
     private val dayClock: DayClock
 ) : ViewModel() {
 
@@ -62,25 +57,8 @@ class OnboardingViewModel @Inject constructor(
             if (withTemplates) {
                 val today = dayClock.today()
                 val now = dayClock.now().toEpochMilli()
-                HabitTemplates.all.filter { it.id in s.selectedTemplates }.forEachIndexed { index, t ->
-                    val habit = Habit(
-                        id = UUID.randomUUID().toString(),
-                        title = context.getString(t.title),
-                        description = context.getString(t.description),
-                        icon = t.icon,
-                        colorHex = t.colorHex,
-                        category = t.category,
-                        goalType = t.goalType,
-                        targetValue = t.target,
-                        unit = t.unit?.let { context.getString(it) },
-                        schedule = t.schedule,
-                        timeOfDay = t.timeOfDay,
-                        startDate = today,
-                        createdAt = now + index,
-                        sortOrder = index
-                    )
-                    habitRepository.upsertHabit(habit)
-                    alarmScheduler.schedule(habit)
+                templates.selected(s.selectedTemplates).forEachIndexed { index, t ->
+                    saveHabit(t.toHabit(id = UUID.randomUUID().toString(), startDate = today, createdAt = now + index, sortOrder = index))
                 }
             }
             val today = dayClock.today()

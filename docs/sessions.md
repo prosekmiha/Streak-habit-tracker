@@ -7,8 +7,8 @@ Seja (meditacija, branje, vadba ...) teče neodvisno od zaslona. Preživi zapust
 | Del | Vloga |
 |---|---|
 | `domain/session/ActiveSession` | Čisto stanje seje in izračun časa (unit testi v `ActiveSessionTest`). |
-| `data/session/SessionStore` | Shrani sejo v DataStore `active_session` ob vsaki spremembi. Hrani tudi zadnji izbrani zvok. |
-| `session/SessionController` | Edini vir resnice (singleton). Ob vsaki spremembi uskladi obvestilo, alarm za cilj in zvok. |
+| `domain/session/ActiveSessionStore` → `data/prefs/SessionDataStore` | Shrani sejo v DataStore `active_session` ob vsaki spremembi. Hrani tudi zadnji izbrani zvok. |
+| `domain/session/SessionController` → `session/AndroidSessionController` | Edini vir resnice (singleton). Ob vsaki spremembi uskladi obvestilo, alarm za cilj in zvok. |
 | `session/SessionNotifier` | Trajno obvestilo s štoparico in dejanji Premor/Nadaljuj ter Končaj, poleg tega opozorilo ob cilju. |
 | `session/SessionReceiver` | Obdela dejanja iz obvestila in alarm za cilj. |
 | `session/AmbientService` + `AmbientSynth` | Ambientni zvok kot foreground storitev `mediaPlayback`, ki teče le med predvajanjem. |
@@ -28,7 +28,7 @@ Ob koncu se zapiše `HabitSession` (zgodovina je v podrobnostih navade). Pri ča
 
 ## Obnova
 
-- **Zagon procesa:** `StreakApplication` pokliče `restore()`, ki obnovi obvestilo in alarm.
+- **Zagon procesa:** `AppStartup` pokliče `restore()`, ki obnovi obvestilo in alarm.
 - **Ponovni zagon naprave:** `BootReceiver` pokliče `restore()`.
 - **Zvok se po obnovi ne zažene sam**, da ob ponovnem zagonu telefona ne zaigra nepričakovano. Znova zaigra, ko uporabnik odpre sejo ali jo nadaljuje iz obvestila.
 - Ob posodobitvi aplikacije sistem pobriše obvestila in alarme. Obnovijo se ob naslednjem zagonu aplikacije.

@@ -2,56 +2,50 @@ package com.streak.app.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.streak.app.data.local.DatabaseGuard
-import com.streak.app.data.local.DatabaseHealth
+import com.streak.app.domain.backup.BackupReminder
+import com.streak.app.domain.backup.BackupService
+import com.streak.app.domain.backup.SnapshotInfo
+import com.streak.app.domain.health.DatabaseHealth
+import com.streak.app.domain.health.DatabaseHealthMonitor
 import com.streak.app.domain.model.CompletionStatus
-import com.streak.app.domain.model.DayState
 import com.streak.app.domain.model.GoalType
 import com.streak.app.domain.model.Habit
-import com.streak.app.domain.model.HabitWithStreak
 import com.streak.app.domain.model.StreakUnit
 import com.streak.app.domain.model.TimeOfDay
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.repository.SettingsRepository
+import com.streak.app.domain.session.SessionController
 import com.streak.app.domain.time.ClockSanity
 import com.streak.app.domain.time.ClockStatus
 import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.LogResult
+import com.streak.app.domain.usecase.SetHabitArchivedUseCase
 import com.streak.app.domain.usecase.ToggleHabitUseCase
-import com.streak.app.session.SessionController
-import com.streak.app.backup.BackupManager
-import com.streak.app.backup.SnapshotInfo
-import com.streak.app.domain.backup.BackupReminder
-import java.time.Instant
 import com.streak.app.ui.components.HabitCardUi
-import com.streak.app.ui.components.WeekDayStatus
 import com.streak.app.ui.components.WeekDayUi
+import com.streak.app.ui.home.HomeUiMapping.isDue
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
-import com.streak.app.domain.gamification.Challenge
-import com.streak.app.game.GameCelebration
-import com.streak.app.game.GameEvents
-import com.streak.app.game.GameMemory
-import com.streak.app.game.GameRepository
-import com.streak.app.game.GameStore
 
 enum class Greeting { MORNING, DAY, EVENING }
 
@@ -84,7 +78,6 @@ data class HomeUiState(
 sealed interface HomeEvent {
     data object FutureBlocked : HomeEvent
     data class OpenSession(val habitId: String) : HomeEvent
-    data class ChallengeDone(val challenge: Challenge) : HomeEvent
 }
 
 // Pasica tekoce seje na vrhu domacega zaslona
@@ -99,26 +92,11 @@ class HomeViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val dayClock: DayClock,
     private val logHabit: ToggleHabitUseCase,
+    private val setArchived: SetHabitArchivedUseCase,
     private val sessionController: SessionController,
-    private val backupManager: BackupManager,
-    private val gameEvents: GameEvents,
-    private val gameStore: GameStore,
-    gameRepository: GameRepository,
-    databaseGuard: DatabaseGuard
+    private val backup: BackupService,
+    databaseHealth: DatabaseHealthMonitor
 ) : ViewModel() {
-
-    // Igrifikacija: praznovanja (znacka, nivo), nabiralnik in nivo za cip
-    val gameCelebration: StateFlow<GameCelebration?> = gameEvents.celebrations.map { it.firstOrNull() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-    val inbox: StateFlow<GameMemory?> = gameStore.memory.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-    val level: StateFlow<Int?> = gameRepository.state.map { it.level.level }.distinctUntilChanged()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-
-    fun dismissGameCelebration() = gameEvents.consumeCelebration()
-
-    fun markInboxRead() {
-        viewModelScope.launch { gameStore.markRead(dayClock.now().toEpochMilli()) }
-    }
 
     // Tekoca seja (osvezi se vsako sekundo, le ko je zaslon viden)
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -132,46 +110,47 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     private val selectedDate = MutableStateFlow<LocalDate?>(null)
     private val celebration = MutableStateFlow<Celebration?>(null)
-    // Navade, pri katerih je uporabnik pravkar napredoval: preveri mejnik ob naslednjem izracunu
-    private val pendingMilestone = mutableMapOf<String, Int>()
-    private val celebrated = mutableSetOf<String>()
+    private val milestones = MilestoneTracker()
     private val events = Channel<HomeEvent>(Channel.BUFFERED)
-    val eventFlow = events.receiveAsFlow()
+    val eventFlow: Flow<HomeEvent> = events.receiveAsFlow()
 
     // Akcija, ki caka na potrditev zaradi skoka ure
     private val _pendingClockAction = MutableStateFlow<(suspend () -> Unit)?>(null)
     val hasPendingClockAction: StateFlow<Boolean> = _pendingClockAction.map { it != null }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    // Prazna baza + samodejni posnetek (npr. nov telefon): ponudi obnovo
+    private val _restoreOffer = MutableStateFlow<SnapshotInfo?>(null)
+    val restoreOffer: StateFlow<SnapshotInfo?> = _restoreOffer.asStateFlow()
+
     val state: StateFlow<HomeUiState> = combine(
         habitRepository.observeHabits(),
         settingsRepository.settings,
         dayClock.todayFlow,
         combine(selectedDate, celebration) { d, c -> d to c },
-        databaseGuard.health
+        databaseHealth.health
     ) { habits, settings, today, (selected, celebrating), health ->
-        checkMilestones(habits)
-        val date = selected?.takeIf { !it.isAfter(today.plusDays(FUTURE_DAYS)) && !it.isBefore(today.minusDays(PAST_DAYS)) } ?: today
-        val cards = habits.mapNotNull { it.toCard(date) }
-        val due = cards.count { it.state.isDue() }
+        milestones.check(habits)?.let { celebration.value = it }
+        val date = HomeUiMapping.clampDate(selected, today)
+        val cards = habits.mapNotNull { HomeUiMapping.card(it, date) }
         HomeUiState(
             loaded = true,
             userName = settings.userName,
-            greeting = greetingFor(LocalTime.now()),
+            greeting = HomeUiMapping.greetingFor(LocalTime.now()),
             today = today,
             selectedDate = date,
-            weekDays = weekDays(habits, today),
-            sections = sections(cards),
-            dueCount = due,
+            weekDays = HomeUiMapping.weekDays(habits, today),
+            sections = HomeUiMapping.sections(cards),
+            dueCount = cards.count { it.state.isDue() },
             doneCount = cards.count { it.isDone },
             hasHabits = habits.isNotEmpty(),
             clockStatus = ClockSanity.check(settings.lastKnownDate, today),
             dbHealth = health,
-            topStreak = habits.filter { it.habit.schedule.streakUnit == StreakUnit.DAY }.maxOfOrNull { it.streak.currentStreak } ?: 0,
+            topStreak = HomeUiMapping.topDailyStreak(habits),
             celebration = celebrating,
             backupDue = BackupReminder.isDue(
                 now = Instant.now(),
@@ -181,7 +160,7 @@ class HomeViewModel @Inject constructor(
                 oldestHabitCreatedAt = habits.minOfOrNull { it.habit.createdAt }?.let(Instant::ofEpochMilli)
             )
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeUiState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HomeUiState())
 
     init {
         // Zapomni si zadnji znani dan, ce se ura ni nenavadno premaknila
@@ -193,13 +172,16 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
+        viewModelScope.launch { _restoreOffer.value = backup.pendingSnapshot() }
     }
 
     fun selectDate(date: LocalDate) {
         selectedDate.value = date
     }
 
-    fun backToToday() { selectedDate.value = null }
+    fun backToToday() {
+        selectedDate.value = null
+    }
 
     // Dotik kartice: da/ne preklopi, kolicina +1, casovna navada odpre sejo,
     // opravljena kartica se odznaci
@@ -210,7 +192,7 @@ class HomeViewModel @Inject constructor(
         }
         guarded {
             val date = state.value.selectedDate
-            if (!item.isDone) pendingMilestone[item.habit.id] = item.currentStreak
+            if (!item.isDone) milestones.expect(item.habit.id, item.currentStreak)
             val result = when {
                 item.isDone -> logHabit(item.habit, date)
                 item.habit.goalType == GoalType.QUANTITY -> logHabit.addProgress(item.habit, date, 1.0)
@@ -222,53 +204,12 @@ class HomeViewModel @Inject constructor(
 
     // Oznaci/odznaci brez odpiranja seje (iz menija dejanj)
     fun toggleDone(item: HabitCardUi) = guarded {
-        if (!item.isDone) pendingMilestone[item.habit.id] = item.currentStreak
+        if (!item.isDone) milestones.expect(item.habit.id, item.currentStreak)
         report(logHabit(item.habit, state.value.selectedDate))
     }
 
-    fun dismissCelebration() { celebration.value = null }
-
-    // Prazna baza + samodejni posnetek (npr. nov telefon): ponudi obnovo
-    private val _restoreOffer = MutableStateFlow<SnapshotInfo?>(null)
-    val restoreOffer: StateFlow<SnapshotInfo?> = _restoreOffer
-
-    init {
-        viewModelScope.launch { _restoreOffer.value = backupManager.pendingSnapshot() }
-        viewModelScope.launch { gameEvents.challengeDone.collect { events.send(HomeEvent.ChallengeDone(it)) } }
-    }
-
-    fun acceptRestore() {
-        _restoreOffer.value = null
-        viewModelScope.launch { backupManager.restoreSnapshot() }
-    }
-
-    fun declineRestore() {
-        _restoreOffer.value = null
-        viewModelScope.launch { backupManager.discardSnapshot() }
-    }
-
-    fun snoozeBackupReminder() {
-        viewModelScope.launch {
-            settingsRepository.update { it.copy(backupReminderSnoozedUntil = Instant.now().plus(BackupReminder.SNOOZE)) }
-        }
-    }
-
-    // Ce je vpis uporabnika podaljsal verigo do mejnika, pokazi praznovanje (enkrat na mejnik)
-    private fun checkMilestones(habits: List<HabitWithStreak>) {
-        if (pendingMilestone.isEmpty()) return
-        val iterator = pendingMilestone.iterator()
-        while (iterator.hasNext()) {
-            val (id, before) = iterator.next()
-            val h = habits.firstOrNull { it.habit.id == id } ?: run { iterator.remove(); continue }
-            val now = h.streak.currentStreak
-            if (now == before) continue
-            iterator.remove()
-            val milestones = if (h.streak.unit == StreakUnit.DAY) DAY_MILESTONES else PERIOD_MILESTONES
-            val key = "$id:$now"
-            if (now > before && now in milestones && celebrated.add(key)) {
-                celebration.value = Celebration(h.habit.title, now, h.streak.unit)
-            }
-        }
+    fun dismissCelebration() {
+        celebration.value = null
     }
 
     fun setStatus(habit: Habit, status: CompletionStatus?) = guarded {
@@ -287,7 +228,23 @@ class HomeViewModel @Inject constructor(
     }
 
     fun archive(habit: Habit) {
-        viewModelScope.launch { habitRepository.setArchived(habit.id, true) }
+        viewModelScope.launch { setArchived(habit.id, archived = true) }
+    }
+
+    fun acceptRestore() {
+        _restoreOffer.value = null
+        viewModelScope.launch { backup.restoreSnapshot() }
+    }
+
+    fun declineRestore() {
+        _restoreOffer.value = null
+        viewModelScope.launch { backup.discardSnapshot() }
+    }
+
+    fun snoozeBackupReminder() {
+        viewModelScope.launch {
+            settingsRepository.update { it.copy(backupReminderSnoozedUntil = Instant.now().plus(BackupReminder.SNOOZE)) }
+        }
     }
 
     // Uporabnik potrdi, da je datum naprave pravilen
@@ -300,7 +257,9 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun dismissClockDialog() { _pendingClockAction.value = null }
+    fun dismissClockDialog() {
+        _pendingClockAction.value = null
+    }
 
     // Pred vpisom preveri skok ure; ob skoku pocaka na potrditev
     private fun guarded(action: suspend () -> Unit) {
@@ -314,61 +273,7 @@ class HomeViewModel @Inject constructor(
         if (result == LogResult.FUTURE_BLOCKED) events.send(HomeEvent.FutureBlocked)
     }
 
-    private fun HabitWithStreak.toCard(date: LocalDate): HabitCardUi? {
-        val dayState = stateOn(date) ?: return null
-        val hasRecord = completionOn(date) != null
-        // Navade izven urnika (npr. ob vikendih) pokazemo le, ce imajo zapis
-        if (dayState == DayState.INACTIVE && !hasRecord) return null
-        if (dayState == DayState.NOT_SCHEDULED && habit.schedule.streakUnit == StreakUnit.DAY && !hasRecord) return null
-        return HabitCardUi(
-            habit = habit,
-            state = dayState,
-            value = completionOn(date)?.value ?: 0.0,
-            currentStreak = streak.currentStreak,
-            bestStreak = streak.bestStreak,
-            unit = streak.unit,
-            note = completionOn(date)?.note
-        )
-    }
-
-    private fun DayState.isDue() = this == DayState.DONE || this == DayState.PARTIAL ||
-        this == DayState.PENDING || this == DayState.MISSED
-
-    // Ena mreza kot v dizajnu, razvrscena po delu dneva (jutro, popoldne, vecer, kadarkoli).
-    // Naslove razdelkov pokazemo le, ce ima vsaka skupina vsaj dve navadi - sicer bi mreza razpadla.
-    private fun sections(cards: List<HabitCardUi>): List<HabitSection> {
-        if (cards.isEmpty()) return emptyList()
-        val groups = DayOrder.mapNotNull { tod -> cards.filter { it.habit.timeOfDay == tod }.takeIf { it.isNotEmpty() }?.let { tod to it } }
-        return if (groups.size > 1 && groups.all { it.second.size >= 2 }) groups.map { (tod, items) -> HabitSection(tod, items) }
-        else listOf(HabitSection(null, groups.flatMap { it.second }))
-    }
-
-    private fun weekDays(habits: List<HabitWithStreak>, today: LocalDate): List<WeekDayUi> =
-        (-PAST_DAYS..FUTURE_DAYS).map { offset ->
-            val date = today.plusDays(offset)
-            val states = habits.mapNotNull { it.stateOn(date) }
-            val due = states.count { it == DayState.DONE || it == DayState.PARTIAL || it == DayState.MISSED || it == DayState.PENDING }
-            val done = states.count { it == DayState.DONE }
-            val status = when {
-                date.isAfter(today) -> WeekDayStatus.FUTURE
-                due > 0 && done >= due -> WeekDayStatus.ALL_DONE
-                done > 0 -> WeekDayStatus.SOME_DONE
-                else -> WeekDayStatus.NONE
-            }
-            WeekDayUi(date, status, date == today)
-        }
-
-    private fun greetingFor(time: LocalTime): Greeting = when (time.hour) {
-        in 5..11 -> Greeting.MORNING
-        in 12..17 -> Greeting.DAY
-        else -> Greeting.EVENING
-    }
-
     private companion object {
-        val DAY_MILESTONES = setOf(7, 30, 100, 365)
-        val PERIOD_MILESTONES = setOf(4, 12, 26, 52)
-        val DayOrder = listOf(TimeOfDay.MORNING, TimeOfDay.AFTERNOON, TimeOfDay.EVENING, TimeOfDay.ANYTIME)
-        const val PAST_DAYS = 13L
-        const val FUTURE_DAYS = 6L
+        const val STOP_TIMEOUT_MS = 5_000L
     }
 }

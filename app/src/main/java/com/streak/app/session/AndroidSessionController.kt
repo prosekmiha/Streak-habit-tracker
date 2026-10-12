@@ -8,13 +8,15 @@ import android.os.Build
 import android.os.SystemClock
 import android.provider.Settings
 import androidx.core.content.ContextCompat
-import com.streak.app.data.session.SessionStore
 import com.streak.app.domain.model.GoalType
 import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.HabitSession
 import com.streak.app.domain.repository.HabitRepository
 import com.streak.app.domain.session.ActiveSession
+import com.streak.app.domain.session.ActiveSessionStore
 import com.streak.app.domain.session.AmbientSound
+import com.streak.app.domain.session.SessionController
+import com.streak.app.domain.session.StartResult
 import com.streak.app.domain.session.TimePoint
 import com.streak.app.domain.time.DayClock
 import com.streak.app.domain.usecase.ToggleHabitUseCase
@@ -32,33 +34,26 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-sealed interface StartResult {
-    data object Started : StartResult
-    data object Resumed : StartResult
-    data class Conflict(val other: ActiveSession) : StartResult
-}
-
-// Edini vir resnice za tekoco sejo. Stanje se shrani ob vsaki spremembi; obvestilo,
-// alarm za cilj in ambientni zvok se uskladijo s stanjem (zaslon, obvestilo in
-// bliznjica uporabljajo isti kontroler).
+// Stanje seje se shrani ob vsaki spremembi; obvestilo, alarm za cilj in ambientni zvok
+// se uskladijo s stanjem.
 @Singleton
-class SessionController @Inject constructor(
+class AndroidSessionController @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val store: SessionStore,
+    private val store: ActiveSessionStore,
     private val habitRepository: HabitRepository,
     private val logHabit: ToggleHabitUseCase,
     private val dayClock: DayClock,
     private val notifier: SessionNotifier,
     private val shortcuts: ShortcutPublisher
-) {
+) : SessionController {
     private val mutex = Mutex()
     private val loaded = CompletableDeferred<Unit>()
     private val _active = MutableStateFlow<ActiveSession?>(null)
-    val active: StateFlow<ActiveSession?> = _active.asStateFlow()
+    override val active: StateFlow<ActiveSession?> = _active.asStateFlow()
 
     private val alarmManager get() = context.getSystemService(AlarmManager::class.java)
 
-    suspend fun awaitLoaded() {
+    override suspend fun awaitLoaded() {
         if (!loaded.isCompleted) mutex.withLock {
             if (!loaded.isCompleted) {
                 _active.value = store.load()
@@ -67,21 +62,20 @@ class SessionController @Inject constructor(
         }
     }
 
-    fun now(): TimePoint = TimePoint(
+    override fun now(): TimePoint = TimePoint(
         SystemClock.elapsedRealtime(),
         Instant.now(),
         Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT, 0)
     )
 
-    suspend fun lastAmbient(): AmbientSound = store.lastAmbient()
+    override suspend fun lastAmbient(): AmbientSound = store.lastAmbient()
 
-    // Ob zagonu procesa ali naprave: obnovi obvestilo in alarm (zvoka ne zazene sam od sebe)
-    suspend fun restore() {
+    override suspend fun restore() {
         awaitLoaded()
         _active.value?.let { sync(it, startAudio = false) }
     }
 
-    suspend fun start(habit: Habit): StartResult {
+    override suspend fun start(habit: Habit): StartResult {
         val result = update { current ->
             when {
                 current == null -> {
@@ -98,17 +92,16 @@ class SessionController @Inject constructor(
         return result
     }
 
-    suspend fun togglePause() = update { s -> s?.let { if (it.running) it.pause(now()) else it.resume(now()) } to Unit }
-    suspend fun pause() = update { s -> s?.pause(now()) to Unit }
-    suspend fun resume() = update { s -> s?.resume(now()) to Unit }
-    suspend fun setAmbient(sound: AmbientSound) = update { s -> s?.copy(ambient = sound) to Unit }
+    override suspend fun togglePause() = update { s -> s?.let { if (it.running) it.pause(now()) else it.resume(now()) } to Unit }
+    override suspend fun pause() = update { s -> s?.pause(now()) to Unit }
+    override suspend fun resume() = update { s -> s?.resume(now()) to Unit }
+    override suspend fun setAmbient(sound: AmbientSound) = update { s -> s?.copy(ambient = sound) to Unit }
 
-    // Natancen alarm za cilj (Android 12+ zahteva dovoljenje uporabnika)
-    fun exactAlarmsAllowed(): Boolean =
+    override fun exactAlarmsAllowed(): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
 
     // Alarm za cilj je sprozen (ali pa je cilj zaznan v aplikaciji): pokazi obvestilo enkrat
-    suspend fun onGoalReached() {
+    override suspend fun onGoalReached() {
         val s = update { s ->
             if (s == null || s.goalNotified || s.targetSeconds <= 0 || s.remainingToGoalMs(now()) != null) s to null
             else s.copy(goalNotified = true) to s
@@ -116,8 +109,8 @@ class SessionController @Inject constructor(
         s?.let { notifier.showGoalReached(it) }
     }
 
-    // Zakljuci sejo. Kratke seje (< 10 s) se ne shranijo. Vrne shranjeno trajanje v sekundah.
-    suspend fun finish(save: Boolean): Long? {
+    // Kratke seje (< 10 s) se ne shranijo
+    override suspend fun finish(save: Boolean): Long? {
         var saved: Long? = null
         update { s ->
             if (s != null && save) {
@@ -208,6 +201,3 @@ class SessionController @Inject constructor(
         const val GOAL_REQUEST = 7301
     }
 }
-
-// Ciljno trajanje casovne navade v sekundah
-fun Habit.targetSeconds(): Long = if (goalType == GoalType.DURATION) targetValue.toLong().coerceAtLeast(0) else 0

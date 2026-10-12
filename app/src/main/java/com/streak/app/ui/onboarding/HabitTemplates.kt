@@ -1,12 +1,17 @@
 package com.streak.app.ui.onboarding
 
+import android.content.Context
 import androidx.annotation.StringRes
 import com.streak.app.R
 import com.streak.app.domain.model.GoalType
+import com.streak.app.domain.model.Habit
 import com.streak.app.domain.model.HabitCategory
 import com.streak.app.domain.model.HabitSchedule
 import com.streak.app.domain.model.ScheduleType
 import com.streak.app.domain.model.TimeOfDay
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.time.LocalDate
+import javax.inject.Inject
 
 // Pripravljene predloge navad. Besedila so lokalizirana ob ustvarjanju navade.
 data class HabitTemplate(
@@ -41,5 +46,50 @@ object HabitTemplates {
         HabitTemplate("coding", R.string.tpl_coding, R.string.tpl_coding_desc, "Code", "#A9C8F5", HabitCategory.LEARNING),
         HabitTemplate("sleep", R.string.tpl_sleep, R.string.tpl_sleep_desc, "Sleep", "#C8BDF7", HabitCategory.HEALTH,
             timeOfDay = TimeOfDay.EVENING)
+    )
+}
+
+// Predloga z besedili v jeziku aplikacije
+data class LocalizedHabitTemplate(
+    val template: HabitTemplate,
+    val title: String,
+    val description: String,
+    val unit: String?
+) {
+    fun toHabit(id: String, startDate: LocalDate, createdAt: Long, sortOrder: Int) = Habit(
+        id = id,
+        title = title,
+        description = description,
+        icon = template.icon,
+        colorHex = template.colorHex,
+        category = template.category,
+        goalType = template.goalType,
+        targetValue = template.target,
+        unit = unit,
+        schedule = template.schedule,
+        timeOfDay = template.timeOfDay,
+        startDate = startDate,
+        createdAt = createdAt,
+        sortOrder = sortOrder
+    )
+}
+
+interface HabitTemplateCatalog {
+    fun localize(template: HabitTemplate): LocalizedHabitTemplate
+
+    fun find(id: String?): LocalizedHabitTemplate? = HabitTemplates.all.firstOrNull { it.id == id }?.let(::localize)
+
+    // Izbrane predloge v vrstnem redu seznama
+    fun selected(ids: Set<String>): List<LocalizedHabitTemplate> = HabitTemplates.all.filter { it.id in ids }.map(::localize)
+}
+
+class ResourceHabitTemplateCatalog @Inject constructor(
+    @ApplicationContext private val context: Context
+) : HabitTemplateCatalog {
+    override fun localize(template: HabitTemplate) = LocalizedHabitTemplate(
+        template = template,
+        title = context.getString(template.title),
+        description = context.getString(template.description),
+        unit = template.unit?.let(context::getString)
     )
 }
